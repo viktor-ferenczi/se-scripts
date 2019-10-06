@@ -30,7 +30,7 @@ namespace GrinderPad
         private const string PISTON_GROUP = "Grinder Pistons";
 
         private const float GRINDING_VELICITY = 2.5f; // m/s
-        private const float PISTON_TOLERANCE = 0.01f; // m
+        private const float PISTON_TOLERANCE = 0.05f; // m
         private const float PISTON_PARKING_VELOCITY = 2.5f; // m/s
         private const float PISTON_SKEW_FIXING_VELOCITY = 1f; // s
 
@@ -159,6 +159,7 @@ namespace GrinderPad
             Start,
             Stop,
             Reverse,
+            Reset,
             Invalid,
         }
 
@@ -172,6 +173,8 @@ namespace GrinderPad
                     return Command.Stop;
                 case "reverse":
                     return Command.Reverse;
+                case "reset":
+                    return Command.Reset;
                 default:
                     return Command.Invalid;
             }
@@ -227,67 +230,9 @@ namespace GrinderPad
 
         private void StateChanged(GrinderPadState previousPadState, GrinderPadState newPadState)
         {
-            ValidateStateChange(previousPadState);
             FindBlocksAgain(previousPadState);
             ControlGrinders();
             ControlPistons(previousPadState);
-        }
-
-        private void ValidateStateChange(GrinderPadState previousPadState)
-        {
-            switch (previousPadState)
-            {
-                case GrinderPadState.Stopped:
-                    switch (State)
-                    {
-                        case GrinderPadState.Failed:
-                        case GrinderPadState.Grinding:
-                        case GrinderPadState.Parking:
-                            break;
-                        default:
-                            throw new InvalidStateTransitionException();
-                    }
-
-                    break;
-                case GrinderPadState.Failed:
-                    switch (State)
-                    {
-                        case GrinderPadState.Parking:
-                        case GrinderPadState.Grinding:
-                            break;
-                        default:
-                            throw new InvalidStateTransitionException();
-                    }
-
-                    break;
-                case GrinderPadState.Grinding:
-                case GrinderPadState.Fixing:
-                    switch (State)
-                    {
-                        case GrinderPadState.Stopped:
-                        case GrinderPadState.Failed:
-                        case GrinderPadState.Parking:
-                        case GrinderPadState.Fixing:
-                            break;
-                        default:
-                            throw new InvalidStateTransitionException();
-                    }
-
-                    break;
-                case GrinderPadState.Parking:
-                    switch (State)
-                    {
-                        case GrinderPadState.Stopped:
-                        case GrinderPadState.Failed:
-                            break;
-                        default:
-                            throw new InvalidStateTransitionException();
-                    }
-
-                    break;
-                default:
-                    throw new InvalidStateTransitionException();
-            }
         }
 
         private void Panic(string formatString, params object[] args)
@@ -427,12 +372,12 @@ namespace GrinderPad
         public Program()
         {
             //Runtime.UpdateFrequency = UpdateFrequency.Update100;
-            Runtime.UpdateFrequency = UpdateFrequency.None;
             FindBlocks();
-            Load(Storage);
+            LoadState(Storage);
+            Runtime.UpdateFrequency = UpdateFrequency.Update100;
         }
 
-        private void Load(string storage)
+        private void LoadState(string storage)
         {
             var rx = new System.Text.RegularExpressions.Regex(@"^GrinderPad:state=(?<state>\w+);direction=(?<direction>[+\-]?\d+);$");
             var m = rx.Match(storage);
@@ -446,7 +391,12 @@ namespace GrinderPad
 
         public void Save()
         {
-            Storage = string.Format("GrinderPad:state={0};direction={1};", State, direction);
+            Storage = DumpState();
+        }
+
+        private string DumpState()
+        {
+            return string.Format("GrinderPad:state={0};direction={1};", State, direction);
         }
 
         public void Main(string argument, UpdateType updateSource)
@@ -455,91 +405,30 @@ namespace GrinderPad
             {
                 Debug("Main");
 
-                var command = ParseCommand(argument);
-                switch (command)
+                switch (updateSource)
                 {
-                    case Command.Start:
-                        switch (State)
+                    case UpdateType.None:
+                    case UpdateType.Terminal:
+                    case UpdateType.Trigger:
+                    case UpdateType.Antenna:
+                    case UpdateType.Mod:
+                    case UpdateType.Script:
+                    case UpdateType.Once:
+                    case UpdateType.IGC:
+                        if (argument != "")
                         {
-                            case GrinderPadState.Stopped:
-                            case GrinderPadState.Failed:
-                            case GrinderPadState.Grinding:
-                            case GrinderPadState.Parking:
-                                State = GrinderPadState.Grinding;
-                                break;
-                            default:
-                                Error("Grinder pad is already running");
-                                break;
+                            ProcessCommand(argument);
                         }
-
                         break;
-
-                    case Command.Stop:
-                        switch (State)
-                        {
-                            case GrinderPadState.Stopped:
-                            case GrinderPadState.Grinding:
-                            case GrinderPadState.Parking:
-                            case GrinderPadState.Fixing:
-                                State = GrinderPadState.Stopped;
-                                break;
-
-                            default:
-                                Error("Grinder pad is not running");
-                                break;
-                        }
-
-                        break;
-
-                    case Command.Reverse:
-                        switch (State)
-                        {
-                            case GrinderPadState.Grinding:
-                            case GrinderPadState.Fixing:
-                                direction = -direction;
-                                break;
-
-                            case GrinderPadState.Parking:
-                                State = GrinderPadState.Stopped;
-                                break;
-
-                            default:
-                                Error("Grinder pad is not grinding");
-                                break;
-                        }
-
-                        break;
-
-                    default:
-                        Error("Invalid command: " + argument);
+                    case UpdateType.Update1:
+                    case UpdateType.Update10:
+                    case UpdateType.Update100:
                         break;
                 }
 
-                switch (State)
-                {
-                    case GrinderPadState.Grinding:
-                        if (HasPistonSkew())
-                        {
-                            State = GrinderPadState.Fixing;
-                        }
-                        else
-                        {
-                            ReversePistonsAtTheEnd();
-                        }
+                PeriodicProcessing();
 
-                        break;
-                }
-
-                switch (State)
-                {
-                    case GrinderPadState.Parking:
-                        StopWhenParked();
-                        break;
-
-                    case GrinderPadState.Fixing:
-                        FixPistonSkew();
-                        break;
-                }
+                Debug(DumpState());
 
                 if (State != GrinderPadState.Failed)
                 {
@@ -552,10 +441,114 @@ namespace GrinderPad
             }
             catch (Exception e)
             {
+                Debug(DumpState());
                 Error(e.ToString());
             }
 
             ShowLog();
+        }
+
+        private void PeriodicProcessing()
+        {
+            switch (State)
+            {
+                case GrinderPadState.Grinding:
+                    if (HasPistonSkew())
+                    {
+                        State = GrinderPadState.Fixing;
+                    }
+                    else
+                    {
+                        ReversePistonsAtTheEnd();
+                    }
+
+                    break;
+            }
+
+            switch (State)
+            {
+                case GrinderPadState.Parking:
+                    StopWhenParked();
+                    break;
+
+                case GrinderPadState.Fixing:
+                    FixPistonSkew();
+                    break;
+            }
+        }
+
+        private void ProcessCommand(string argument)
+        {
+            var command = ParseCommand(argument);
+            switch (command)
+            {
+                case Command.Start:
+                    switch (State)
+                    {
+                        case GrinderPadState.Stopped:
+                        case GrinderPadState.Failed:
+                        case GrinderPadState.Grinding:
+                        case GrinderPadState.Parking:
+                            State = GrinderPadState.Grinding;
+                            break;
+                        default:
+                            Error("Grinder pad is already running");
+                            break;
+                    }
+
+                    break;
+
+                case Command.Stop:
+                    switch (State)
+                    {
+                        case GrinderPadState.Stopped:
+                        case GrinderPadState.Grinding:
+                        case GrinderPadState.Parking:
+                        case GrinderPadState.Fixing:
+                            State = GrinderPadState.Stopped;
+                            break;
+
+                        default:
+                            Error("Grinder pad is not running");
+                            break;
+                    }
+
+                    break;
+
+                case Command.Reverse:
+                    switch (State)
+                    {
+                        case GrinderPadState.Grinding:
+                        case GrinderPadState.Fixing:
+                            direction = -direction;
+                            break;
+
+                        case GrinderPadState.Parking:
+                            State = GrinderPadState.Stopped;
+                            break;
+
+                        default:
+                            Error("Grinder pad is not grinding");
+                            break;
+                    }
+
+                    break;
+
+                case Command.Reset:
+                    switch (State)
+                    {
+                        case GrinderPadState.Failed:
+                        case GrinderPadState.Grinding:
+                        case GrinderPadState.Fixing:
+                            State = GrinderPadState.Parking;
+                            break;
+                    }
+                    break;
+
+                default:
+                    Error("Invalid command: " + argument);
+                    break;
+            }
         }
 
         #endregion
