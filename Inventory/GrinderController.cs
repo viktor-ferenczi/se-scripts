@@ -6,6 +6,7 @@ using System.Text;
 using Inventory;
 using Sandbox.Definitions;
 using Sandbox.Game;
+using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Profiler;
@@ -30,9 +31,8 @@ namespace GrinderPad
         private const string PISTON_GROUP = "Grinder Pistons";
 
         private const float GRINDING_VELICITY = 2.5f; // m/s
+        private const float PARKING_VELOCITY = 2.5f; // m/s
         private const float PISTON_TOLERANCE = 0.05f; // m
-        private const float PISTON_PARKING_VELOCITY = 2.5f; // m/s
-        private const float PISTON_SKEW_FIXING_VELOCITY = 1f; // s
 
         // Debugging
 
@@ -140,7 +140,7 @@ namespace GrinderPad
 
             foreach (var piston in pistons)
             {
-                piston.Velocity = -PISTON_PARKING_VELOCITY;
+                piston.Velocity = -PARKING_VELOCITY;
             }
         }
 
@@ -188,7 +188,6 @@ namespace GrinderPad
             Failed,
             Grinding,
             Parking,
-            Fixing,
         }
 
         private class InvalidStateTransitionException: Exception {}
@@ -222,11 +221,14 @@ namespace GrinderPad
             }
         }
 
-        private GrinderPadState state = GrinderPadState.Stopped;
+        private enum GrinderDirection
+        {
+            Forward,
+            Backward,
+        }
 
-        private const int Forward = 1;
-        private const int Backward = -1;
-        private int direction = Forward;
+        private GrinderPadState state = GrinderPadState.Stopped;
+        private GrinderDirection direction = GrinderDirection.Forward;
 
         private void StateChanged(GrinderPadState previousPadState, GrinderPadState newPadState)
         {
@@ -265,7 +267,6 @@ namespace GrinderPad
 
                 case GrinderPadState.Grinding:
                 case GrinderPadState.Parking:
-                case GrinderPadState.Fixing:
                     EnableGrinders();
                     break;
             }
@@ -273,15 +274,6 @@ namespace GrinderPad
 
         private void ControlPistons(GrinderPadState previousState)
         {
-            switch (previousState)
-            {
-                case GrinderPadState.Stopped:
-                case GrinderPadState.Failed:
-                case GrinderPadState.Fixing:
-                    SetPistonMinLimit(0f);
-                    break;
-            }
-
             switch (State)
             {
                 case GrinderPadState.Stopped:
@@ -291,37 +283,58 @@ namespace GrinderPad
 
                 case GrinderPadState.Grinding:
                     EnablePistons();
-                    SetPistonVelocity(direction * SinglePistonGrindingVelocity);
+                    SetPistonVelocityForGrinding();
                     break;
 
                 case GrinderPadState.Parking:
                     EnablePistons();
                     SetPistonVelocity(-SinglePistonParkingVelocity);
                     break;
-
-                case GrinderPadState.Fixing:
-                    EnablePistons();
-                    SetPistonVelocity(0f);
-                    break;
             }
         }
 
         private void ReversePistonsAtTheEnd()
         {
-            var piston = pistons[0];
-            var position = piston.CurrentPosition;
-
-            if (direction > 0)
+            var sumPositions = pistons.Sum(piston => piston.CurrentPosition);
+            var targetSumPosition = 2 * End;
+            var delta = sumPositions - targetSumPosition;
+            Debug("sumPos {0}", sumPositions);
+            Debug("End {0}", End);
+            Debug("Delta {0}", delta);
+            if (Math.Abs(delta) < PISTON_TOLERANCE)
             {
-                if (position > piston.MaxLimit - PISTON_TOLERANCE)
+                ReverseDirection();
+            }
+        }
+
+        private void ReverseDirection()
+        {
+            switch (direction)
+            {
+                case GrinderDirection.Forward:
+                    direction = GrinderDirection.Backward;
+                    break;
+                case GrinderDirection.Backward:
+                    direction = GrinderDirection.Forward;
+                    break;
+            }
+        }
+
+        private float End
+        {
+            get
+            {
+                switch (direction)
                 {
-                    direction = Backward;
+                    case GrinderDirection.Forward:
+                        return pistons.Sum(piston => piston.MaxLimit) / PistonCountOnOneSide;
+                        break;
+                    case GrinderDirection.Backward:
+                        return pistons.Sum(piston => piston.MinLimit) / PistonCountOnOneSide;
+                        break;
                 }
-            } else {
-                if (position < piston.MinLimit + PISTON_TOLERANCE)
-                {
-                    direction = Forward;
-                }
+
+                return 0f;
             }
         }
 
@@ -330,7 +343,7 @@ namespace GrinderPad
             if(pistons.All(piston => piston.CurrentPosition < PISTON_TOLERANCE))
             {
                 State = GrinderPadState.Stopped;
-                direction = Forward;
+                direction = GrinderDirection.Forward;
             }
         }
 
@@ -342,32 +355,33 @@ namespace GrinderPad
             }
         }
 
-        private void SetPistonMinLimit(float position)
+        private void SetPistonVelocityForGrinding()
         {
+            var target = End / PistonCountOnOneSide;
+            var totalDelta = pistons.Sum(piston => Math.Abs(target - piston.CurrentPosition));
+            if (totalDelta < PISTON_TOLERANCE)
+            {
+                SetPistonVelocity(0f);
+                return;
+            }
+
+            var skew = 0f;
+            var averageDelta = totalDelta / PistonCountOnOneSide;
             foreach (var piston in pistons)
             {
-                piston.MinLimit = position;
+                var delta = target - piston.CurrentPosition;
+                skew += Math.Abs(delta - averageDelta);
+                piston.Velocity = delta / totalDelta * GRINDING_VELICITY;
             }
-        }
 
-        private bool HasPistonSkew()
-        {
-            var target = pistons[0].CurrentPosition;
-            return pistons.Any(piston => Math.Abs(piston.CurrentPosition - target) > PISTON_TOLERANCE);
-        }
-
-        private void FixPistonSkew()
-        {
-            var targetPosition = pistons.Min(piston => piston.CurrentPosition);
-            SetPistonMinLimit(targetPosition);
-            SetPistonVelocity(-PISTON_SKEW_FIXING_VELOCITY);
+            Debug("Piston skew {0}", skew);
         }
 
         // Calculated settings
 
         private int PistonCountOnOneSide => pistons.Count / 2;
         private float SinglePistonGrindingVelocity => GRINDING_VELICITY / PistonCountOnOneSide;
-        private float SinglePistonParkingVelocity => PISTON_PARKING_VELOCITY / PistonCountOnOneSide;
+        private float SinglePistonParkingVelocity => PARKING_VELOCITY / PistonCountOnOneSide;
 
         public Program()
         {
@@ -385,7 +399,7 @@ namespace GrinderPad
 
             if (Enum.TryParse(m.Groups["state"].Value, out state))
             {
-                int.TryParse(m.Groups["direction"].Value, out direction);
+                Enum.TryParse(m.Groups["direction"].Value, out direction);
             }
         }
 
@@ -453,26 +467,11 @@ namespace GrinderPad
             switch (State)
             {
                 case GrinderPadState.Grinding:
-                    if (HasPistonSkew())
-                    {
-                        State = GrinderPadState.Fixing;
-                    }
-                    else
-                    {
-                        ReversePistonsAtTheEnd();
-                    }
-
+                    ReversePistonsAtTheEnd();
                     break;
-            }
 
-            switch (State)
-            {
                 case GrinderPadState.Parking:
                     StopWhenParked();
-                    break;
-
-                case GrinderPadState.Fixing:
-                    FixPistonSkew();
                     break;
             }
         }
@@ -504,7 +503,6 @@ namespace GrinderPad
                         case GrinderPadState.Stopped:
                         case GrinderPadState.Grinding:
                         case GrinderPadState.Parking:
-                        case GrinderPadState.Fixing:
                             State = GrinderPadState.Stopped;
                             break;
 
@@ -519,8 +517,7 @@ namespace GrinderPad
                     switch (State)
                     {
                         case GrinderPadState.Grinding:
-                        case GrinderPadState.Fixing:
-                            direction = -direction;
+                            ReverseDirection();
                             break;
 
                         case GrinderPadState.Parking:
@@ -539,7 +536,6 @@ namespace GrinderPad
                     {
                         case GrinderPadState.Failed:
                         case GrinderPadState.Grinding:
-                        case GrinderPadState.Fixing:
                             State = GrinderPadState.Parking;
                             break;
                     }
