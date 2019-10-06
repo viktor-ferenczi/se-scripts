@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Dev\SE\Programs" t="IncludeFlat">
+      <e p="Inventory" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="GrinderController.cs" t="Include" />
+        <e p="Inventory.csproj" t="IncludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netcoreapp2.2" t="Include">
+              <e p="Inventory.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ProjectorInventory.cs" t="Include" />
+        <e p="ShipInventory.cs" t="Include" />
+        <e p="SpaceEngineersProgram.cs" t="Include" />
+      </e>
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Programs.sln" t="IncludeFlat" />
+    </e>
+    <e p="C:\Users\fviktor\.Rider2019.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\fviktor\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_Programs.459880562.00" t="ExcludeRecursive" />
+  </component>
+</project>
