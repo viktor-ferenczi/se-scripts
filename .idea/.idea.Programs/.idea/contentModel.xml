@@ -15,6 +15,7 @@
         </e>
         <e p="ProjectorInventory.cs" t="Include" />
         <e p="ShipInventory.cs" t="Include" />
+        <e p="Skeleton.cs" t="Include" />
         <e p="SpaceEngineersProgram.cs" t="Include" />
       </e>
       <e p="packages" t="ExcludeRecursive" />
