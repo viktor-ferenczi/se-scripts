@@ -141,35 +141,6 @@ namespace Skeleton
             }
         }
 
-        private void ProcessCommand(string argument)
-        {
-            // TODO: Add command processing below
-
-            var command = ParseCommand(argument);
-            switch (command)
-            {
-                case Command.Default:
-                    // TODO
-                    break;
-
-                case Command.Start:
-                    // TODO
-                    break;
-
-                case Command.Stop:
-                    // TODO
-                    break;
-
-                case Command.Reset:
-                    // TODO
-                    break;
-
-                default:
-                    Error("Invalid command: " + argument);
-                    break;
-            }
-        }
-
         public Program()
         {
             Initialize();
@@ -238,6 +209,35 @@ namespace Skeleton
             }
 
             ShowLog();
+        }
+
+        private void ProcessCommand(string argument)
+        {
+            // TODO: Add command processing below
+
+            var command = ParseCommand(argument);
+            switch (command)
+            {
+                case Command.Default:
+                    // TODO
+                    break;
+
+                case Command.Start:
+                    // TODO
+                    break;
+
+                case Command.Stop:
+                    // TODO
+                    break;
+
+                case Command.Reset:
+                    // TODO
+                    break;
+
+                default:
+                    Error("Invalid command: " + argument);
+                    break;
+            }
         }
 
         private void PeriodicProcessing()
