@@ -30,11 +30,15 @@ namespace GrinderPad
         // Config
 
         private const string GRINDER_GROUP = "Grinders";
-        private const string PISTON_GROUP = "Grinder Pistons";
+        private const string GRINDER_PISTON_GROUP = "Grinder Pistons";
+        private const string SUSPENSION_PISTON_GROUP = "Welder Wall Pistons";
 
-        private const float GRINDING_VELICITY = 5f; // m/s
-        private const float PARKING_VELOCITY = 10f; // m/s
-        private const float PISTON_TOLERANCE = 0.2f; // m
+        private const float GRINDER_VELOCITY = 2.5f; // m/s
+        private const float PARKING_VELOCITY = 5.0f; // m/s
+        private const float GRINDING_MIN_DISTANCE = 5.0f; // m
+        private const float PISTON_TOLERANCE = 0.5f; // m
+        private const float SUSPENSION_VELOCITY = 0.2f; // m/s
+        private const float SUSPENSION_STEP = 1.25f; // m/run
 
         // Debugging
 
@@ -61,6 +65,11 @@ namespace GrinderPad
             }
         }
 
+        private void Warning(string formatString, params object[] args)
+        {
+            Log("W: " + formatString, args);
+        }
+
         private void Error(string formatString, params object[] args)
         {
             Log("E: " + formatString, args);
@@ -69,16 +78,21 @@ namespace GrinderPad
         // Blocks
 
         private List<IMyShipGrinder> grinders = new List<IMyShipGrinder>();
-        private List<IMyPistonBase> pistons = new List<IMyPistonBase>();
-        private float sumMinExtension = 0f;
-        private float sumMaxExtension = 0f;
+        private List<IMyPistonBase> grinderPistons = new List<IMyPistonBase>();
+        private List<IMyPistonBase> suspensionPistons = new List<IMyPistonBase>();
+        private float sumMinGrinderExtension = 0f;
+        private float sumMaxGrinderExtension = 0f;
+        private float sumMinSuspensionExtension = 0f;
+        private float suspensionTarget = 0f;
+        private float suspensionVelocity = 0f;
 
         private void FindBlocks()
         {
             Debug("FindBlocks");
 
             GridTerminalSystem.GetBlockGroupWithName(GRINDER_GROUP).GetBlocksOfType<IMyShipGrinder>(grinders);
-            GridTerminalSystem.GetBlockGroupWithName(PISTON_GROUP).GetBlocksOfType<IMyPistonBase>(pistons);
+            GridTerminalSystem.GetBlockGroupWithName(GRINDER_PISTON_GROUP).GetBlocksOfType<IMyPistonBase>(grinderPistons);
+            GridTerminalSystem.GetBlockGroupWithName(SUSPENSION_PISTON_GROUP).GetBlocksOfType<IMyPistonBase>(suspensionPistons);
 
             if (grinders.Count < 1)
             {
@@ -86,15 +100,20 @@ namespace GrinderPad
                 return;
             }
 
-            if (pistons.Count < 1)
+            if (grinderPistons.Count < 1)
             {
-                Panic("Piston group not found: " + PISTON_GROUP);
+                Panic("Piston group not found: " + GRINDER_PISTON_GROUP);
                 return;
             }
 
-            if (pistons.Count % 2 != 0)
+            if (suspensionPistons.Count < 1)
             {
-                Panic("Number of pistons must be even in group: " + PISTON_GROUP);
+                Warning("Suspension piston group not found: " + SUSPENSION_PISTON_GROUP);
+            }
+
+            if (grinderPistons.Count % 2 != 0)
+            {
+                Panic("Number of pistons must be even in group: " + GRINDER_PISTON_GROUP);
                 return;
             }
 
@@ -104,16 +123,24 @@ namespace GrinderPad
                 return;
             }
 
-            if (!IsAllFunctional(pistons))
+            if (!IsAllFunctional(grinderPistons))
             {
-                Panic("Broken pistons(s) in group " + PISTON_GROUP);
+                Panic("Broken pistons(s) in group " + GRINDER_PISTON_GROUP);
                 return;
             }
 
-            sumMinExtension = pistons.Sum(piston => piston.MinLimit);
-            sumMaxExtension = pistons.Sum(piston => piston.MaxLimit);
+            sumMinGrinderExtension = grinderPistons.Sum(piston => piston.MinLimit);
+            sumMaxGrinderExtension = grinderPistons.Sum(piston => piston.MaxLimit);
+
+            sumMinSuspensionExtension = suspensionPistons.Count > 0 ? suspensionPistons.Sum(piston => piston.MinLimit) : 0f;
+            suspensionTarget = GetSuspensionPosition();
 
             Debug("FindBlocks OK");
+        }
+
+        private float GetSuspensionPosition()
+        {
+            return suspensionPistons.Count > 0 ? suspensionPistons.Sum(piston => piston.CurrentPosition) : 0f;
         }
 
         private static bool IsAllFunctional(IEnumerable<IMyFunctionalBlock> blocks)
@@ -126,26 +153,36 @@ namespace GrinderPad
             ApplyToAll(grinders, "OnOff_On");
         }
 
-        private void EnablePistons()
-        {
-            ApplyToAll(pistons, "OnOff_On");
-        }
-
         private void DisableGrinders()
         {
             ApplyToAll(grinders, "OnOff_Off");
         }
 
-        private void DisablePistons()
+        private void EnableGrinderPistons()
         {
-            ApplyToAll(pistons, "OnOff_Off");
+            ApplyToAll(grinderPistons, "OnOff_On");
+        }
+
+        private void DisableGrinderPistons()
+        {
+            ApplyToAll(grinderPistons, "OnOff_Off");
+        }
+
+        private void EnableSuspensionPistons()
+        {
+            ApplyToAll(suspensionPistons, "OnOff_On");
+        }
+
+        private void DisableSuspensionPistons()
+        {
+            ApplyToAll(suspensionPistons, "OnOff_Off");
         }
 
         private void Park()
         {
             DisableGrinders();
 
-            foreach (var piston in pistons)
+            foreach (var piston in grinderPistons)
             {
                 piston.Velocity = -PARKING_VELOCITY;
             }
@@ -235,7 +272,7 @@ namespace GrinderPad
         {
             FindBlocksAgain(previousPadState);
             ControlGrinders();
-            ControlPistons(previousPadState);
+            ControlGrinderPistons(previousPadState);
         }
 
         private void Panic(string formatString, params object[] args)
@@ -273,36 +310,44 @@ namespace GrinderPad
             }
         }
 
-        private void ControlPistons(GrinderPadState previousState)
+        private void ControlGrinderPistons(GrinderPadState previousState)
         {
             switch (State)
             {
                 case GrinderPadState.Stopped:
                 case GrinderPadState.Failed:
-                    DisablePistons();
+                    DisableGrinderPistons();
+                    DisableSuspensionPistons();
                     break;
 
                 case GrinderPadState.Grinding:
-                    EnablePistons();
+                    EnableGrinderPistons();
                     SetPistonVelocityToTarget();
+                    EnableSuspensionPistons();
                     break;
 
                 case GrinderPadState.Parking:
-                    EnablePistons();
+                    DisableSuspensionPistons();
+                    EnableGrinderPistons();
                     SetPistonVelocity(-SinglePistonParkingVelocity);
                     break;
             }
         }
 
-        private bool HasReachedTarget()
+        private bool GrindersHaveReachedTarget()
         {
             var sumTarget = SumTarget;
-            var sumPosition = pistons.Sum(piston => piston.CurrentPosition);
+            var sumPosition = grinderPistons.Sum(piston => piston.CurrentPosition);
             var tolerance = PISTON_TOLERANCE * PistonCountOnOneSide;
-            return Math.Abs(sumPosition - sumTarget) < tolerance;
+            if (direction > 0)
+            {
+                return sumPosition > sumTarget - tolerance;
+            }
+
+            return sumPosition < sumTarget + tolerance;
         }
 
-        private void ReverseDirection()
+        private void ReverseGrinderDirection()
         {
             Debug("Reversing");
             direction *= -1;
@@ -311,7 +356,7 @@ namespace GrinderPad
 
         private void SetPistonVelocityToTarget()
         {
-            SetPistonVelocity(direction * GRINDING_VELICITY / PistonCountOnOneSide);
+            SetPistonVelocity(direction * GRINDER_VELOCITY / PistonCountOnOneSide);
         }
 
         private float SumTarget
@@ -321,24 +366,60 @@ namespace GrinderPad
                 switch (State)
                 {
                     case GrinderPadState.Grinding:
-                        return direction > 0 ? sumMaxExtension : sumMinExtension;
+                        return direction > 0 ? sumMaxGrinderExtension : GRINDING_MIN_DISTANCE * 2;
                 }
-                return sumMinExtension;
+                return sumMinGrinderExtension;
             }
         }
 
         private void SetPistonVelocity(float velocity)
         {
-            foreach (var piston in pistons)
+            foreach (var piston in grinderPistons)
             {
                 piston.Velocity = velocity;
             }
         }
 
+        private void SetSuspensionPistonVelocity(float velocity)
+        {
+            suspensionVelocity = velocity;
+            foreach (var piston in suspensionPistons)
+            {
+                piston.Velocity = velocity;
+            }
+        }
+
+        private bool HasSuspensionReachedBottom()
+        {
+            return GetSuspensionPosition() < sumMinSuspensionExtension + PISTON_TOLERANCE;
+        }
+
+        private void LowerSuspension()
+        {
+            if (suspensionPistons.Count == 0)
+            {
+                return;
+            }
+
+            suspensionTarget -= SUSPENSION_STEP;
+            SetSuspensionPistonVelocity(-SUSPENSION_VELOCITY / suspensionPistons.Count);
+        }
+
+        private void StopSuspensionAtTarget()
+        {
+            if (suspensionVelocity != 0f)
+            {
+                if (GetSuspensionPosition() < suspensionTarget + PISTON_TOLERANCE * suspensionPistons.Count)
+                {
+                    SetSuspensionPistonVelocity(0f);
+                }
+            }
+        }
+
         // Calculated settings
 
-        private int PistonCountOnOneSide => pistons.Count / 2;
-        private float SinglePistonGrindingVelocity => GRINDING_VELICITY / PistonCountOnOneSide;
+        private int PistonCountOnOneSide => grinderPistons.Count / 2;
+        private float SinglePistonGrindingVelocity => GRINDER_VELOCITY / PistonCountOnOneSide;
         private float SinglePistonParkingVelocity => PARKING_VELOCITY / PistonCountOnOneSide;
 
         public Program()
@@ -417,22 +498,39 @@ namespace GrinderPad
                 Error(e.ToString());
             }
 
+//            Debug("suspensionPistons.Count = {0}", suspensionPistons.Count);
+//            Debug("suspensionTarget = {0}", suspensionTarget);
+//            Debug("suspensionVelocity = {0}", suspensionVelocity);
+
             ShowLog();
         }
 
         private void PeriodicProcessing()
         {
-            if (HasReachedTarget())
+            if (GrindersHaveReachedTarget())
             {
-                ReverseDirection();
+                ReverseGrinderDirection();
 
                 switch (State)
                 {
+                    case GrinderPadState.Grinding:
+                        if (HasSuspensionReachedBottom())
+                        {
+                            State = GrinderPadState.Parking;
+                        }
+                        else
+                        {
+                            LowerSuspension();
+                        }
+                        break;
+
                     case GrinderPadState.Parking:
                         State = GrinderPadState.Stopped;
                         break;
                 }
             }
+
+            StopSuspensionAtTarget();
         }
 
         private void ProcessCommand(string argument)
@@ -448,6 +546,7 @@ namespace GrinderPad
                         case GrinderPadState.Grinding:
                         case GrinderPadState.Parking:
                             State = GrinderPadState.Grinding;
+                            SetPistonVelocityToTarget();
                             break;
                         default:
                             Error("Grinder pad is already running");
@@ -492,8 +591,10 @@ namespace GrinderPad
                     break;
 
                 case Command.Reset:
+                    FindBlocks();
                     switch (State)
                     {
+                        case GrinderPadState.Stopped:
                         case GrinderPadState.Failed:
                         case GrinderPadState.Grinding:
                             State = GrinderPadState.Parking;
