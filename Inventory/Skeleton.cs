@@ -1,7 +1,7 @@
 /*
  * This is a skeleton for developing Space Engineers programmable block scripts
  *
- * Autocompletion needs Space Engineers being installed to its standard location in Steam.
+ * Auto-completion needs Space Engineers being installed to its standard location in Steam.
  *
  * Make a copy of this script first.
  * Change the name of the namespace to your topic.
