@@ -48,7 +48,7 @@ namespace Skeleton
         // TODO: Add configuration variables here
         //Examples:
         //private const string GRINDER_GROUP = "Grinders";
-        //private const string GRINDER_PISTON_GROUP = "Grinder Pistons";
+        //private const string PISTON_GROUP = "Pistons";
 
         // Debugging
 
