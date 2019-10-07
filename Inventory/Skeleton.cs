@@ -117,9 +117,9 @@ namespace Skeleton
 
         private enum Command
         {
+            Default,
             Start,
             Stop,
-            Reverse,
             Reset,
             Invalid,
         }
@@ -128,6 +128,8 @@ namespace Skeleton
         {
             switch (argument)
             {
+                case "":
+                    return Command.Default;
                 case "start":
                     return Command.Start;
                 case "stop":
@@ -146,6 +148,10 @@ namespace Skeleton
             var command = ParseCommand(argument);
             switch (command)
             {
+                case Command.Default:
+                    // TODO
+                    break;
+
                 case Command.Start:
                     // TODO
                     break;
@@ -215,9 +221,14 @@ namespace Skeleton
                     case UpdateType.IGC:
                         ProcessCommand(argument);
                         break;
-                }
 
-                PeriodicProcessing();
+                    case UpdateType.Update1:
+                    case UpdateType.Update10:
+                    case UpdateType.Update100:
+                        PeriodicProcessing();
+                        break;
+
+                }
 
                 Log("OK");
             }
@@ -225,12 +236,13 @@ namespace Skeleton
             {
                 Error(e.ToString());
             }
+
             ShowLog();
         }
 
         private void PeriodicProcessing()
         {
-            // TODO: Add periodic processing here
+            // TODO: Add periodic processing here, called only if UpdateFrequency is not set to UpdateType.None
         }
 
         #endregion
