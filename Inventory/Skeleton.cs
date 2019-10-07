@@ -7,9 +7,9 @@
  * Change the name of the namespace to your topic.
  * Edit your script in JetBrains Rider or Microsoft Visual Studio.
  * Fill in the missing code where you see "TODO" below.
- * Make sure your IDE does not highlight any errors. You cannot run the script, though.
- * Copy the contents of the CodeEditor region into the programmable block in Space Engineers.
- * Check the code in Space Engineers, it it reports no errors then it should be ready to run.
+ * Make sure your IDE does not detect any errors, look for red/yellow highlights.
+ * Copy-paste the contents of the CodeEditor region into the programmable block in Space Engineers.
+ * Check the code in Space Engineers, it should be ready to run if no compilation errors reported.
  *
  */
 
