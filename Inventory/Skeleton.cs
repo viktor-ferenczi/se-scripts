@@ -178,7 +178,7 @@ namespace Skeleton
         {
             try
             {
-                Debug("Main: {0}", argument);
+                Debug("Main {0} {1}", updateSource, argument);
 
                 switch (updateSource)
                 {
@@ -235,7 +235,7 @@ namespace Skeleton
                     break;
 
                 default:
-                    Error("Invalid command: " + argument);
+                    Error("Invalid command");
                     break;
             }
         }
