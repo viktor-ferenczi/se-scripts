@@ -201,7 +201,7 @@ namespace Skeleton
         {
             try
             {
-                Debug("Main: " + argument);
+                Debug("Main: {0}", argument);
 
                 switch (updateSource)
                 {
