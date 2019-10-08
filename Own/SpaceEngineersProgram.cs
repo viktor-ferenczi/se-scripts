@@ -7,7 +7,7 @@ namespace Skeleton
     {
         protected IMyGridTerminalSystem GridTerminalSystem = null;
 
-        protected class Runtime
+        protected static class Runtime
         {
             public static UpdateFrequency UpdateFrequency { get; set; }
         }

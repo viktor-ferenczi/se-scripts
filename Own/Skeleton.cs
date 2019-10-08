@@ -142,7 +142,7 @@ namespace Skeleton
             Start,
             Stop,
             Reset,
-            Invalid,
+            Unknown,
         }
 
         private Command ParseCommand(string argument)
@@ -158,7 +158,7 @@ namespace Skeleton
                 case "reset":
                     return Command.Reset;
                 default:
-                    return Command.Invalid;
+                    return Command.Unknown;
             }
         }
 
@@ -202,39 +202,54 @@ namespace Skeleton
         {
             ClearLog();
 
-            try
-            {
-                Debug("Main {0} {1}", updateSource, argument);
+            Debug("Main {0} {1}", updateSource, argument);
 
-                switch (updateSource)
-                {
-                    case UpdateType.None:
-                    case UpdateType.Terminal:
-                    case UpdateType.Trigger:
-                    case UpdateType.Antenna:
-                    case UpdateType.Mod:
-                    case UpdateType.Script:
-                    case UpdateType.Once:
-                    case UpdateType.IGC:
+            switch (updateSource)
+            {
+                case UpdateType.None:
+                case UpdateType.Terminal:
+                case UpdateType.Trigger:
+                case UpdateType.Antenna:
+                case UpdateType.Mod:
+                case UpdateType.Script:
+                case UpdateType.Once:
+                case UpdateType.IGC:
+                    try {
                         ProcessCommand(argument);
-                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Error(e.ToString());
+                    }
+                    break;
 
-                    case UpdateType.Update1:
-                    case UpdateType.Update10:
-                    case UpdateType.Update100:
+                case UpdateType.Update1:
+                case UpdateType.Update10:
+                case UpdateType.Update100:
+                    try {
                         PeriodicProcessing();
-                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Error(e.ToString());
+                    }
 
-                }
+                    if (highestLogLogSeverity >= LogSeverity.Error)
+                    {
+                        StopPeriodicProcessing();
+                    }
 
-                Log("OK");
+                    break;
             }
-            catch (Exception e)
-            {
-                Error(e.ToString());
-            }
+
+            Log(highestLogLogSeverity.ToString());
 
             ShowLog();
+        }
+
+        private void StopPeriodicProcessing()
+        {
+            Runtime.UpdateFrequency = UpdateFrequency.None;
         }
 
         private void ProcessCommand(string argument)
@@ -261,7 +276,7 @@ namespace Skeleton
                     break;
 
                 default:
-                    Error("Invalid command");
+                    Error("Unknown command");
                     break;
             }
         }
