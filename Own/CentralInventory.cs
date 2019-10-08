@@ -606,14 +606,14 @@ namespace CentralInventory
 
             AppendRawData("batteryCapacity", batteryCapacity);
             AppendRawData("batteryCharge", batteryCharge);
-            text.AppendLine(string.Format("Battery: {0:p0}", Math.Round(batteryCharge / Math.Max(1, batteryCapacity))));
+            text.AppendLine(string.Format("Battery: {0:p0}", batteryCharge / Math.Max(1, batteryCapacity)));
             text.AppendLine(string.Format("Energy: {0:n2} MWh", Math.Round(batteryCharge)));
             text.AppendLine("");
 
             AppendRawData("cargoCapacity", cargoCapacity);
             AppendRawData("cargoVolume", cargoVolume);
             AppendRawData("cargoMass", cargoMass * 1e-6);
-            text.AppendLine(string.Format("Cargo: {0:p0}", Math.Round(cargoVolume / Math.Max(1, cargoCapacity))));
+            text.AppendLine(string.Format("Cargo: {0:p0}", cargoVolume / Math.Max(1, cargoCapacity)));
             text.AppendLine(string.Format(" Capacity: {0:n0} ML", Math.Round(cargoCapacity * 1e-6)));
             text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoVolume * 1e-6)));
             text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
