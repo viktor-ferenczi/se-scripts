@@ -13,7 +13,7 @@
  *
  * Assign your text panels to the "Inventory Panels" group.
  *
- * Panels must have the following in their name (case insensitive):
+ * Text panels must have the following in their name (case insensitive):
  * - Resource
  * - Ore
  * - Ingot
@@ -21,12 +21,15 @@
  * - Ammo
  * - Other
  * - Status
+ * - Raw
  *
  * Set Content to Text and Images and Font to Monospaced on all panels.
  *
- * Components may need two text panels to fit all text.
+ * Component and Other may need two text panels to fit all items.
  * All text panels inside each resource type must have the same size.
  * Panels of the same type are concatenated in ascending name order.
+ *
+ * The raw panel displays raw inventory information for other blocks to use.
  *
  */
 
@@ -580,6 +583,9 @@ namespace CentralInventory
             }
 
             var text = new StringBuilder();
+
+            text.AppendLine(string.Format("{0:yyyy-MM-dd HH:mm:ss} UTC", DateTime.UtcNow));
+            text.AppendLine("");
 
             text.AppendLine(highestLogLogSeverity.ToString());
             text.AppendLine("");
