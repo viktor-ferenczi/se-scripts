@@ -69,6 +69,8 @@ namespace CentralInventory
         // Config
 
         private const string PANEL_GROUP = "Inventory Panels";
+        private const int PANEL_ROW_COUNT = 17;
+        private const int PANEL_COLUMN_COUNT = 24;
         private const double DISPLAY_PRECISION = 1;
         private const int BATCH_SIZE = 5;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
@@ -120,7 +122,15 @@ namespace CentralInventory
         private void ShowLog()
         {
             Echo(log.ToString());
-            Surface.WriteText(highestLogLogSeverity.ToString());
+
+            if (highestLogLogSeverity == LogSeverity.Ok)
+            {
+                Surface.WriteText("Running");
+            }
+            else
+            {
+                Surface.WriteText(highestLogLogSeverity.ToString());
+            }
         }
 
         private void IncreaseSeverity(LogSeverity severity)
@@ -515,7 +525,7 @@ namespace CentralInventory
                 return;
             }
 
-            var panelRowCount = (int)Math.Floor(17.0 / panels[0].FontSize);
+            var panelRowCount = (int)Math.Floor(PANEL_ROW_COUNT / panels[0].FontSize);
             var panelIndex = 0;
 
             if (summary.Count > 0)
@@ -597,13 +607,6 @@ namespace CentralInventory
             text.AppendLine(FormatDateTime(DateTime.UtcNow));
             text.AppendLine("");
 
-            text.AppendLine(highestLogLogSeverity.ToString());
-            text.AppendLine("");
-
-            text.AppendLine(string.Format("Cargo blocks: {0}", cargoBlocks.Count));
-            text.AppendLine(string.Format("Battery blocks: {0}", batteryBlocks.Count));
-            text.AppendLine("");
-
             AppendRawData("batteryCapacity", batteryCapacity);
             AppendRawData("batteryCharge", batteryCharge);
             text.AppendLine(string.Format("Battery: {0:p0}", batteryCharge / Math.Max(1, batteryCapacity)));
@@ -618,6 +621,8 @@ namespace CentralInventory
             text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoVolume * 1e-6)));
             text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
             text.AppendLine("");
+
+            text.Append(Wrap(log.ToString(), PANEL_COLUMN_COUNT));
 
             var panel = panels.First();
             panel.WriteText(text);
@@ -646,11 +651,6 @@ namespace CentralInventory
             rawData.AppendLine(string.Format("{0}={1}", name, value));
         }
 
-        private static string Capitalize(string text)
-        {
-            return text.Substring(0, 1).ToUpper() + text.Substring(1);
-        }
-
         private void Accumulate(Dictionary<string, double> summary, string key, double amount)
         {
             if (summary.ContainsKey(key))
@@ -663,12 +663,29 @@ namespace CentralInventory
             }
         }
 
-        private static void ApplyToAll(IEnumerable<IMyFunctionalBlock> blocks, string action)
+        private static string Capitalize(string text)
         {
-            foreach (var block in blocks)
+            return text.Substring(0, 1).ToUpper() + text.Substring(1);
+        }
+
+        private static string Wrap(string text, int width)
+        {
+            var output = new StringBuilder();
+            foreach (var line in text.Split('\n'))
             {
-                block.ApplyAction(action);
+                var trimmed = line.TrimEnd();
+                int position = 0;
+                while (trimmed.Length > position + width)
+                {
+                    output.AppendLine(trimmed.Substring(position, width));
+                    position += width;
+                }
+                if (position < trimmed.Length)
+                {
+                    output.AppendLine(trimmed.Substring(position));
+                }
             }
+            return output.ToString();
         }
 
         #endregion
