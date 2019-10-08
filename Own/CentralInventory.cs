@@ -158,12 +158,14 @@ namespace CentralInventory
 
         private int cargoIndex;
         private double cargoCapacity;
-        private double cargoUsage;
+        private double cargoVolume;
         private double cargoMass;
 
         private int batteryIndex;
         private double batteryCharge;
         private double batteryCapacity;
+
+        private StringBuilder rawData = new StringBuilder();
 
         Dictionary<string, double> ore = new Dictionary<string, double>();
         Dictionary<string, double> ingot = new Dictionary<string, double>();
@@ -217,12 +219,14 @@ namespace CentralInventory
 
             cargoIndex = 0;
             cargoCapacity = 0f;
-            cargoUsage = 0f;
+            cargoVolume = 0f;
             cargoMass = 0f;
 
             batteryIndex = 0;
             batteryCapacity = 0f;
             batteryCharge = 0f;
+
+            rawData.Clear();
 
             ore.Clear();
             ingot.Clear();
@@ -348,7 +352,7 @@ namespace CentralInventory
                         break;
 
                     case State.Report:
-                        ReportInventory();
+                        Report();
                         Reset();
                         break;
 
@@ -390,7 +394,7 @@ namespace CentralInventory
         {
             IMyInventory blockInventory = cargo.GetInventory(0);
             cargoCapacity += blockInventory.MaxVolume.RawValue;
-            cargoUsage += blockInventory.CurrentVolume.RawValue;
+            cargoVolume += blockInventory.CurrentVolume.RawValue;
             cargoMass += blockInventory.CurrentMass.RawValue;
         }
 
@@ -480,8 +484,11 @@ namespace CentralInventory
             batteryCharge += battery.CurrentStoredPower;
         }
 
-        private void ReportInventory()
+        private void Report()
         {
+            AppendRawData("now", FormatDateTime(DateTime.UtcNow));
+            AppendRawData("status", highestLogLogSeverity.ToString());
+
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
             foreach (var panel in textPanels)
@@ -496,6 +503,7 @@ namespace CentralInventory
             DisplaySummary("other", other);
 
             DisplayStatus();
+            DisplayRawData();
         }
 
         private void DisplaySummary(string kind, Dictionary<string, double> summary)
@@ -537,7 +545,7 @@ namespace CentralInventory
                 .OrderBy(panel => panel.CustomName);
         }
 
-        private static IEnumerable<StringBuilder> FormatSummary(string kind, Dictionary<string, double> summary, int panelRowCount)
+        private IEnumerable<StringBuilder> FormatSummary(string kind, Dictionary<string, double> summary, int panelRowCount)
         {
             var page = new StringBuilder();
 
@@ -553,6 +561,8 @@ namespace CentralInventory
             var sortedSummary = summary.ToImmutableSortedDictionary();
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
+                AppendRawData(kind + item.Key, item.Value);
+
                 var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / DISPLAY_PRECISION) * DISPLAY_PRECISION);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + item.Key;
 
@@ -584,7 +594,7 @@ namespace CentralInventory
 
             var text = new StringBuilder();
 
-            text.AppendLine(string.Format("{0:yyyy-MM-dd HH:mm:ss} UTC", DateTime.UtcNow));
+            text.AppendLine(FormatDateTime(DateTime.UtcNow));
             text.AppendLine("");
 
             text.AppendLine(highestLogLogSeverity.ToString());
@@ -594,13 +604,18 @@ namespace CentralInventory
             text.AppendLine(string.Format("Battery blocks: {0}", batteryBlocks.Count));
             text.AppendLine("");
 
+            AppendRawData("batteryCapacity", batteryCapacity);
+            AppendRawData("batteryCharge", batteryCharge);
             text.AppendLine(string.Format("Battery: {0:p0}", Math.Round(batteryCharge / Math.Max(1, batteryCapacity))));
             text.AppendLine(string.Format("Energy: {0:n2} MWh", Math.Round(batteryCharge)));
             text.AppendLine("");
 
-            text.AppendLine(string.Format("Cargo: {0:p0}", Math.Round(cargoUsage / Math.Max(1, cargoCapacity))));
+            AppendRawData("cargoCapacity", cargoCapacity);
+            AppendRawData("cargoVolume", cargoVolume);
+            AppendRawData("cargoMass", cargoMass * 1e-6);
+            text.AppendLine(string.Format("Cargo: {0:p0}", Math.Round(cargoVolume / Math.Max(1, cargoCapacity))));
             text.AppendLine(string.Format(" Capacity: {0:n0} ML", Math.Round(cargoCapacity * 1e-6)));
-            text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoUsage * 1e-6)));
+            text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoVolume * 1e-6)));
             text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
             text.AppendLine("");
 
@@ -608,16 +623,35 @@ namespace CentralInventory
             panel.WriteText(text);
         }
 
+        private void DisplayRawData()
+        {
+            var panels = FindPanels("raw").ToList();
+            if (panels.Count == 0)
+            {
+                return;
+            }
+
+            panels[0].WriteText(rawData);
+        }
+
+        private static string FormatDateTime(DateTime dt)
+        {
+            return string.Format("{0:yyyy-MM-dd HH:mm:ss} UTC", dt);
+        }
 
         // Utility functions
 
+        private void AppendRawData<T>(string name, T value)
+        {
+            rawData.AppendLine(string.Format("{0}={1}", name, value));
+        }
 
         private static string Capitalize(string text)
         {
             return text.Substring(0, 1).ToUpper() + text.Substring(1);
         }
 
-        private static void Accumulate(Dictionary<string, double> summary, string key, double amount)
+        private void Accumulate(Dictionary<string, double> summary, string key, double amount)
         {
             if (summary.ContainsKey(key))
             {
