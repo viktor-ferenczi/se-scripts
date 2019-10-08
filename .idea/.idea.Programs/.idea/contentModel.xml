@@ -2,19 +2,32 @@
 <project version="4">
   <component name="ContentModelStore">
     <e p="C:\Dev\space_engineers_scripts" t="IncludeFlat">
-      <e p="Inventory" t="IncludeRecursive">
+      <e p="Others" t="IncludeRecursive">
         <e p="bin" t="ExcludeRecursive" />
-        <e p="GrinderController.cs" t="Include" />
-        <e p="Inventory.csproj" t="IncludeRecursive" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="netcoreapp2.2" t="Include">
-              <e p="Inventory.AssemblyInfo.cs" t="Include" />
+              <e p="Others.AssemblyInfo.cs" t="Include" />
             </e>
           </e>
         </e>
+        <e p="Others.csproj" t="IncludeRecursive" />
+        <e p="Program.cs" t="Include" />
         <e p="ProjectorInventory.cs" t="Include" />
         <e p="ShipInventory.cs" t="Include" />
+      </e>
+      <e p="Own" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="GrinderController.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netcoreapp2.2" t="Include">
+              <e p="Own.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Own.csproj" t="IncludeRecursive" />
+        <e p="SharedInventory.cs" t="Include" />
         <e p="Skeleton.cs" t="Include" />
         <e p="SpaceEngineersProgram.cs" t="Include" />
       </e>

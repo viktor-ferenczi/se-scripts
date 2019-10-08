@@ -692,11 +692,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Dev\\space_engineers_scripts\\Inventory\\Inventory.csproj",
-      "projectName": "Inventory",
-      "projectPath": "C:\\Dev\\space_engineers_scripts\\Inventory\\Inventory.csproj",
+      "projectUniqueName": "C:\\Dev\\space_engineers_scripts\\Own\\Own.csproj",
+      "projectName": "Own",
+      "projectPath": "C:\\Dev\\space_engineers_scripts\\Own\\Own.csproj",
       "packagesPath": "C:\\Users\\fviktor\\.nuget\\packages\\",
-      "outputPath": "C:\\Dev\\space_engineers_scripts\\Inventory\\obj\\",
+      "outputPath": "C:\\Dev\\space_engineers_scripts\\Own\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
