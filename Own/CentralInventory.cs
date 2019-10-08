@@ -67,7 +67,7 @@ namespace CentralInventory
 
         private const string PANEL_GROUP = "Inventory Panels";
         private const double DISPLAY_PRECISION = 1;
-        private const int CARGO_BATCH_SIZE = 5;
+        private const int BATCH_SIZE = 5;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
 
         // Debugging
@@ -139,14 +139,28 @@ namespace CentralInventory
         // Blocks
 
         private List<IMyCargoContainer> cargoBlocks = new List<IMyCargoContainer>();
+        private List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
         private List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
 
         // State
 
-        private int cargoIndex = -1;
-        private double cargoCapacity = 0f;
-        private double cargoUsage = 0f;
-        private double cargoMass = 0f;
+        private enum State
+        {
+            Cargo,
+            Battery,
+            Report,
+        }
+
+        private State state = State.Cargo;
+
+        private int cargoIndex;
+        private double cargoCapacity;
+        private double cargoUsage;
+        private double cargoMass;
+
+        private int batteryIndex;
+        private double batteryCharge;
+        private double batteryCapacity;
 
         Dictionary<string, double> ore = new Dictionary<string, double>();
         Dictionary<string, double> ingot = new Dictionary<string, double>();
@@ -196,10 +210,16 @@ namespace CentralInventory
                 ClearLog();
             }
 
+            state = State.Cargo;
+
             cargoIndex = 0;
             cargoCapacity = 0f;
             cargoUsage = 0f;
             cargoMass = 0f;
+
+            batteryIndex = 0;
+            batteryCapacity = 0f;
+            batteryCharge = 0f;
 
             ore.Clear();
             ingot.Clear();
@@ -211,9 +231,11 @@ namespace CentralInventory
             textPanels.Clear();
 
             GridTerminalSystem.GetBlocksOfType<IMyCargoContainer>(cargoBlocks);
+            GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
             Log("Cargo blocks: {0}", cargoBlocks.Count);
+            Log("Battery blocks: {0}", batteryBlocks.Count);
             Log("Text panels: {0}", textPanels.Count);
         }
 
@@ -300,28 +322,37 @@ namespace CentralInventory
 
         private void PeriodicProcessing()
         {
-            if (cargoBlocks.Count == 0)
+            for (int batch = 0; batch < BATCH_SIZE; batch++)
             {
-                Error("No cargo containers found");
-                return;
-            }
-
-            if (cargoIndex < cargoBlocks.Count)
-            {
-                for (int i = 0; i < CARGO_BATCH_SIZE; i++)
+                switch (state)
                 {
-                    ScanCargo();
-                    if (cargoIndex >= cargoBlocks.Count)
-                    {
+                    case State.Cargo:
+                        if (cargoIndex >= cargoBlocks.Count)
+                        {
+                            state = State.Battery;
+                            continue;
+                        }
+                        ScanCargo();
                         break;
-                    }
+
+                    case State.Battery:
+                        if (batteryIndex >= batteryBlocks.Count)
+                        {
+                            state = State.Report;
+                            continue;
+                        }
+                        ScanBattery();
+                        break;
+
+                    case State.Report:
+                        ReportInventory();
+                        Reset();
+                        break;
+
+                    default:
+                        Reset();
+                        break;
                 }
-            }
-            else
-            {
-                ReportInventory();
-                Reset();
-                return;
             }
         }
 
@@ -330,7 +361,7 @@ namespace CentralInventory
             var cargo = cargoBlocks[cargoIndex++];
             if (cargo == null)
             {
-                Debug("Cargo container missing");
+                Debug("Cargo container is missing");
                 return;
             }
 
@@ -417,6 +448,33 @@ namespace CentralInventory
 
                 Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
             }
+        }
+
+        private void ScanBattery()
+        {
+            var battery = batteryBlocks[batteryIndex++];
+            if (battery == null)
+            {
+                Debug("Battery is missing");
+                return;
+            }
+
+            if (!battery.IsFunctional)
+            {
+                Warning("Broken battery: " + battery.CustomName);
+                return;
+            }
+
+            if (!battery.IsWorking)
+            {
+                Warning("Disabled battery: " + battery.CustomName);
+                return;
+            }
+
+            Debug("[{0}]: {1}", batteryIndex, battery.CustomName);
+
+            batteryCapacity += battery.MaxStoredPower;
+            batteryCharge += battery.CurrentStoredPower;
         }
 
         private void ReportInventory()
@@ -523,10 +581,21 @@ namespace CentralInventory
 
             var text = new StringBuilder();
 
-            text.AppendLine(string.Format("Cargo: {0:p0}", cargoUsage / cargoCapacity));
-            text.AppendLine(string.Format(" Capacity: {0:n0} ML", cargoCapacity * 1e-6));
-            text.AppendLine(string.Format(" Volume: {0:n0} ML", cargoUsage * 1e-6));
-            text.AppendLine(string.Format(" Mass: {0:n0} kg", cargoMass * 1e-6));
+            text.AppendLine(highestLogLogSeverity.ToString());
+            text.AppendLine("");
+
+            text.AppendLine(string.Format("Cargo blocks: {0}", cargoBlocks.Count));
+            text.AppendLine(string.Format("Battery blocks: {0}", batteryBlocks.Count));
+            text.AppendLine("");
+
+            text.AppendLine(string.Format("Battery: {0:p0}", Math.Round(batteryCharge / Math.Max(1, batteryCapacity))));
+            text.AppendLine(string.Format("Energy: {0:n2} MWh", Math.Round(batteryCharge)));
+            text.AppendLine("");
+
+            text.AppendLine(string.Format("Cargo: {0:p0}", Math.Round(cargoUsage / Math.Max(1, cargoCapacity))));
+            text.AppendLine(string.Format(" Capacity: {0:n0} ML", Math.Round(cargoCapacity * 1e-6)));
+            text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoUsage * 1e-6)));
+            text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
             text.AppendLine("");
 
             var panel = panels.First();
