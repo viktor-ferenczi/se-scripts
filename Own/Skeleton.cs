@@ -171,6 +171,7 @@ namespace Skeleton
         private void Initialize()
         {
             Surface.ContentType = ContentType.TEXT_AND_IMAGE;
+            Surface.FontSize = 4f;
 
             Reset();
 
