@@ -159,7 +159,6 @@ namespace CentralInventory
         private enum Command
         {
             Default,
-            Reset,
             Unknown,
         }
 
@@ -169,8 +168,6 @@ namespace CentralInventory
             {
                 case "":
                     return Command.Default;
-                case "reset":
-                    return Command.Reset;
                 default:
                     return Command.Unknown;
             }
@@ -200,6 +197,9 @@ namespace CentralInventory
             }
 
             cargoIndex = 0;
+            cargoCapacity = 0f;
+            cargoUsage = 0f;
+            cargoMass = 0f;
 
             ore.Clear();
             ingot.Clear();
@@ -289,9 +289,6 @@ namespace CentralInventory
             switch (command)
             {
                 case Command.Default:
-                    break;
-
-                case Command.Reset:
                     Reset();
                     break;
 
@@ -527,9 +524,9 @@ namespace CentralInventory
             var text = new StringBuilder();
 
             text.AppendLine(string.Format("Cargo: {0:p0}", cargoUsage / cargoCapacity));
-            text.AppendLine(string.Format(" Capacity: {0:n0} L", cargoCapacity));
-            text.AppendLine(string.Format(" Volume: {0:n0} L", cargoUsage));
-            text.AppendLine(string.Format(" Mass: {0:n0} kg", cargoMass));
+            text.AppendLine(string.Format(" Capacity: {0:n0} ML", cargoCapacity * 1e-6));
+            text.AppendLine(string.Format(" Volume: {0:n0} ML", cargoUsage * 1e-6));
+            text.AppendLine(string.Format(" Mass: {0:n0} kg", cargoMass * 1e-6));
             text.AppendLine("");
 
             var panel = panels.First();
