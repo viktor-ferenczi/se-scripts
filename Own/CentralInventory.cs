@@ -19,6 +19,7 @@
  * - Ingot
  * - Component
  * - Ammo
+ * - Other
  * - Status
  *
  * Set Content to Text and Images and Font to Monospaced on all panels.
@@ -65,7 +66,8 @@ namespace CentralInventory
         // Config
 
         private const string PANEL_GROUP = "Inventory Panels";
-        private const double PRECISION = 1;
+        private const double DISPLAY_PRECISION = 1;
+        private const int CARGO_BATCH_SIZE = 5;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
 
         // Debugging
@@ -77,7 +79,7 @@ namespace CentralInventory
             Error,
         }
 
-        private bool DEBUG = true;
+        private bool DEBUG = false;
         private LogSeverity highestLogLogSeverity = LogSeverity.Ok;
         private readonly StringBuilder log = new StringBuilder();
 
@@ -150,6 +152,7 @@ namespace CentralInventory
         Dictionary<string, double> ingot = new Dictionary<string, double>();
         Dictionary<string, double> component = new Dictionary<string, double>();
         Dictionary<string, double> ammo = new Dictionary<string, double>();
+        Dictionary<string, double> other = new Dictionary<string, double>();
 
         // Parameter parsing (commands)
 
@@ -191,7 +194,10 @@ namespace CentralInventory
 
         private void Reset()
         {
-            ClearLog();
+            if (!DEBUG)
+            {
+                ClearLog();
+            }
 
             cargoIndex = 0;
 
@@ -199,6 +205,7 @@ namespace CentralInventory
             ingot.Clear();
             component.Clear();
             ammo.Clear();
+            other.Clear();
 
             cargoBlocks.Clear();
             textPanels.Clear();
@@ -206,8 +213,8 @@ namespace CentralInventory
             GridTerminalSystem.GetBlocksOfType<IMyCargoContainer>(cargoBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
-            Log("Found {0} cargo blocks", cargoBlocks.Count);
-            Log("Found {0} text panels", textPanels.Count);
+            Log("Cargo blocks: {0}", cargoBlocks.Count);
+            Log("Text panels: {0}", textPanels.Count);
         }
 
         private void Load()
@@ -304,21 +311,26 @@ namespace CentralInventory
 
             if (cargoIndex < cargoBlocks.Count)
             {
-                ScanCargo();
-                cargoIndex++;
+                for (int i = 0; i < CARGO_BATCH_SIZE; i++)
+                {
+                    ScanCargo();
+                    if (cargoIndex >= cargoBlocks.Count)
+                    {
+                        break;
+                    }
+                }
             }
             else
             {
                 ReportInventory();
-                //Reset();
-                StopPeriodicProcessing();
+                Reset();
                 return;
             }
         }
 
         private void ScanCargo()
         {
-            var cargo = cargoBlocks[cargoIndex];
+            var cargo = cargoBlocks[cargoIndex++];
             if (cargo == null)
             {
                 Debug("Cargo container missing");
@@ -337,7 +349,7 @@ namespace CentralInventory
                 return;
             }
 
-            Log("Scanning [{0}]: {1}", cargoIndex, cargo.CustomName);
+            Debug("[{0}]: {1}", cargoIndex, cargo.CustomName);
 
             SummarizeCapacity(cargo);
             SummarizeCargoContainer(cargo);
@@ -386,6 +398,21 @@ namespace CentralInventory
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
                         break;
+                    case "MyObjectBuilder_PhysicalGunObject":
+                        summary = other;
+                        break;
+                    case "MyObjectBuilder_Datapad":
+                        summary = other;
+                        break;
+                    case "MyObjectBuilder_GasContainerObject":
+                        summary = other;
+                        break;
+                    case "MyObjectBuilder_OxygenContainerObject":
+                        summary = other;
+                        break;
+                    case "MyObjectBuilder_PhysicalObject":
+                        summary = other;
+                        break;
                     default:
                         Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
                         continue;
@@ -408,6 +435,7 @@ namespace CentralInventory
             DisplaySummary("ingot", ingot);
             DisplaySummary("component", component);
             DisplaySummary("ammo", ammo);
+            DisplaySummary("other", other);
 
             DisplayStatus();
         }
@@ -421,18 +449,26 @@ namespace CentralInventory
                 return;
             }
 
-            var panelRowCount = (int)Math.Floor(panels[0].SurfaceSize.Y / panels[0].FontSize);
+            var panelRowCount = (int)Math.Floor(17.0 / panels[0].FontSize);
             var panelIndex = 0;
 
-            foreach (var page in FormatSummary(kind, summary, panelRowCount))
+            if (summary.Count > 0)
             {
-                if (panelIndex >= panels.Count)
+                foreach (var page in FormatSummary(kind, summary, panelRowCount))
                 {
-                    Warning("Not enough panels to display full {0} information", kind);
-                }
+                    if (panelIndex >= panels.Count)
+                    {
+                        Warning("Not enough panels to display full {0} information", kind);
+                        break;
+                    }
 
-                var panel = panels[panelIndex++];
-                panel.WriteText(page);
+                    panels[panelIndex++].WriteText(page);
+                }
+            }
+
+            while (panelIndex < panels.Count)
+            {
+                panels[panelIndex++].WriteText("");
             }
         }
 
@@ -451,11 +487,16 @@ namespace CentralInventory
             page.AppendLine(new String('-', kind.Length));
             var lineCount = 2;
 
+            var maxValue = summary.Values.Max();
+            var maxWidth = maxValue >= 10
+                ? string.Format("{0:n0}", Math.Round(maxValue / DISPLAY_PRECISION) * DISPLAY_PRECISION).Length
+                : 1;
+
             var sortedSummary = summary.ToImmutableSortedDictionary();
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
-                var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / PRECISION) * PRECISION);
-                var line = formattedAmount.PadLeft(11) + " " + item.Key;
+                var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / DISPLAY_PRECISION) * DISPLAY_PRECISION);
+                var line = formattedAmount.PadLeft(maxWidth) + " " + item.Key;
 
                 page.AppendLine(line);
                 lineCount++;
@@ -468,7 +509,7 @@ namespace CentralInventory
                 }
             }
 
-            if (page.ToString().Length > 0)
+            if (page.Length > 0)
             {
                 yield return page;
             }
