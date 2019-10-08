@@ -1,8 +1,7 @@
 using System;
 using Sandbox.ModAPI.Ingame;
-using IMyGridTerminalSystem = Sandbox.ModAPI.Ingame.IMyGridTerminalSystem;
 
-namespace Inventory
+namespace Skeleton
 {
     public class SpaceEngineersProgram
     {
@@ -13,13 +12,13 @@ namespace Inventory
             public static UpdateFrequency UpdateFrequency { get; set; }
         }
 
-        protected void Echo(string noPanelsFound)
+        protected void Echo(string text)
         {
             throw new NotImplementedException();
         }
 
         protected String Storage { get; set; }
-        protected IMyTerminalBlock Me { get; set; }
+        protected IMyProgrammableBlock Me { get; set; }
 
         public SpaceEngineersProgram()
         {

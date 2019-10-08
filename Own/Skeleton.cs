@@ -20,15 +20,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Inventory;
+using Skeleton;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
+using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Profiler;
 using VRageMath;
+using ContentType = VRage.Game.GUI.TextPanel.ContentType;
 using IMyBatteryBlock = Sandbox.ModAPI.Ingame.IMyBatteryBlock;
 using IMyBlockGroup = Sandbox.ModAPI.Ingame.IMyBlockGroup;
 using IMyCargoContainer = Sandbox.ModAPI.Ingame.IMyCargoContainer;
@@ -50,9 +52,19 @@ namespace Skeleton
         //private const string GRINDER_GROUP = "Grinders";
         //private const string PISTON_GROUP = "Pistons";
 
+        private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
+
         // Debugging
 
+        enum LogSeverity
+        {
+            Ok,
+            Warning,
+            Error,
+        }
+
         private bool DEBUG = true;
+        private LogSeverity highestLogLogSeverity = LogSeverity.Ok;
         private readonly StringBuilder log = new StringBuilder();
 
         private void Log(string formatString, params object[] args)
@@ -71,22 +83,41 @@ namespace Skeleton
         private void Warning(string formatString, params object[] args)
         {
             Log("W: " + formatString, args);
+            IncreaseSeverity(LogSeverity.Warning);
         }
 
         private void Error(string formatString, params object[] args)
         {
             Log("E: " + formatString, args);
+            IncreaseSeverity(LogSeverity.Error);
+        }
+
+        private void ClearLog()
+        {
+            highestLogLogSeverity = LogSeverity.Ok;
+            log.Clear();
         }
 
         private void ShowLog()
         {
             Echo(log.ToString());
-            ClearLog();
+            Surface.WriteText(highestLogLogSeverity.ToString());
         }
 
-        private void ClearLog()
+        private void IncreaseSeverity(LogSeverity severity)
         {
-            log.Clear();
+            if (highestLogLogSeverity < severity)
+            {
+                highestLogLogSeverity = severity;
+            }
+        }
+
+        private IMyTextSurface Surface
+        {
+            get
+            {
+                return Me.GetSurface(0);
+            }
         }
 
         // Blocks
@@ -102,16 +133,6 @@ namespace Skeleton
         //Examples:
         //private bool grindersRunning = false;
         //private float pistonPosition = 0f;
-
-        // Utility functions
-
-        private static void ApplyToAll(IEnumerable<IMyFunctionalBlock> blocks, string action)
-        {
-            foreach (var block in blocks)
-            {
-                block.ApplyAction(action);
-            }
-        }
 
         // Parameter parsing (commands)
 
@@ -149,15 +170,17 @@ namespace Skeleton
 
         private void Initialize()
         {
-            FindBlocks();
+            Surface.ContentType = ContentType.TEXT_AND_IMAGE;
 
-            // TODO: Set the update frequency here, unless you plan to trigger this script by other means
-            //Example:
-            //Runtime.UpdateFrequency = UpdateFrequency.Update100;
+            Reset();
+
+            Runtime.UpdateFrequency = UPDATE_FREQUENCY;
         }
 
-        private void FindBlocks()
+        private void Reset()
         {
+            // TODO: Reset state variables here
+
             // TODO: Find blocks here
             //Examples:
             //GridTerminalSystem.GetBlockGroupWithName(GRINDER_GROUP).GetBlocksOfType<IMyShipGrinder>(grinders);
@@ -176,6 +199,8 @@ namespace Skeleton
 
         public void Main(string argument, UpdateType updateSource)
         {
+            ClearLog();
+
             try
             {
                 Debug("Main {0} {1}", updateSource, argument);
@@ -231,7 +256,7 @@ namespace Skeleton
                     break;
 
                 case Command.Reset:
-                    // TODO
+                    Reset();
                     break;
 
                 default:
@@ -243,6 +268,16 @@ namespace Skeleton
         private void PeriodicProcessing()
         {
             // TODO: Add periodic processing here, called only if UpdateFrequency is not set to UpdateType.None
+        }
+
+        // Utility functions
+
+        private static void ApplyToAll(IEnumerable<IMyFunctionalBlock> blocks, string action)
+        {
+            foreach (var block in blocks)
+            {
+                block.ApplyAction(action);
+            }
         }
 
         #endregion

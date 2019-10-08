@@ -15,9 +15,11 @@
         <e p="Program.cs" t="Include" />
         <e p="ProjectorInventory.cs" t="Include" />
         <e p="ShipInventory.cs" t="Include" />
+        <e p="TheGalleryAirlock.cs" t="Include" />
       </e>
       <e p="Own" t="IncludeRecursive">
         <e p="bin" t="ExcludeRecursive" />
+        <e p="CentralInventory.cs" t="Include" />
         <e p="GrinderController.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
@@ -27,7 +29,6 @@
           </e>
         </e>
         <e p="Own.csproj" t="IncludeRecursive" />
-        <e p="SharedInventory.cs" t="Include" />
         <e p="Skeleton.cs" t="Include" />
         <e p="SpaceEngineersProgram.cs" t="Include" />
       </e>

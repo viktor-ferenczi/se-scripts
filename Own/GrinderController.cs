@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Inventory;
+using Skeleton;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.World;
