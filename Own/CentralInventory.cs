@@ -290,7 +290,6 @@ namespace CentralInventory
                         Error(e.ToString());
                     }
 
-                    Log(highestLogLogSeverity.ToString());
                     break;
 
                 case UpdateType.Update1:
