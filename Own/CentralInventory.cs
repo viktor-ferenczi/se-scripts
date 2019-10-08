@@ -498,6 +498,11 @@ namespace CentralInventory
         {
             AppendRawData("now", FormatDateTime(DateTime.UtcNow));
             AppendRawData("status", highestLogLogSeverity.ToString());
+            AppendRawData("batteryCapacity", batteryCapacity);
+            AppendRawData("batteryCharge", batteryCharge);
+            AppendRawData("cargoCapacity", cargoCapacity);
+            AppendRawData("cargoVolume", cargoVolume);
+            AppendRawData("cargoMass", cargoMass * 1e-6);
 
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
@@ -607,15 +612,10 @@ namespace CentralInventory
             text.AppendLine(FormatDateTime(DateTime.UtcNow));
             text.AppendLine("");
 
-            AppendRawData("batteryCapacity", batteryCapacity);
-            AppendRawData("batteryCharge", batteryCharge);
             text.AppendLine(string.Format("Battery: {0:p0}", batteryCharge / Math.Max(1, batteryCapacity)));
             text.AppendLine(string.Format("Energy: {0:n2} MWh", Math.Round(batteryCharge)));
             text.AppendLine("");
 
-            AppendRawData("cargoCapacity", cargoCapacity);
-            AppendRawData("cargoVolume", cargoVolume);
-            AppendRawData("cargoMass", cargoMass * 1e-6);
             text.AppendLine(string.Format("Cargo: {0:p0}", cargoVolume / Math.Max(1, cargoCapacity)));
             text.AppendLine(string.Format(" Capacity: {0:n0} ML", Math.Round(cargoCapacity * 1e-6)));
             text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(cargoVolume * 1e-6)));
@@ -646,7 +646,12 @@ namespace CentralInventory
 
         // Utility functions
 
-        private void AppendRawData<T>(string name, T value)
+        private void AppendRawData(string name, string value)
+        {
+            rawData.AppendLine(string.Format("{0}=\"{1}\"", name, value));
+        }
+
+        private void AppendRawData(string name, double value)
         {
             rawData.AppendLine(string.Format("{0}={1}", name, value));
         }
