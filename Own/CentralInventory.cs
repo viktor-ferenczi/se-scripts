@@ -329,8 +329,6 @@ namespace CentralInventory
 
         private void ProcessCommand(string argument)
         {
-            // TODO: Add command processing below
-
             var command = ParseCommand(argument);
             switch (command)
             {
@@ -540,18 +538,15 @@ namespace CentralInventory
             var panelRowCount = (int)Math.Floor(PANEL_ROW_COUNT / panels[0].FontSize);
             var panelIndex = 0;
 
-            if (summary.Count > 0)
+            foreach (var page in FormatSummary(kind, summary, panelRowCount))
             {
-                foreach (var page in FormatSummary(kind, summary, panelRowCount))
+                if (panelIndex >= panels.Count)
                 {
-                    if (panelIndex >= panels.Count)
-                    {
-                        Warning("Not enough panels to display full {0} information", kind);
-                        break;
-                    }
-
-                    panels[panelIndex++].WriteText(page);
+                    Warning("Not enough panels to display full {0} information", kind);
+                    break;
                 }
+
+                panels[panelIndex++].WriteText(page);
             }
 
             while (panelIndex < panels.Count)
@@ -575,7 +570,7 @@ namespace CentralInventory
             page.AppendLine(new String('-', kind.Length));
             var lineCount = 2;
 
-            var maxValue = summary.Values.Max();
+            var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
             var maxWidth = maxValue >= 10
                 ? string.Format("{0:n0}", Math.Round(maxValue / DISPLAY_PRECISION) * DISPLAY_PRECISION).Length
                 : 1;
