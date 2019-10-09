@@ -78,7 +78,8 @@ namespace CentralInventory
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 24;
         private const double DISPLAY_PRECISION = 1;
-        private const int BATCH_SIZE = 5;
+        private const int CARGO_BATCH_SIZE = 5;
+        private const int BATTERY_BATCH_SIZE = 20;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
 
         // Debugging
@@ -128,15 +129,7 @@ namespace CentralInventory
         private void ShowLog()
         {
             Echo(log.ToString());
-
-            if (highestLogLogSeverity == LogSeverity.Ok)
-            {
-                Surface.WriteText("Running");
-            }
-            else
-            {
-                Surface.WriteText(highestLogLogSeverity.ToString());
-            }
+            Surface.WriteText(highestLogLogSeverity.ToString());
         }
 
         private void IncreaseSeverity(LogSeverity severity)
@@ -342,11 +335,13 @@ namespace CentralInventory
 
         private void PeriodicProcessing()
         {
-            for (int batch = 0; batch < BATCH_SIZE; batch++)
+            int batchSize = 1;
+            for (int batch = 0; batch < batchSize; batch++)
             {
                 switch (state)
                 {
                     case State.Cargo:
+                        batchSize = CARGO_BATCH_SIZE;
                         if (cargoIndex >= cargoBlocks.Count)
                         {
                             state = State.Battery;
@@ -356,6 +351,7 @@ namespace CentralInventory
                         break;
 
                     case State.Battery:
+                        batchSize = BATTERY_BATCH_SIZE;
                         if (batteryIndex >= batteryBlocks.Count)
                         {
                             state = State.Report;

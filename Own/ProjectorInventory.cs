@@ -112,15 +112,7 @@ namespace ProjectorInventory
         private void ShowLog()
         {
             Echo(log.ToString());
-
-            if (highestLogLogSeverity == LogSeverity.Ok)
-            {
-                Surface.WriteText("Running");
-            }
-            else
-            {
-                Surface.WriteText(highestLogLogSeverity.ToString());
-            }
+            Surface.WriteText(highestLogLogSeverity.ToString());
         }
 
         private void IncreaseSeverity(LogSeverity severity)
@@ -333,16 +325,6 @@ namespace ProjectorInventory
             FindTextPanels();
             FindRawInventoryPanel();
             FindProjector();
-
-            if (rawInventoryPanel == null)
-            {
-                Error("Raw inventory panel not found");
-            }
-
-            if (projector == null)
-            {
-                Error("Projector not found");
-            }
         }
 
         private void FindTextPanels()
@@ -355,7 +337,7 @@ namespace ProjectorInventory
         private void FindRawInventoryPanel()
         {
             var panels = new List<IMyTextPanel>();
-            GridTerminalSystem.GetBlockGroupWithName(INVENTORY_PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(panels);
+            GridTerminalSystem.GetBlockGroupWithName(INVENTORY_PANEL_GROUP)?.GetBlocksOfType<IMyTextPanel>(panels);
             rawInventoryPanel = panels.FirstOrDefault(panel => panel.CustomName.ToLower().Contains("raw"));
         }
 
@@ -424,8 +406,6 @@ namespace ProjectorInventory
                     break;
             }
 
-            Log(highestLogLogSeverity.ToString());
-
             ShowLog();
         }
 
@@ -464,13 +444,14 @@ namespace ProjectorInventory
                     ReportDifference();
                     break;
                 default:
-                    if (textPanels.Count > 0)
-                    {
-                        var panel = textPanels[0];
-                        panel.WriteText(log.ToString());
-                    }
                     Reset();
                     break;
+            }
+
+            if (textPanels.Count > 0 && highestLogLogSeverity == LogSeverity.Error)
+            {
+                var panel = textPanels[0];
+                panel.WriteText(Wrap(log.ToString(), PANEL_COLUMN_COUNT));
             }
         }
 
@@ -478,12 +459,14 @@ namespace ProjectorInventory
         {
             if (rawInventoryPanel == null)
             {
+                Error("Raw inventory panel not found");
                 state = State.Failed;
                 return;
             }
 
             if (rawInventoryPanel.GetText() == rawInventory)
             {
+                Reset();
                 return;
             }
 
@@ -546,28 +529,28 @@ namespace ProjectorInventory
         {
             if (projector == null)
             {
-                Warning("Missing projector");
+                Error("Projector not found");
                 state = State.Failed;
                 return;
             }
 
             if (!projector.IsFunctional)
             {
-                Warning("Broken projector: {0}", projector.CustomName);
+                Error("Broken projector: {0}", projector.CustomName);
                 state = State.Failed;
                 return;
             }
 
             if (!projector.IsWorking)
             {
-                Warning("Disabled projector: {0}", projector.CustomName);
+                Error("Disabled projector: {0}", projector.CustomName);
                 state = State.Failed;
                 return;
             }
 
             if (!projector.IsProjecting)
             {
-                Warning("Projector is not active: {0}", projector.CustomName);
+                Error("Projector is not active: {0}", projector.CustomName);
                 state = State.Failed;
                 return;
             }
@@ -648,7 +631,7 @@ namespace ProjectorInventory
             {
                 if (panelIndex >= textPanels.Count)
                 {
-                    Warning("Not enough panels to display full information");
+                    Error("Not enough panels to display full information");
                     break;
                 }
 
@@ -719,6 +702,28 @@ namespace ProjectorInventory
             {
                 yield return page;
             }
+        }
+
+        // Utility functions
+
+        private static string Wrap(string text, int width)
+        {
+            var output = new StringBuilder();
+            foreach (var line in text.Split('\n'))
+            {
+                var trimmed = line.TrimEnd();
+                int position = 0;
+                while (trimmed.Length > position + width)
+                {
+                    output.AppendLine(trimmed.Substring(position, width));
+                    position += width;
+                }
+                if (position < trimmed.Length)
+                {
+                    output.AppendLine(trimmed.Substring(position));
+                }
+            }
+            return output.ToString();
         }
 
         #endregion
