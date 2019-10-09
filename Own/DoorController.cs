@@ -61,6 +61,7 @@ namespace DoorController
         // Config
 
         private const string DOOR_GROUP = "Controlled Doors";
+        private const double AUTO_CLOSE_DELAY = 3.0; // s
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10;
 
         // Debugging
@@ -133,6 +134,7 @@ namespace DoorController
 
         private readonly List<IMyDoor> doors = new List<IMyDoor>();
         private readonly Dictionary<string, List<IMyDoor>> doorGroups = new Dictionary<string, List<IMyDoor>>();
+        private readonly Dictionary<string, DateTime> lastOpened = new Dictionary<string, DateTime>();
 
         // Parameter parsing (commands)
 
@@ -184,6 +186,7 @@ namespace DoorController
         private void GroupDoors()
         {
             doorGroups.Clear();
+            lastOpened.Clear();
             foreach (var door in doors)
             {
                 List<IMyDoor> group = null;
@@ -191,6 +194,7 @@ namespace DoorController
                 {
                     group = new List<IMyDoor>();
                     doorGroups[door.CustomName] = group;
+                    lastOpened[door.CustomName] = DateTime.UtcNow;
                 }
                 group.Add(door);
             }
@@ -276,6 +280,7 @@ namespace DoorController
 
         private void PeriodicProcessing()
         {
+            var now = DateTime.UtcNow;
             foreach (var group in doorGroups)
             {
                 var doors = group.Value;
@@ -285,10 +290,19 @@ namespace DoorController
                 {
                     case 0:
                         ApplyToAll(doors, "OnOff_On");
+                        lastOpened[group.Key] = now;
                         break;
 
                     case 1:
-                        ApplyToAll(doors.Where(IsClosed).Where(IsSteady), "OnOff_Off");
+                        var openSince = now - lastOpened[group.Key];
+                        if (openSince.TotalSeconds < AUTO_CLOSE_DELAY)
+                        {
+                            ApplyToAll(doors.Where(IsClosed).Where(IsSteady), "OnOff_Off");
+                        }
+                        else
+                        {
+                            ApplyToAll(doors, "Open_Off");
+                        }
                         break;
 
                     default:
