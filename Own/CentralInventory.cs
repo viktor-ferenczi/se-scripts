@@ -658,7 +658,7 @@ namespace CentralInventory
             rawData.AppendLine(string.Format("{0}: {1}", name, value));
         }
 
-        private void Accumulate(Dictionary<string, double> summary, string key, double amount)
+        private static void Accumulate(IDictionary<string, double> summary, string key, double amount)
         {
             if (summary.ContainsKey(key))
             {
