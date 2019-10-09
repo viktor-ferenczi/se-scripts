@@ -1,49 +1,47 @@
-/*
-    * Central Inventory
-    *
-    * Periodically walks all cargo and battery blocks and builds a summary.
-    * Displays human readable summary on text panels.
-    * Produces machine readable information to be used by other programs.
-    *
-    * How to use:
-    *
-    * Build a programmable block.
-    * Copy-paste all code from the CodeEditor region below into the block.
-    * Compile and run the code in the block.
-    *
-    * Build large text panels with the following words in their name:
-    * - Resource
-    * - Ore
-    * - Ingot
-    * - Component
-    * - Ammo
-    * - Other
-    * - Status
-    * - Raw
-    *
-    * Assign your text panels to the "Inventory Panels" group.
-    *
-    * Set Content to Text and Images and Font to Monospaced on all panels.
-    *
-    * You may need two Component panels and two Other panels to fit all items.
-    * All text panels inside each resource type must have the same size.
-    * Panels of the same type are concatenated in ascending name order.
-    *
-    * The Raw panel displays raw inventory information in a YAML like format.
-    * It can be used by compatible programs to quickly acquire inventory
-    * information without walking on all the blocks again.
-    *
-    * Updates will be less frequent if you have more cargo blocks.
-    *
-    * Adjust BATCH_SIZE to change the block scanning speed, higher value will
-    * result in faster updates at the cost of more computation. If your
-    * programmable block burns try to decrease BATCH_SIZE.
-    *
-    */
+/* Central Inventory
+
+Periodically walks all cargo and battery blocks and builds a summary.
+Displays human readable summary on text panels.
+Produces machine readable information to be used by other programs.
+
+How to use:
+
+Build a programmable block.
+Copy-paste all code from the CodeEditor region below into the block.
+Compile and run the code in the block.
+
+Build large text panels with the following words in their name:
+- Resource
+- Ore
+- Ingot
+- Component
+- Ammo
+- Other
+- Status
+- Raw
+
+Assign your text panels to the "Inventory Panels" group.
+
+Set Content to Text and Images and Font to Monospaced on all panels.
+
+You may need two Component panels and two Other panels to fit all items.
+All text panels inside each resource type must have the same size.
+Panels of the same type are concatenated in ascending name order.
+
+The Raw panel displays raw inventory information in a YAML like format.
+It can be used by compatible programs to quickly acquire inventory
+information without walking on all the blocks again.
+
+Updates will be less frequent if you have more cargo blocks.
+
+Adjust BATCH_SIZE to change the block scanning speed, higher value will
+result in faster updates at the cost of more computation. If your
+programmable block burns try to decrease BATCH_SIZE.
+
+*/
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -575,7 +573,7 @@ namespace CentralInventory
                 ? string.Format("{0:n0}", Math.Round(maxValue / DISPLAY_PRECISION) * DISPLAY_PRECISION).Length
                 : 1;
 
-            var sortedSummary = summary.ToImmutableSortedDictionary();
+            var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
                 AppendRawData(kind + item.Key, item.Value);

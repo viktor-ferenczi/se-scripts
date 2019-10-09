@@ -6,7 +6,7 @@
         <e p="bin" t="ExcludeRecursive" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
-            <e p="netcoreapp2.2" t="Include">
+            <e p="net461" t="Include">
               <e p="Others.AssemblyInfo.cs" t="Include" />
             </e>
           </e>
@@ -25,12 +25,13 @@
         <e p="GrinderController.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
-            <e p="netcoreapp2.2" t="Include">
+            <e p="net461" t="Include">
               <e p="Own.AssemblyInfo.cs" t="Include" />
             </e>
           </e>
         </e>
         <e p="Own.csproj" t="IncludeRecursive" />
+        <e p="ProjectorInventory.cs" t="Include" />
         <e p="Skeleton.cs" t="Include" />
         <e p="SpaceEngineersProgram.cs" t="Include" />
       </e>
