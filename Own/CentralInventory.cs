@@ -494,9 +494,9 @@ namespace CentralInventory
                 return;
             }
 
-            if (!block.IsWorking)
+            if (!block.IsWorking && block is IMyCargoContainer)
             {
-                Warning("Disabled block: " + block.CustomName);
+                Warning("Disabled cargo: " + block.CustomName);
                 return;
             }
 
