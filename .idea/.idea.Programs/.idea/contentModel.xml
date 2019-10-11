@@ -20,9 +20,9 @@
         <e p="TheGalleryMacros.cs" t="Include" />
       </e>
       <e p="Own" t="IncludeRecursive">
+        <e p="AirlockController.cs" t="Include" />
         <e p="bin" t="ExcludeRecursive" />
         <e p="CentralInventory.cs" t="Include" />
-        <e p="DoorController.cs" t="Include" />
         <e p="GrinderController.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
