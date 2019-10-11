@@ -1,6 +1,6 @@
 /* Central Inventory
 
-Periodically walks all cargo and battery blocks and builds a summary.
+Periodically builds a summary on cargo and power status.
 Displays human readable summary on text panels.
 Produces machine readable information to be used by other programs.
 
@@ -18,6 +18,7 @@ Build large text panels with the following words in their name:
 - Ammo
 - Other
 - Status
+- Error
 - Raw
 
 Assign your text panels to the "Inventory Panels" group.
@@ -28,15 +29,22 @@ You may need two Component panels and two Other panels to fit all items.
 All text panels inside each resource type must have the same size.
 Panels of the same type are concatenated in ascending name order.
 
+The Status panel displays top level summaries.
+
+The Error panel displays warnings and errors.
+
 The Raw panel displays raw inventory information in a YAML like format.
 It can be used by compatible programs to quickly acquire inventory
 information without walking on all the blocks again.
 
-Updates will be less frequent if you have more cargo blocks.
+Updates will be less frequent if you have more blocks.
 
 Adjust BATCH_SIZE to change the block scanning speed, higher value will
 result in faster updates at the cost of more computation. If your
 programmable block burns try to decrease BATCH_SIZE.
+
+Resource name tables were taken from Projector2LCD by Juggernaut93:
+https://steamcommunity.com/sharedfiles/filedetails/?id=1500259551
 
 */
 
@@ -44,6 +52,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -78,9 +87,9 @@ namespace CentralInventory
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 24;
         private const double DISPLAY_PRECISION = 1;
-        private const int CARGO_BATCH_SIZE = 5;
-        private const int BATTERY_BATCH_SIZE = 20;
-        private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
+        private const int CARGO_BATCH_SIZE = 3;
+        private const int BATTERY_BATCH_SIZE = 10;
+        private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10;
 
         // Debugging
 
@@ -148,9 +157,103 @@ namespace CentralInventory
             }
         }
 
+        // Tables
+
+        private enum Component
+        {
+            BulletproofGlass,
+            ComputerComponent,
+            ConstructionComponent,
+            DetectorComponent,
+            Display,
+            ExplosivesComponent,
+            GirderComponent,
+            GravityGeneratorComponent,
+            InteriorPlate,
+            LargeTube,
+            MedicalComponent,
+            MetalGrid,
+            MotorComponent,
+            PowerCell,
+            RadioCommunicationComponent,
+            ReactorComponent,
+            SmallTube,
+            SolarCell,
+            SteelPlate,
+            Superconductor,
+            ThrustComponent,
+            ZoneChip,
+        }
+
+        private readonly Dictionary<Component, string> componentNames = new Dictionary<Component, string>()
+        {
+            [Component.BulletproofGlass] = "Bulletproof Glass",
+            [Component.ComputerComponent] = "Computer",
+            [Component.ConstructionComponent] = "Construction Component",
+            [Component.DetectorComponent] = "Detector Components",
+            [Component.Display] = "Display",
+            [Component.ExplosivesComponent] = "Explosives",
+            [Component.GirderComponent] = "Girder",
+            [Component.GravityGeneratorComponent] = "Gravity Generator Components",
+            [Component.InteriorPlate] = "Interior Plate",
+            [Component.LargeTube] = "Large Steel Tube",
+            [Component.MedicalComponent] = "Medical Components",
+            [Component.MetalGrid] = "Metal Grid",
+            [Component.MotorComponent] = "Motor Component",
+            [Component.PowerCell] = "Power Cell",
+            [Component.RadioCommunicationComponent] = "Radio-Communication Components",
+            [Component.ReactorComponent] = "Reactor Components",
+            [Component.SmallTube] = "Small Steel Tube",
+            [Component.SolarCell] = "Solar Cell",
+            [Component.SteelPlate] = "Steel Plate",
+            [Component.Superconductor] = "Superconductor Component",
+            [Component.ThrustComponent] = "Thruster Components",
+            [Component.ZoneChip] = "Zone Chip",
+        };
+
+        private enum Ingot
+        {
+            Cobalt, Gold, Iron, Magnesium, Nickel, Platinum, Silicon, Silver, Stone, Uranium
+        }
+
+        private readonly Dictionary<Ingot, string> ingotNames = new Dictionary<Ingot, string>()
+        {
+            [Ingot.Cobalt] = "Cobalt Ingot",
+            [Ingot.Gold] = "Gold Ingot",
+            [Ingot.Iron] = "Iron Ingot",
+            [Ingot.Magnesium] = "Magnesium Powder",
+            [Ingot.Nickel] = "Nickel Ingot",
+            [Ingot.Platinum] = "Platinum Ingot",
+            [Ingot.Silicon] = "Silicon Wafer",
+            [Ingot.Silver] = "Silver Ingot",
+            [Ingot.Stone] = "Gravel",
+            [Ingot.Uranium] = "Uranium Ingot",
+        };
+
+        private enum Ore
+        {
+            Cobalt, Gold, Ice, Iron, Magnesium, Nickel, Platinum, Scrap, Silicon, Silver, Stone, Uranium
+        }
+
+        private readonly Dictionary<Ore, string> oreNames = new Dictionary<Ore, string>()
+        {
+            [Ore.Cobalt] = "Cobalt Ore",
+            [Ore.Gold] = "Gold Ore",
+            [Ore.Ice] = "Ice Ore",
+            [Ore.Iron] = "Iron Ore",
+            [Ore.Magnesium] = "Magnesium Ore",
+            [Ore.Nickel] = "Nickel Ore",
+            [Ore.Platinum] = "Platinum Ore",
+            [Ore.Scrap] = "Scrap Metal",
+            [Ore.Silicon] = "Silicon Ore",
+            [Ore.Silver] = "Silver Ore",
+            [Ore.Stone] = "Stone",
+            [Ore.Uranium] = "Uranium Ore",
+        };
+
         // Blocks
 
-        private List<IMyCargoContainer> cargoBlocks = new List<IMyCargoContainer>();
+        private List<IMyTerminalBlock> cargoBlocks = new List<IMyTerminalBlock>();
         private List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
         private List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
 
@@ -161,6 +264,7 @@ namespace CentralInventory
             Cargo,
             Battery,
             Report,
+            Done,
         }
 
         private State state = State.Cargo;
@@ -246,11 +350,14 @@ namespace CentralInventory
             cargoBlocks.Clear();
             textPanels.Clear();
 
-            GridTerminalSystem.GetBlocksOfType<IMyCargoContainer>(cargoBlocks);
+            var blocks = new List<IMyTerminalBlock>();
+            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(blocks);
+            cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
+
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
-            Log("Cargo blocks: {0}", cargoBlocks.Count);
+            Log("Blocks with items: {0}", cargoBlocks.Count);
             Log("Battery blocks: {0}", batteryBlocks.Count);
             Log("Text panels: {0}", textPanels.Count);
         }
@@ -335,79 +442,79 @@ namespace CentralInventory
 
         private void PeriodicProcessing()
         {
-            int batchSize = 1;
-            for (int batch = 0; batch < batchSize; batch++)
+            switch (state)
             {
-                switch (state)
-                {
-                    case State.Cargo:
-                        batchSize = CARGO_BATCH_SIZE;
+                case State.Cargo:
+                    for (int batch = 0; batch < CARGO_BATCH_SIZE; batch++)
+                    {
                         if (cargoIndex >= cargoBlocks.Count)
                         {
                             state = State.Battery;
-                            continue;
+                            break;
                         }
                         ScanCargo();
-                        break;
+                    }
+                    break;
 
-                    case State.Battery:
-                        batchSize = BATTERY_BATCH_SIZE;
+                case State.Battery:
+                    for (int batch = 0; batch < BATTERY_BATCH_SIZE; batch++)
+                    {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
                             state = State.Report;
-                            continue;
+                            break;
                         }
                         ScanBattery();
-                        break;
+                    }
+                    break;
 
-                    case State.Report:
-                        Report();
-                        Reset();
-                        break;
+                case State.Report:
+                    Report();
+                    state = State.Done;
+                    break;
 
-                    default:
-                        Reset();
-                        break;
-                }
+                default:
+                    Reset();
+                    break;
             }
         }
 
         private void ScanCargo()
         {
-            var cargo = cargoBlocks[cargoIndex++];
-            if (cargo == null)
+            var block = cargoBlocks[cargoIndex++];
+            if (block == null)
             {
-                Debug("Cargo container is missing");
+                Debug("Block is missing");
                 return;
             }
 
-            if (!cargo.IsFunctional)
+            if (!block.IsFunctional)
             {
-                Warning("Broken container: " + cargo.CustomName);
+                Warning("Broken block: " + block.CustomName);
                 return;
             }
 
-            if (!cargo.IsWorking)
+            if (!block.IsWorking)
             {
-                Warning("Disabled container: " + cargo.CustomName);
+                Warning("Disabled block: " + block.CustomName);
                 return;
             }
 
-            Debug("[{0}]: {1}", cargoIndex, cargo.CustomName);
+            Debug("[{0}]: {1}", cargoIndex, block.CustomName);
 
-            SummarizeCapacity(cargo);
-            SummarizeCargoContainer(cargo);
+            SummarizeBlockCapacity(block);
+            SummarizeBlockContents(block);
         }
 
-        private void SummarizeCapacity(IMyCargoContainer cargo)
+        private void SummarizeBlockCapacity(IMyTerminalBlock block)
         {
-            IMyInventory blockInventory = cargo.GetInventory(0);
+            IMyInventory blockInventory = block.GetInventory(0);
             cargoCapacity += blockInventory.MaxVolume.RawValue;
             cargoVolume += blockInventory.CurrentVolume.RawValue;
             cargoMass += blockInventory.CurrentMass.RawValue;
         }
 
-        private void SummarizeCargoContainer(IMyCargoContainer cargo)
+        private void SummarizeBlockContents(IMyTerminalBlock cargo)
         {
             for (int i = 0; i < cargo.InventoryCount; i++)
             {
@@ -510,17 +617,53 @@ namespace CentralInventory
                 Debug("Panel {0}", panel.CustomName);
             }
 
-            DisplaySummary("ore", ore);
-            DisplaySummary("ingot", ingot);
-            DisplaySummary("component", component);
-            DisplaySummary("ammo", ammo);
-            DisplaySummary("other", other);
+            DisplaySummary("ore", ore, formatOreName);
+            DisplaySummary("ingot", ingot, formatIngotName);
+            DisplaySummary("component", component, formatComponentName);
+            DisplaySummary("ammo", ammo, null);
+            DisplaySummary("other", other, null);
 
             DisplayStatus();
+            DisplayErrors();
             DisplayRawData();
         }
 
-        private void DisplaySummary(string kind, Dictionary<string, double> summary)
+        private string formatOreName(string key)
+        {
+            Ore enumValue;
+            if (Ore.TryParse(key, out enumValue))
+            {
+                return oreNames[enumValue];
+            }
+
+            return key;
+        }
+
+        private string formatIngotName(string key)
+        {
+            Ingot enumValue;
+            if (Ingot.TryParse(key, out enumValue))
+            {
+                return ingotNames[enumValue];
+            }
+
+            return key;
+        }
+
+        private string formatComponentName(string key)
+        {
+            Component enumValue;
+            if (Component.TryParse(key, out enumValue))
+            {
+                return componentNames[enumValue];
+            }
+
+            return key;
+        }
+
+        private delegate string ResourceNameFormatter(string key);
+
+        private void DisplaySummary(string kind, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter)
         {
             var panels = FindPanels(kind).ToList();
             if (panels.Count == 0)
@@ -532,7 +675,7 @@ namespace CentralInventory
             var panelRowCount = (int)Math.Floor(PANEL_ROW_COUNT / panels[0].FontSize);
             var panelIndex = 0;
 
-            foreach (var page in FormatSummary(kind, summary, panelRowCount))
+            foreach (var page in FormatSummary(kind, summary, resourceNameFormatter, panelRowCount))
             {
                 if (panelIndex >= panels.Count)
                 {
@@ -556,7 +699,11 @@ namespace CentralInventory
                 .OrderBy(panel => panel.CustomName);
         }
 
-        private IEnumerable<StringBuilder> FormatSummary(string kind, Dictionary<string, double> summary, int panelRowCount)
+        private IEnumerable<StringBuilder> FormatSummary(
+            string kind,
+            Dictionary<string, double> summary,
+            ResourceNameFormatter resourceNameFormatter,
+            int panelRowCount)
         {
             var page = new StringBuilder();
 
@@ -575,7 +722,8 @@ namespace CentralInventory
                 AppendRawData(kind + item.Key, item.Value);
 
                 var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / DISPLAY_PRECISION) * DISPLAY_PRECISION);
-                var line = formattedAmount.PadLeft(maxWidth) + " " + item.Key;
+                var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
+                var line = formattedAmount.PadLeft(maxWidth) + " " + name;
 
                 page.AppendLine(line);
                 lineCount++;
@@ -618,7 +766,20 @@ namespace CentralInventory
             text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
             text.AppendLine("");
 
-            text.Append(Wrap(log.ToString(), PANEL_COLUMN_COUNT));
+            var panel = panels.First();
+            panel.WriteText(text);
+        }
+
+        private void DisplayErrors()
+        {
+            var panels = FindPanels("error").ToList();
+            if (panels.Count == 0)
+            {
+                Warning("No error panel");
+                return;
+            }
+
+            var text = Wrap(log.ToString(), PANEL_COLUMN_COUNT);
 
             var panel = panels.First();
             panel.WriteText(text);
