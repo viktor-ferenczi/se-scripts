@@ -175,7 +175,7 @@ namespace Skeleton
 
             Reset();
 
-            Runtime.UpdateFrequency = UPDATE_FREQUENCY;
+            Runtime.UpdateFrequency = highestLogLogSeverity == LogSeverity.Error ? UpdateFrequency.None : UPDATE_FREQUENCY;
         }
 
         private void Reset()

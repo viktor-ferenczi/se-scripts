@@ -34,6 +34,7 @@
         <e p="Own.csproj" t="IncludeRecursive" />
         <e p="ProjectorInventory.cs" t="Include" />
         <e p="Skeleton.cs" t="Include" />
+        <e p="SolarTower.cs" t="Include" />
         <e p="SpaceEngineersProgram.cs" t="Include" />
       </e>
       <e p="packages" t="ExcludeRecursive" />
