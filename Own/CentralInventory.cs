@@ -51,6 +51,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -72,6 +73,7 @@ using IMyCubeBlock = VRage.Game.ModAPI.IMyCubeBlock;
 using IMyGasTank = Sandbox.Game.Entities.Interfaces.IMyGasTank;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 using IMyTextPanel = Sandbox.ModAPI.Ingame.IMyTextPanel;
+using MyInventoryItem = VRage.Game.ModAPI.Ingame.MyInventoryItem;
 
 namespace CentralInventory
 {
@@ -81,8 +83,8 @@ namespace CentralInventory
 
         // Config
 
-        private const string PANEL_GROUP = "Inventory Panels";
-        private const bool AUTOMATIC_SORTING = true;
+        private const string PANELS_GROUP = "Inventory Panels";
+        private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
@@ -189,24 +191,24 @@ namespace CentralInventory
             [Component.BulletproofGlass] = "Bulletproof Glass",
             [Component.ComputerComponent] = "Computer",
             [Component.ConstructionComponent] = "Construction Component",
-            [Component.DetectorComponent] = "Detector Components",
+            [Component.DetectorComponent] = "Detector Component",
             [Component.Display] = "Display",
-            [Component.ExplosivesComponent] = "Explosives",
+            [Component.ExplosivesComponent] = "Explosive",
             [Component.GirderComponent] = "Girder",
-            [Component.GravityGeneratorComponent] = "Gravity Generator Components",
+            [Component.GravityGeneratorComponent] = "Gravity Gen Component",
             [Component.InteriorPlate] = "Interior Plate",
             [Component.LargeTube] = "Large Steel Tube",
-            [Component.MedicalComponent] = "Medical Components",
+            [Component.MedicalComponent] = "Medical Component",
             [Component.MetalGrid] = "Metal Grid",
             [Component.MotorComponent] = "Motor Component",
             [Component.PowerCell] = "Power Cell",
-            [Component.RadioCommunicationComponent] = "Radio-Communication Components",
-            [Component.ReactorComponent] = "Reactor Components",
+            [Component.RadioCommunicationComponent] = "Radio-Comm Component",
+            [Component.ReactorComponent] = "Reactor Component",
             [Component.SmallTube] = "Small Steel Tube",
             [Component.SolarCell] = "Solar Cell",
             [Component.SteelPlate] = "Steel Plate",
             [Component.Superconductor] = "Superconductor Component",
-            [Component.ThrustComponent] = "Thruster Components",
+            [Component.ThrustComponent] = "Thruster Component",
             [Component.ZoneChip] = "Zone Chip",
         };
 
@@ -263,7 +265,6 @@ namespace CentralInventory
             Cargo,
             Battery,
             Report,
-            Sort,
             Done,
         }
 
@@ -278,7 +279,6 @@ namespace CentralInventory
         private double batteryCharge;
         private double batteryCapacity;
 
-
         private StringBuilder rawData = new StringBuilder();
 
         Dictionary<string, double> ore = new Dictionary<string, double>();
@@ -286,6 +286,98 @@ namespace CentralInventory
         Dictionary<string, double> component = new Dictionary<string, double>();
         Dictionary<string, double> ammo = new Dictionary<string, double>();
         Dictionary<string, double> other = new Dictionary<string, double>();
+
+        class Container : IComparable<Container>
+        {
+            public readonly int index;
+            private readonly IMyCargoContainer container;
+            private readonly IMyInventory inventory;
+
+            public Container(int index, IMyCargoContainer container)
+            {
+                this.index = index;
+                this.container = container;
+                inventory = container.GetInventory();
+            }
+
+            private struct NameMapping
+            {
+                public readonly string customNamePart;
+                public readonly string nameInMap;
+
+                public NameMapping(string customNamePart, string nameInMap)
+                {
+                    this.customNamePart = customNamePart;
+                    this.nameInMap = nameInMap;
+                }
+            }
+
+            private NameMapping[] nameMappings =
+            {
+                new NameMapping("ore", "ore"),
+                new NameMapping("ingot", "ingot"),
+                new NameMapping("component", "component"),
+                new NameMapping("weapon", "weapon"),
+                new NameMapping("ammo", "ammo"),
+                new NameMapping("hydrogen", "hydrogen"),
+                new NameMapping("h2", "hydrogen"),
+                new NameMapping("oxygen", "oxygen"),
+                new NameMapping("o2", "oxygen"),
+                new NameMapping("gas", "gas"),
+                new NameMapping("bottle", "gas"),
+                new NameMapping("generator", "gas"),
+                new NameMapping("tool", "tool"),
+            };
+
+            public void Register(Dictionary<string, List<Container>> map)
+            {
+                var name = container.CustomName.ToLower();
+                foreach (var nameMapping in nameMappings)
+                {
+                    if (name.Contains(nameMapping.customNamePart))
+                    {
+                        Map(map, nameMapping.nameInMap);
+                        return;
+                    }
+                }
+                Map(map, "");
+            }
+
+            private void Map(Dictionary<string, List<Container>> map, string name)
+            {
+                List<Container> containers;
+
+                if (!map.TryGetValue(name, out containers))
+                {
+                    containers = new List<Container>();
+                    map[name] = containers;
+                }
+
+                containers.Add(this);
+            }
+
+            public bool IsFull
+            {
+                get { return inventory.IsFull; }
+            }
+
+            public bool CollectItem(IMyInventory source, int itemIndex)
+            {
+                return inventory.TransferItemFrom(source, itemIndex, stackIfPossible: true);
+            }
+
+            public bool AlreadyScanned(int scanIndex)
+            {
+                return index < scanIndex;
+            }
+
+            public int CompareTo(Container other)
+            {
+                return string.Compare(container.CustomName, other.container.CustomName, StringComparison.InvariantCultureIgnoreCase);
+            }
+        }
+
+        private readonly Dictionary<string, List<Container>> containerMap = new Dictionary<string, List<Container>>();
 
         // Parameter parsing (commands)
 
@@ -350,19 +442,40 @@ namespace CentralInventory
 
             cargoBlocks.Clear();
             textPanels.Clear();
+            containerMap.Clear();
 
             var blocks = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(blocks);
             cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
 
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
-            GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+
+            var containerBlocks = new List<IMyCargoContainer>();
+            GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP).GetBlocksOfType<IMyCargoContainer>(containerBlocks);
+
+            foreach (var containerBlock in containerBlocks)
+            {
+                var container = new Container(cargoBlocks.IndexOf(containerBlock), containerBlock);
+                container.Register(containerMap);
+            }
+
+            foreach (var containers in containerMap.Values)
+            {
+                containers.Sort();
+            }
+
+            if (textPanels == null || textPanels.Count == 0)
+            {
+                Error("No text panels in group {0}", PANELS_GROUP);
+                return;
+            }
 
             foreach (var panel in textPanels)
             {
                 panel.ContentType = ContentType.TEXT_AND_IMAGE;
 
-                if (panel.DisplayNameText.ToLower().Contains("status"))
+                if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
                     panel.FontSize = 1.8f;
@@ -374,9 +487,10 @@ namespace CentralInventory
                 }
             }
 
-            Log("Blocks with items: {0}", cargoBlocks.Count);
-            Log("Battery blocks: {0}", batteryBlocks.Count);
             Log("Text panels: {0}", textPanels.Count);
+            Log("Blocks with items: {0}", cargoBlocks.Count);
+            Log("Sorted containers: {0}", containerBlocks.Count);
+            Log("Battery blocks: {0}", batteryBlocks.Count);
         }
 
         private void Load()
@@ -470,6 +584,7 @@ namespace CentralInventory
                             break;
                         }
                         ScanCargo();
+                        cargoIndex++;
                     }
                     break;
 
@@ -482,16 +597,13 @@ namespace CentralInventory
                             break;
                         }
                         ScanBattery();
+                        batteryIndex++;
                     }
                     break;
 
                 case State.Report:
                     Report();
-                    state = AUTOMATIC_SORTING ? State.Sort : State.Done;
-                    break;
-
-                case State.Sort:
-                    Sort();
+                    state = State.Done;
                     break;
 
                 default:
@@ -502,7 +614,7 @@ namespace CentralInventory
 
         private void ScanCargo()
         {
-            var block = cargoBlocks[cargoIndex++];
+            var block = cargoBlocks[cargoIndex];
             if (block == null)
             {
                 Debug("Block is missing");
@@ -545,12 +657,15 @@ namespace CentralInventory
 
         private void SummarizeCargoInventory(IMyInventory blockInventory)
         {
-            List<MyInventoryItem> items = new List<MyInventoryItem>();
+            var items = new List<MyInventoryItem>();
             blockInventory.GetItems(items);
+            Container container;
 
-            foreach (var item in items)
+            for (int itemIndex = 0; itemIndex < items.Count; itemIndex++)
             {
-                if (item.Amount <= 0)
+                var item = items[itemIndex];
+
+                if (item == null || item.Amount <= 0)
                 {
                     continue;
                 }
@@ -560,43 +675,67 @@ namespace CentralInventory
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
+                        container = FindContainer("ore");
                         break;
                     case "MyObjectBuilder_Ingot":
                         summary = ingot;
+                        container = FindContainer("ingot") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_Component":
                         summary = component;
+                        container = FindContainer("component") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
+                        container = FindContainer("weapon") ?? FindContainer("ammo") ?? FindContainer("tool") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
+                        container = FindContainer("weapon") ?? FindContainer("ammo") ?? FindContainer("tool") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_Datapad":
                         summary = other;
+                        container = FindContainer("tool") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_GasContainerObject":
                         summary = other;
+                        container = FindContainer("hydrogen") ?? FindContainer("gas");
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
                         summary = other;
+                        container = FindContainer("oxygen") ?? FindContainer("gas") ?? FindContainer("");
                         break;
                     case "MyObjectBuilder_PhysicalObject":
                         summary = other;
+                        container = FindContainer("tool") ?? FindContainer("");
+                        break;
+                    case "MyObjectBuilder_ConsumableItem":
+                        summary = other;
+                        container = FindContainer("food") ?? FindContainer("tool") ?? FindContainer("");
                         break;
                     default:
                         Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
                         continue;
                 }
 
-                Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
+                var collected = container != null && cargoIndex != container.index && container.CollectItem(blockInventory, itemIndex);
+                var scannedLater = collected && !container.AlreadyScanned(cargoIndex);
+
+                if (!scannedLater)
+                {
+                    Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
+                }
             }
+        }
+
+        private Container FindContainer(string name)
+        {
+            return containerMap.GetValueOrDefault(name)?.FirstOrDefault(container => !container.IsFull);
         }
 
         private void ScanBattery()
         {
-            var battery = batteryBlocks[batteryIndex++];
+            var battery = batteryBlocks[batteryIndex];
             if (battery == null)
             {
                 Debug("Battery is missing");
@@ -621,11 +760,6 @@ namespace CentralInventory
             batteryCharge += battery.CurrentStoredPower;
         }
 
-        private void Sort()
-        {
-            // TODO
-        }
-
         private void Report()
         {
             AppendRawData("now", FormatDateTime(DateTime.UtcNow));
@@ -636,7 +770,7 @@ namespace CentralInventory
             AppendRawData("cargoVolume", cargoVolume);
             AppendRawData("cargoMass", cargoMass * 1e-6);
 
-            GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
 
             foreach (var panel in textPanels)
             {
