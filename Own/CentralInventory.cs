@@ -333,6 +333,13 @@ namespace CentralInventory
                 new NameMapping("consumable", "food"),
             };
 
+            public object Name {
+                get
+                {
+                    return container.CustomName;
+                }
+            }
+
             public void Register(Dictionary<string, List<Container>> map)
             {
                 var name = container.CustomName.ToLower();
@@ -761,9 +768,13 @@ namespace CentralInventory
                     {
                         foreach (var container in containers)
                         {
+                            var mass = cargo.Mass;
                             if (container.CollectItem(blockInventory, itemIndex))
                             {
-                                break;
+                                if (cargo.Mass != mass)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
