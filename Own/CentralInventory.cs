@@ -455,10 +455,10 @@ namespace CentralInventory
             cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
 
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
-            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
             var containerBlocks = new List<IMyCargoContainer>();
-            GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP).GetBlocksOfType<IMyCargoContainer>(containerBlocks);
+            GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP)?.GetBlocksOfType<IMyCargoContainer>(containerBlocks);
 
             foreach (var containerBlock in containerBlocks)
             {
@@ -826,7 +826,7 @@ namespace CentralInventory
             AppendRawData("cargoVolume", cargoVolume);
             AppendRawData("cargoMass", cargoMass * 1e-6);
 
-            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
             foreach (var panel in textPanels)
             {
