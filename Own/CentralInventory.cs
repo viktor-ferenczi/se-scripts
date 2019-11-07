@@ -58,6 +58,7 @@ using System.Text;
 using Skeleton;
 using Sandbox.Definitions;
 using Sandbox.Game;
+using Sandbox.Game.EntityComponents;
 using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.GUI.TextPanel;
@@ -289,13 +290,11 @@ namespace CentralInventory
 
         class Container : IComparable<Container>
         {
-            public readonly int index;
             private readonly IMyCargoContainer container;
             private readonly IMyInventory inventory;
 
-            public Container(int index, IMyCargoContainer container)
+            public Container(IMyCargoContainer container)
             {
-                this.index = index;
                 this.container = container;
                 inventory = container.GetInventory();
             }
@@ -319,14 +318,19 @@ namespace CentralInventory
                 new NameMapping("component", "component"),
                 new NameMapping("weapon", "weapon"),
                 new NameMapping("ammo", "ammo"),
+                new NameMapping("magazine", "ammo"),
+                new NameMapping("rocket", "ammo"),
+                new NameMapping("bullet", "ammo"),
                 new NameMapping("hydrogen", "hydrogen"),
-                new NameMapping("h2", "hydrogen"),
                 new NameMapping("oxygen", "oxygen"),
+                new NameMapping("h2", "hydrogen"),
                 new NameMapping("o2", "oxygen"),
                 new NameMapping("gas", "gas"),
                 new NameMapping("bottle", "gas"),
                 new NameMapping("generator", "gas"),
                 new NameMapping("tool", "tool"),
+                new NameMapping("food", "food"),
+                new NameMapping("consumable", "food"),
             };
 
             public void Register(Dictionary<string, List<Container>> map)
@@ -356,24 +360,19 @@ namespace CentralInventory
                 containers.Add(this);
             }
 
-            public bool IsFull
-            {
-                get { return inventory.IsFull; }
-            }
-
             public bool CollectItem(IMyInventory source, int itemIndex)
             {
                 return inventory.TransferItemFrom(source, itemIndex, stackIfPossible: true);
             }
 
-            public bool AlreadyScanned(int scanIndex)
-            {
-                return index < scanIndex;
-            }
-
             public int CompareTo(Container other)
             {
                 return string.Compare(container.CustomName, other.container.CustomName, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            public bool IsTheSameBlock(IMyTerminalBlock block)
+            {
+                return block == container;
             }
         }
 
@@ -456,13 +455,20 @@ namespace CentralInventory
 
             foreach (var containerBlock in containerBlocks)
             {
-                var container = new Container(cargoBlocks.IndexOf(containerBlock), containerBlock);
+                var container = new Container(containerBlock);
                 container.Register(containerMap);
             }
 
             foreach (var containers in containerMap.Values)
             {
                 containers.Sort();
+            }
+
+            var names = containerMap.Keys.ToList();
+            names.Sort();
+            foreach (var name in names)
+            {
+                Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
             }
 
             if (textPanels == null || textPanels.Count == 0)
@@ -642,6 +648,12 @@ namespace CentralInventory
         private void SummarizeBlockCapacity(IMyTerminalBlock block)
         {
             IMyInventory blockInventory = block.GetInventory(0);
+
+            if (blockInventory == null)
+            {
+                return;
+            }
+
             cargoCapacity += blockInventory.MaxVolume.RawValue;
             cargoVolume += blockInventory.CurrentVolume.RawValue;
             cargoMass += blockInventory.CurrentMass.RawValue;
@@ -649,19 +661,30 @@ namespace CentralInventory
 
         private void SummarizeBlockContents(IMyTerminalBlock cargo)
         {
-            for (int i = 0; i < cargo.InventoryCount; i++)
+            for (int inventoryIndex = 0; inventoryIndex < cargo.InventoryCount; inventoryIndex++)
             {
-                SummarizeCargoInventory(cargo.GetInventory(i));
+                SummarizeCargoInventory(cargo, inventoryIndex);
             }
         }
 
-        private void SummarizeCargoInventory(IMyInventory blockInventory)
+        private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
+            var blockInventory = cargo.GetInventory(inventoryIndex);
+            if (blockInventory == null)
+            {
+                return;
+            }
+
             var items = new List<MyInventoryItem>();
             blockInventory.GetItems(items);
-            Container container;
 
-            for (int itemIndex = 0; itemIndex < items.Count; itemIndex++)
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            List<Container> containers;
+            for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
             {
                 var item = items[itemIndex];
 
@@ -670,67 +693,89 @@ namespace CentralInventory
                     continue;
                 }
 
+                var subTypeName = item.Type.SubtypeId.ToLower();
+
                 Dictionary<string, double> summary;
                 switch (item.Type.TypeId)
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
-                        container = FindContainer("ore");
+                        containers = FindContainers("ore");
                         break;
                     case "MyObjectBuilder_Ingot":
                         summary = ingot;
-                        container = FindContainer("ingot") ?? FindContainer("");
+                        containers = FindContainers("ingot") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_Component":
                         summary = component;
-                        container = FindContainer("component") ?? FindContainer("");
+                        containers = FindContainers("component") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
-                        container = FindContainer("weapon") ?? FindContainer("ammo") ?? FindContainer("tool") ?? FindContainer("");
+                        containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
-                        container = FindContainer("weapon") ?? FindContainer("ammo") ?? FindContainer("tool") ?? FindContainer("");
+                        if (subTypeName.Contains("weld") ||
+                            subTypeName.Contains("grind") ||
+                            subTypeName.Contains("drill"))
+                        {
+                            containers = FindContainers("tool") ?? FindContainers("");
+
+                        }
+                        else
+                        {
+                            containers = FindContainers("weapon") ?? FindContainers("ammo") ?? FindContainers("tool") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_Datapad":
                         summary = other;
-                        container = FindContainer("tool") ?? FindContainer("");
+                        containers = FindContainers("tool") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_GasContainerObject":
                         summary = other;
-                        container = FindContainer("hydrogen") ?? FindContainer("gas");
+                        containers = FindContainers("hydrogen") ?? FindContainers("gas");
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
                         summary = other;
-                        container = FindContainer("oxygen") ?? FindContainer("gas") ?? FindContainer("");
+                        containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_PhysicalObject":
                         summary = other;
-                        container = FindContainer("tool") ?? FindContainer("");
+                        containers = FindContainers("tool") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_ConsumableItem":
                         summary = other;
-                        container = FindContainer("food") ?? FindContainer("tool") ?? FindContainer("");
+                        containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
                         break;
                     default:
                         Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
                         continue;
                 }
 
-                var collected = container != null && cargoIndex != container.index && container.CollectItem(blockInventory, itemIndex);
-                var scannedLater = collected && !container.AlreadyScanned(cargoIndex);
-
-                if (!scannedLater)
+                if (containers != null)
                 {
-                    Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
+                    var alreadyInTheRightPlace = containers.Find(container => container.IsTheSameBlock(cargo)) != null;
+
+                    if (!alreadyInTheRightPlace)
+                    {
+                        foreach (var container in containers)
+                        {
+                            if (container.CollectItem(blockInventory, itemIndex))
+                            {
+                                break;
+                            }
+                        }
+                    }
                 }
+
+                Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
             }
         }
 
-        private Container FindContainer(string name)
+        private List<Container> FindContainers(string name)
         {
-            return containerMap.GetValueOrDefault(name)?.FirstOrDefault(container => !container.IsFull);
+            return containerMap.GetValueOrDefault(name);
         }
 
         private void ScanBattery()
