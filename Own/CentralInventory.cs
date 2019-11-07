@@ -61,6 +61,7 @@ using Sandbox.Game;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Weapons;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
@@ -676,6 +677,11 @@ namespace CentralInventory
 
         private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
+            var allowAmmo = !(cargo is IMyUserControllableGun);
+            var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
+            var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);
+            var allowComponent = !(cargo is IMyShipWelder);
+
             var blockInventory = cargo.GetInventory(inventoryIndex);
             if (blockInventory == null)
             {
@@ -690,7 +696,8 @@ namespace CentralInventory
                 return;
             }
 
-            List<Container> containers;
+            List<Container> containers = null;
+
             for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
             {
                 var item = items[itemIndex];
@@ -707,19 +714,31 @@ namespace CentralInventory
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
-                        containers = FindContainers("ore");
+                        if (allowOre)
+                        {
+                            containers = FindContainers("ore");
+                        }
                         break;
                     case "MyObjectBuilder_Ingot":
                         summary = ingot;
-                        containers = FindContainers("ingot") ?? FindContainers("");
+                        if (allowIngot)
+                        {
+                            containers = FindContainers("ingot") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_Component":
                         summary = component;
-                        containers = FindContainers("component") ?? FindContainers("");
+                        if (allowComponent)
+                        {
+                            containers = FindContainers("component") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
-                        containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
+                        if (allowAmmo)
+                        {
+                            containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
