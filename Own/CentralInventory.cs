@@ -23,8 +23,6 @@ Build large text panels with the following words in their name:
 
 Assign your text panels to the "Inventory Panels" group.
 
-Set Content to Text and Images and Font to Monospaced on all panels.
-
 You may need two Component panels and two Other panels to fit all items.
 All text panels inside each resource type must have the same size.
 Panels of the same type are concatenated in ascending name order.
@@ -84,8 +82,9 @@ namespace CentralInventory
         // Config
 
         private const string PANEL_GROUP = "Inventory Panels";
+        private const bool AUTOMATIC_SORTING = true;
         private const int PANEL_ROW_COUNT = 17;
-        private const int PANEL_COLUMN_COUNT = 24;
+        private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
         private const int CARGO_BATCH_SIZE = 3;
         private const int BATTERY_BATCH_SIZE = 10;
@@ -264,6 +263,7 @@ namespace CentralInventory
             Cargo,
             Battery,
             Report,
+            Sort,
             Done,
         }
 
@@ -277,6 +277,7 @@ namespace CentralInventory
         private int batteryIndex;
         private double batteryCharge;
         private double batteryCapacity;
+
 
         private StringBuilder rawData = new StringBuilder();
 
@@ -356,6 +357,22 @@ namespace CentralInventory
 
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(textPanels);
+
+            foreach (var panel in textPanels)
+            {
+                panel.ContentType = ContentType.TEXT_AND_IMAGE;
+
+                if (panel.DisplayNameText.ToLower().Contains("status"))
+                {
+                    panel.Font = "InfoMessageBoxText";
+                    panel.FontSize = 1.8f;
+                }
+                else
+                {
+                    panel.Font = "Monospace";
+                    panel.FontSize = 1f;
+                }
+            }
 
             Log("Blocks with items: {0}", cargoBlocks.Count);
             Log("Battery blocks: {0}", batteryBlocks.Count);
@@ -470,7 +487,11 @@ namespace CentralInventory
 
                 case State.Report:
                     Report();
-                    state = State.Done;
+                    state = AUTOMATIC_SORTING ? State.Sort : State.Done;
+                    break;
+
+                case State.Sort:
+                    Sort();
                     break;
 
                 default:
@@ -598,6 +619,11 @@ namespace CentralInventory
 
             batteryCapacity += battery.MaxStoredPower;
             batteryCharge += battery.CurrentStoredPower;
+        }
+
+        private void Sort()
+        {
+            // TODO
         }
 
         private void Report()
@@ -836,12 +862,14 @@ namespace CentralInventory
             foreach (var line in text.Split('\n'))
             {
                 var trimmed = line.TrimEnd();
-                int position = 0;
+
+                var position = 0;
                 while (trimmed.Length > position + width)
                 {
                     output.AppendLine(trimmed.Substring(position, width));
                     position += width;
                 }
+
                 if (position < trimmed.Length)
                 {
                     output.AppendLine(trimmed.Substring(position));
