@@ -9,7 +9,7 @@ Build a programmable block.
 Copy-paste all code from the CodeEditor region below into the block.
 Compile and run the code in the block.
 Build airlocks, set the same name on all doors inside the same airlock.
-Assign all doors of the controlled airlocks to the "Controlled Doors" group.
+Assign all doors of the controlled airlocks to the "Airlock Doors" group.
 
 Run the program every time after you make changes to the doors.
 This is to find the doors of the airlocks again, which is a one time operation.
