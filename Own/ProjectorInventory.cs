@@ -71,7 +71,7 @@ namespace ProjectorInventory
         private const string INVENTORY_PANEL_GROUP = "Inventory Panels";
         private const bool ASSUME_LIGHT_ARMOR = true;
         private const int PANEL_ROW_COUNT = 17;
-        private const int PANEL_COLUMN_COUNT = 24;
+        private const int PANEL_COLUMN_COUNT = 25;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update100;
 
         // Debugging
@@ -175,24 +175,24 @@ namespace ProjectorInventory
             [Component.BulletproofGlass] = "Bulletproof Glass",
             [Component.ComputerComponent] = "Computer",
             [Component.ConstructionComponent] = "Construction Component",
-            [Component.DetectorComponent] = "Detector Components",
+            [Component.DetectorComponent] = "Detector Component",
             [Component.Display] = "Display",
-            [Component.ExplosivesComponent] = "Explosives",
+            [Component.ExplosivesComponent] = "Explosive",
             [Component.GirderComponent] = "Girder",
-            [Component.GravityGeneratorComponent] = "Gravity Generator Components",
+            [Component.GravityGeneratorComponent] = "Gravity Gen Component",
             [Component.InteriorPlate] = "Interior Plate",
             [Component.LargeTube] = "Large Steel Tube",
-            [Component.MedicalComponent] = "Medical Components",
+            [Component.MedicalComponent] = "Medical Component",
             [Component.MetalGrid] = "Metal Grid",
             [Component.MotorComponent] = "Motor Component",
             [Component.PowerCell] = "Power Cell",
-            [Component.RadioCommunicationComponent] = "Radio-Communication Components",
-            [Component.ReactorComponent] = "Reactor Components",
+            [Component.RadioCommunicationComponent] = "Radio-Comm Component",
+            [Component.ReactorComponent] = "Reactor Component",
             [Component.SmallTube] = "Small Steel Tube",
             [Component.SolarCell] = "Solar Cell",
             [Component.SteelPlate] = "Steel Plate",
             [Component.Superconductor] = "Superconductor Component",
-            [Component.ThrustComponent] = "Thruster Components",
+            [Component.ThrustComponent] = "Thruster Component",
             [Component.ZoneChip] = "Zone Chip",
         };
 
