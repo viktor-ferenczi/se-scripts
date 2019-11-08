@@ -3,14 +3,15 @@
 Periodically builds a summary on cargo and power status.
 Displays human readable summary on text panels.
 Produces machine readable information to be used by other programs.
+Optionally sorts items into specific containers.
 
-How to use:
+=== Setting up the inventory display ===
 
 Build a programmable block.
 Copy-paste all code from the CodeEditor region below into the block.
 Compile and run the code in the block.
 
-Build large text panels with the following words in their name:
+Build large text panels with the following words in their name (case insensitive):
 - Resource
 - Ore
 - Ingot
@@ -22,6 +23,12 @@ Build large text panels with the following words in their name:
 - Raw
 
 Assign your text panels to the "Inventory Panels" group.
+
+Run the programmable block again after making changes to the group.
+
+Text panel content mode, font and character size will be overridden
+by the script in order to nicely fit the contents. Colors are free
+to configure to match your environment.
 
 You may need two Component panels and two Other panels to fit all items.
 All text panels inside each resource type must have the same size.
@@ -35,11 +42,59 @@ The Raw panel displays raw inventory information in a YAML like format.
 It can be used by compatible programs to quickly acquire inventory
 information without walking on all the blocks again.
 
-Updates will be less frequent if you have more blocks.
+=== Setting up inventory sorting ===
 
-Adjust BATCH_SIZE to change the block scanning speed, higher value will
-result in faster updates at the cost of more computation. If your
-programmable block burns try to decrease BATCH_SIZE.
+Sorting uses the same programmable block as the display functionality,
+do not add a separate one. You can use only sorting by setting up the
+programmable block like above, but without the displays configured.
+
+Include the following words in the name of the cargo blocks you expect
+the items to be placed into (case insensitive):
+- Ore
+- Ingot
+- Component
+- Weapon
+- Ammo
+- Tool
+- Food
+
+Make sure your have the following words in the name of your gas tanks or
+generator in order to automatically pull bottles for refilling:
+- Hydrogen or H2
+- Oxygen or O2
+- Generator
+
+Sorting is enabled by assigning your target containers (where you expect
+the sorted items to be placed) to the "Sorted Containers" group.
+
+Run the programmable block again after making changes to the group.
+
+For safety reasons sorting functionality will NOT pull
+- ammo out of any turrets or interior guns
+- ore out of refineries
+- ice out of gas generators
+- ingots out of assemblers
+- ingots (Uranium) out of reactors
+- components out of welders
+- zone chips out from safe zone generators
+
+=== Remarks ===
+
+Display updates and sorting will be slower if you have more blocks.
+It is normal and the script is designed this way to prevent the PB
+from burning down on multiplayer servers.
+
+You can adjust BATCH_SIZE to change the block scanning speed, higher
+value will result in faster processing at the cost of more computation
+and higher risk of your PB ending up in smoke and fire. If your
+PB burns down, then try to decrease BATCH_SIZE. It may need to be
+tuned for the server you are playing on.
+
+Mod compatibility is entirely untested. Works well with vanialla Space Engineers
+in Experimental mode and scripts enabled as of 2019-11-07. Also works
+on Alehouse PvP Two multiplayer server.
+
+=== Credits ===
 
 Resource name tables were taken from Projector2LCD by Juggernaut93:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1500259551
@@ -71,8 +126,7 @@ using ContentType = VRage.Game.GUI.TextPanel.ContentType;
 using IMyBatteryBlock = Sandbox.ModAPI.Ingame.IMyBatteryBlock;
 using IMyBlockGroup = Sandbox.ModAPI.Ingame.IMyBlockGroup;
 using IMyCargoContainer = Sandbox.ModAPI.Ingame.IMyCargoContainer;
-using IMyCubeBlock = VRage.Game.ModAPI.IMyCubeBlock;
-using IMyGasTank = Sandbox.Game.Entities.Interfaces.IMyGasTank;
+using IMyCubeBlock = VRage.Game.ModAPI.Ingame.IMyCubeBlock;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 using IMyTextPanel = Sandbox.ModAPI.Ingame.IMyTextPanel;
 using MyInventoryItem = VRage.Game.ModAPI.Ingame.MyInventoryItem;
@@ -319,13 +373,8 @@ namespace CentralInventory
                 new NameMapping("component", "component"),
                 new NameMapping("weapon", "weapon"),
                 new NameMapping("ammo", "ammo"),
-                new NameMapping("magazine", "ammo"),
-                new NameMapping("rocket", "ammo"),
-                new NameMapping("bullet", "ammo"),
                 new NameMapping("hydrogen", "hydrogen"),
                 new NameMapping("oxygen", "oxygen"),
-                new NameMapping("h2", "hydrogen"),
-                new NameMapping("o2", "oxygen"),
                 new NameMapping("gas", "gas"),
                 new NameMapping("bottle", "gas"),
                 new NameMapping("generator", "gas"),
@@ -492,7 +541,7 @@ namespace CentralInventory
                 if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = 1.8f;
+                    panel.FontSize = 1.6f;
                 }
                 else
                 {
@@ -680,7 +729,9 @@ namespace CentralInventory
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);
-            var allowComponent = !(cargo is IMyShipWelder);
+
+            // FIXME: Detect the safe zone by its interface. What is that?
+            var allowComponent = !(cargo is IMyShipWelder || cargo.GetProperty("SafeZoneCreate") != null);
 
             var blockInventory = cargo.GetInventory(inventoryIndex);
             if (blockInventory == null)
