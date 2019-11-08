@@ -8,19 +8,18 @@ How to use:
 Build a programmable block.
 Copy-paste all code from the CodeEditor region below into the block.
 Compile and run the code in the block.
-Build airlocks, set the same name on all doors inside the same airlock.
+Build airlocks, set the same name for both doors of each airlock.
+You can build rooms with a single door, it will be closed automatically.
+You can build rooms with multiple doors, only one of them can be open at a time.
 Assign all doors of the controlled airlocks to the "Airlock Doors" group.
 
 Run the program every time after you make changes to the doors.
 This is to find the doors of the airlocks again, which is a one time operation.
 
-This controller works with more than two doors having the same name.
-In this case it will let only one of them being opened at a time.
-
 When multiple doors are opened at the exact same time the script will
-force close all the doors in that group. It means that air can be
-leaked with a small probability. This is the price to pay to avoid the
-button which would open the door otherwise.
+force close all the doors having that name. It means that a bit of air
+can be leaked with some low probability. This is the price to pay to avoid
+the button which would open the door otherwise in a perfect solution.
 
 */
 
