@@ -291,10 +291,10 @@ namespace CentralInventory
 
         class Container : IComparable<Container>
         {
-            private readonly IMyCargoContainer container;
+            private readonly IMyTerminalBlock container;
             private readonly IMyInventory inventory;
 
-            public Container(IMyCargoContainer container)
+            public Container(IMyTerminalBlock container)
             {
                 this.container = container;
                 inventory = container.GetInventory();
@@ -458,8 +458,8 @@ namespace CentralInventory
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
-            var containerBlocks = new List<IMyCargoContainer>();
-            GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP)?.GetBlocksOfType<IMyCargoContainer>(containerBlocks);
+            var containerBlocks = new List<IMyTerminalBlock>();
+            GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
 
             foreach (var containerBlock in containerBlocks)
             {
