@@ -1,25 +1,14 @@
 using System;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
+using IMyGridTerminalSystem = Sandbox.ModAPI.Ingame.IMyGridTerminalSystem;
+using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
+using IMyGridProgram = Sandbox.ModAPI.IMyGridProgram;
 
 namespace Skeleton
 {
-    public class SpaceEngineersProgram
+    public class SpaceEngineersProgram : IMyGridProgram
     {
-        protected IMyGridTerminalSystem GridTerminalSystem = null;
-
-        protected static class Runtime
-        {
-            public static UpdateFrequency UpdateFrequency { get; set; }
-        }
-
-        protected void Echo(string text)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected String Storage { get; set; }
-        protected IMyProgrammableBlock Me { get; set; }
-
         public SpaceEngineersProgram()
         {
             // The constructor, called only once every session and
@@ -42,6 +31,21 @@ namespace Skeleton
             //
             // This method is optional and can be removed if not
             // needed.
+        }
+
+        public Func<IMyIntergridCommunicationSystem> IGC_ContextGetter { get; set; }
+        public IMyGridTerminalSystem GridTerminalSystem { get; set; }
+        public IMyProgrammableBlock Me { get; set; }
+        public TimeSpan ElapsedTime { get; set; }
+        public string Storage { get; set; }
+        public IMyGridProgramRuntimeInfo Runtime { get; set; }
+        public Action<string> Echo { get; set; }
+        public bool HasMainMethod { get; }
+        public bool HasSaveMethod { get; }
+
+        public void Main(string argument)
+        {
+            throw new NotImplementedException();
         }
 
         public void Main(string argument, UpdateType updateSource)
