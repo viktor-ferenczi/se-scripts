@@ -15,6 +15,7 @@
         <e p="Program.cs" t="Include" />
         <e p="ProjectorInventory.cs" t="Include" />
         <e p="ShipInventory.cs" t="Include" />
+        <e p="SimpleSorter.cs" t="Include" />
         <e p="TheGalleryAirlock.cs" t="Include" />
         <e p="TheGalleryBlockInfo.cs" t="Include" />
         <e p="TheGalleryMacros.cs" t="Include" />
@@ -23,7 +24,6 @@
         <e p="AirlockController.cs" t="Include" />
         <e p="bin" t="ExcludeRecursive" />
         <e p="CentralInventory.cs" t="Include" />
-        <e p="GrinderController.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="net461" t="Include">
