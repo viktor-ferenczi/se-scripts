@@ -747,7 +747,6 @@ namespace CentralInventory
                             subTypeName.Contains("drill"))
                         {
                             containers = FindContainers("tool") ?? FindContainers("");
-
                         }
                         else
                         {
@@ -760,7 +759,7 @@ namespace CentralInventory
                         break;
                     case "MyObjectBuilder_GasContainerObject":
                         summary = other;
-                        containers = FindContainers("hydrogen") ?? FindContainers("gas");
+                        containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
                         summary = other;
