@@ -5,7 +5,7 @@ Displays human readable summary on text panels.
 Produces machine readable information to be used by other programs.
 Optionally sorts items into specific containers.
 
-=== Setting up the inventory display ===
+=== How to set up inventory display ===
 
 Build a programmable block.
 Copy-paste all code from the CodeEditor region below into the block.
@@ -42,7 +42,7 @@ The Raw panel displays raw inventory information in a YAML like format.
 It can be used by compatible programs to quickly acquire inventory
 information without walking on all the blocks again.
 
-=== Setting up inventory sorting ===
+=== How to set up inventory sorting ===
 
 Sorting uses the same programmable block as the display functionality,
 do not add a separate one. You can use only sorting by setting up the
@@ -77,6 +77,9 @@ For safety reasons sorting functionality will NOT pull
 - ingots (Uranium) out of reactors
 - components out of welders
 - zone chips out from safe zone generators
+
+Sorting collects items from the programmable block's own grid.
+This is to prevent pulling out cargo from all docked ships.
 
 === Remarks ===
 
@@ -141,6 +144,7 @@ namespace CentralInventory
 
         private const string PANELS_GROUP = "Inventory Panels";
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
+        private const bool PULL_ITEMS_FROM_OWN_GRID_ONLY = true;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
@@ -726,6 +730,7 @@ namespace CentralInventory
 
         private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
+            var allowSorting = !PULL_ITEMS_FROM_OWN_GRID_ONLY || cargo.CubeGrid == Me.CubeGrid;
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);
@@ -765,64 +770,84 @@ namespace CentralInventory
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
-                        if (allowOre)
+                        if (allowSorting && allowOre)
                         {
                             containers = FindContainers("ore");
                         }
                         break;
                     case "MyObjectBuilder_Ingot":
                         summary = ingot;
-                        if (allowIngot)
+                        if (allowSorting && allowIngot)
                         {
                             containers = FindContainers("ingot") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_Component":
                         summary = component;
-                        if (allowComponent)
+                        if (allowSorting && allowComponent)
                         {
                             containers = FindContainers("component") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
-                        if (allowAmmo)
+                        if (allowSorting && allowAmmo)
                         {
                             containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
-                        if (subTypeName.Contains("weld") ||
-                            subTypeName.Contains("grind") ||
-                            subTypeName.Contains("drill"))
+                        if (allowSorting)
                         {
-                            containers = FindContainers("tool") ?? FindContainers("");
+                            if (subTypeName.Contains("weld") ||
+                                subTypeName.Contains("grind") ||
+                                subTypeName.Contains("drill"))
+                            {
+                                containers = FindContainers("tool") ?? FindContainers("");
+                            }
+                            else
+                            {
+                                containers = FindContainers("weapon") ?? FindContainers("ammo") ??
+                                             FindContainers("tool") ?? FindContainers("");
+                            }
                         }
-                        else
-                        {
-                            containers = FindContainers("weapon") ?? FindContainers("ammo") ?? FindContainers("tool") ?? FindContainers("");
-                        }
+
                         break;
                     case "MyObjectBuilder_Datapad":
                         summary = other;
-                        containers = FindContainers("tool") ?? FindContainers("");
+                        if(allowSorting)
+                        {
+                            containers = FindContainers("tool") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_GasContainerObject":
                         summary = other;
-                        containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
+                        if(allowSorting)
+                        {
+                            containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
                         summary = other;
-                        containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
+                        if(allowSorting)
+                        {
+                            containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_PhysicalObject":
                         summary = other;
-                        containers = FindContainers("tool") ?? FindContainers("");
+                        if(allowSorting)
+                        {
+                            containers = FindContainers("tool") ?? FindContainers("");
+                        }
                         break;
                     case "MyObjectBuilder_ConsumableItem":
                         summary = other;
-                        containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
+                        if(allowSorting)
+                        {
+                            containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
+                        }
                         break;
                     default:
                         Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
