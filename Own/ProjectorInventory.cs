@@ -327,6 +327,14 @@ namespace ProjectorInventory
             var panels = new List<IMyTextPanel>();
             GridTerminalSystem.GetBlockGroupWithName(PANEL_GROUP).GetBlocksOfType<IMyTextPanel>(panels);
             textPanels = panels.OrderBy(panel => panel.CustomName).ToList();
+
+            foreach (var panel in textPanels)
+            {
+                panel.ContentType = ContentType.TEXT_AND_IMAGE;
+                panel.Font = "Monospace";
+                panel.FontSize = 1f;
+            }
+
             ClearPanels();
         }
 
@@ -678,7 +686,27 @@ namespace ProjectorInventory
 
             if (missing.Count == 0)
             {
-                page.AppendLine("Ready to print");
+                if (projector.DetailedInfo == "")
+                {
+                    page.AppendLine("");
+                    page.AppendLine("Ready to print");
+                }
+                else
+                {
+                    var pageLineCount = 1;
+                    var lines = projector.DetailedInfo.Split('\n').Skip(3);
+                    foreach (var line in lines)
+                    {
+                        if (pageLineCount == PANEL_ROW_COUNT)
+                        {
+                            yield return page;
+                            page.Clear();
+                            pageLineCount = 0;
+                        }
+                        page.AppendLine(line);
+                        pageLineCount++;
+                    }
+                }
                 yield return page;
                 yield break;
             }
