@@ -5,6 +5,7 @@
  * Supports pistons moving a grid of welders.
  *
  * Groups:
+ * - Printer Welders: All welders in the printer
  * - Printer Pistons X: Welder movement
  * - Printer Pistons Y: Welder movement
  * - Printer Pistons Z: Pulling out the print
