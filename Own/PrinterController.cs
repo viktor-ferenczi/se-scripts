@@ -63,7 +63,7 @@ namespace PrinterController
         private const float MAX_PISTON_VELOCITY = 5f;
         private const float MAX_PISTON_POSITION = 10f;
         private const float PISTON_Z_ADVANCE_VELOCITY = 1f;
-        private const float PISTON_Z_RESET_VELOCITY = -1f;
+        private const float PISTON_Z_RESET_VELOCITY = 5f;
 
         // Debugging
 
@@ -318,7 +318,7 @@ namespace PrinterController
 
         private void StartZ()
         {
-            var velocity = Math.Min(MAX_PISTON_VELOCITY, PISTON_Z_ADVANCE_VELOCITY * pistonsZ.Count);
+            var velocity = Math.Min(MAX_PISTON_VELOCITY, PISTON_Z_ADVANCE_VELOCITY / pistonsZ.Count);
             foreach (var piston in pistonsZ)
             {
                 piston.MaxLimit = piston.CurrentPosition;
@@ -430,9 +430,10 @@ namespace PrinterController
 
         private void RetractZ()
         {
+            var velocity = -PISTON_Z_RESET_VELOCITY / pistonsZ.Count;
             foreach (var piston in pistonsZ)
             {
-                piston.Velocity = PISTON_Z_RESET_VELOCITY;
+                piston.Velocity = velocity;
                 piston.MaxLimit = MAX_PISTON_POSITION;
             }
         }
