@@ -978,7 +978,7 @@ namespace CentralInventory
             var panels = FindPanels(kind).ToList();
             if (panels.Count == 0)
             {
-                Warning("No text panel for {0}", kind);
+                Log("No text panel for {0}", kind);
                 return;
             }
 
@@ -1085,7 +1085,7 @@ namespace CentralInventory
             var panels = FindPanels("error").ToList();
             if (panels.Count == 0)
             {
-                Warning("No error panel");
+                Log("No error panel");
                 return;
             }
 
