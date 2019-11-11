@@ -199,10 +199,14 @@ namespace PrinterController
             roundsInLayer = 0;
 
             GridTerminalSystem.GetBlockGroupWithName(WELDERS).GetBlocksOfType(welders);
-
             GridTerminalSystem.GetBlockGroupWithName(PISTONS_X).GetBlocksOfType(pistonsX);
             GridTerminalSystem.GetBlockGroupWithName(PISTONS_Y).GetBlocksOfType(pistonsY);
             GridTerminalSystem.GetBlockGroupWithName(PISTONS_Z).GetBlocksOfType(pistonsZ);
+
+            welders = FilterSameConstruct(welders, Me);
+            pistonsX = FilterSameConstruct(pistonsX, Me);
+            pistonsY = FilterSameConstruct(pistonsZ, Me);
+            pistonsZ = FilterSameConstruct(pistonsY, Me);
 
             projector = GridTerminalSystem.GetBlockWithName(PROJECTOR_NAME) as IMyProjector;
             if (projector == null)
@@ -212,6 +216,11 @@ namespace PrinterController
             }
 
             Stop();
+        }
+
+        private static List<T> FilterSameConstruct<T>(List<T> blocks, IMyProgrammableBlock reference) where T: IMyTerminalBlock
+        {
+            return blocks.Where(block => block.IsSameConstructAs(reference)).ToList();
         }
 
         private void Load()

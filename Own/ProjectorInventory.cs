@@ -363,7 +363,7 @@ namespace ProjectorInventory
         {
             var projectors = new List<IMyProjector>();
             GridTerminalSystem.GetBlocksOfType<IMyProjector>(projectors);
-            return projectors.Where(block => !block.CustomName.ToLower().Contains("console")).ToList();
+            return projectors.Where(block => block.IsSameConstructAs(Me) && !block.CustomName.ToLower().Contains("console")).ToList();
         }
 
         private void Load()

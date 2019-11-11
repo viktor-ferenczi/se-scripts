@@ -730,7 +730,7 @@ namespace CentralInventory
 
         private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
-            var allowSorting = !PULL_ITEMS_FROM_OWN_GRID_ONLY || cargo.CubeGrid == Me.CubeGrid;
+            var allowSorting = !PULL_ITEMS_FROM_OWN_GRID_ONLY || cargo.IsSameConstructAs(Me);
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);

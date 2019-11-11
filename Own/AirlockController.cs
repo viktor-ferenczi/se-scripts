@@ -142,7 +142,7 @@ namespace AirlockController
 
         // Blocks
 
-        private readonly List<IMyDoor> controlledDoors = new List<IMyDoor>();
+        private List<IMyDoor> controlledDoors = new List<IMyDoor>();
         private readonly Dictionary<string, Airlock> airlocks = new Dictionary<string, Airlock>();
 
         // Parameter parsing (commands)
@@ -200,6 +200,7 @@ namespace AirlockController
         {
             controlledDoors.Clear();
             GridTerminalSystem.GetBlockGroupWithName(DOOR_GROUP)?.GetBlocksOfType<IMyDoor>(controlledDoors);
+            controlledDoors = controlledDoors.Where(door => door.IsSameConstructAs(Me)).ToList();
         }
 
         private void FindAirlocks()
