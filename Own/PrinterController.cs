@@ -112,7 +112,7 @@ namespace PrinterController
         private void ShowLog()
         {
             Echo(log.ToString());
-            Surface.WriteText(highestLogLogSeverity.ToString());
+            Surface.WriteText(log.ToString());
         }
 
         private void IncreaseSeverity(LogSeverity severity)
@@ -183,7 +183,8 @@ namespace PrinterController
         private void Initialize()
         {
             Surface.ContentType = ContentType.TEXT_AND_IMAGE;
-            Surface.FontSize = 4f;
+            Surface.Font = "InfoMessageBoxText";
+            Surface.FontSize = 1.3f;
 
             Reset();
 
@@ -225,8 +226,6 @@ namespace PrinterController
 
         public void Main(string argument, UpdateType updateSource)
         {
-            ClearLog();
-
             Debug("Main {0} {1}", updateSource, argument);
 
             switch (updateSource)
@@ -239,6 +238,7 @@ namespace PrinterController
                 case UpdateType.Script:
                 case UpdateType.Once:
                 case UpdateType.IGC:
+                    ClearLog();
                     try {
                         ProcessCommand(argument);
                     }
@@ -246,6 +246,7 @@ namespace PrinterController
                     {
                         Error(e.ToString());
                     }
+                    Log(highestLogLogSeverity.ToString());
                     break;
 
                 case UpdateType.Update1:
@@ -266,8 +267,6 @@ namespace PrinterController
 
                     break;
             }
-
-            Log(highestLogLogSeverity.ToString());
 
             ShowLog();
         }
@@ -309,9 +308,18 @@ namespace PrinterController
         private void Start()
         {
             projector.ApplyAction("OnOff_On");
+
+            if (!projector.IsProjecting)
+            {
+                Error("Load a blueprint into projector:");
+                Log(PROJECTOR_NAME);
+                return;
+            }
+
             ApplyToAll(welders, "OnOff_On");
             ApplyToAll(pistonsX, "Extend");
             ApplyToAll(pistonsY, "Retract");
+
             StartZ();
             printing = true;
         }
@@ -338,13 +346,21 @@ namespace PrinterController
         {
             if (!printing) return;
 
-            if (!projector.IsProjecting)
+            ClearLog();
+            try
             {
-                Stop();
-                return;
-            }
+                if (!projector.IsProjecting)
+                {
+                    Stop();
+                    return;
+                }
 
-            MoveWeldersAround();
+                MoveWeldersAround();
+            }
+            finally
+            {
+                Log(highestLogLogSeverity.ToString());
+            }
         }
 
         private void MoveWeldersAround()
