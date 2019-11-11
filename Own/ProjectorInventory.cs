@@ -1,5 +1,4 @@
-/*
-Projector Inventory
+/* Projector Inventory
 
 Takes blueprint component requirements from a projector block.
 Takes inventory information from a Central Inventory program.
@@ -642,7 +641,7 @@ namespace ProjectorInventory
             {
                 if (panelIndex >= textPanels.Count)
                 {
-                    Error("Not enough panels to display full information");
+                    Warning("Not enough panels to display full information");
                     break;
                 }
 
