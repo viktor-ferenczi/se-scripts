@@ -144,12 +144,14 @@ namespace CentralInventory
 
         private const string PANELS_GROUP = "Inventory Panels";
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
-        private const bool PULL_ITEMS_FROM_OWN_GRID_ONLY = true;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
         private const int CARGO_BATCH_SIZE = 3;
         private const int BATTERY_BATCH_SIZE = 10;
+        private const bool SHOW_HEADERS = true;
+        private const float DEFAULT_FONT_SIZE = 1f;
+        private const float STATUS_FONT_SIZE = 1.6f;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10;
 
         // Debugging
@@ -505,7 +507,7 @@ namespace CentralInventory
             containerMap.Clear();
 
             var blocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(blocks);
+            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(blocks, block => block.IsSameConstructAs(Me));
             cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
 
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
@@ -545,12 +547,12 @@ namespace CentralInventory
                 if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = 1.6f;
+                    panel.FontSize = STATUS_FONT_SIZE;
                 }
                 else
                 {
                     panel.Font = "Monospace";
-                    panel.FontSize = 1f;
+                    panel.FontSize = DEFAULT_FONT_SIZE;
                 }
             }
 
@@ -730,7 +732,6 @@ namespace CentralInventory
 
         private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
-            var allowSorting = !PULL_ITEMS_FROM_OWN_GRID_ONLY || cargo.IsSameConstructAs(Me);
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);
@@ -770,84 +771,66 @@ namespace CentralInventory
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
-                        if (allowSorting && allowOre)
+                        if (allowOre)
                         {
                             containers = FindContainers("ore");
                         }
                         break;
                     case "MyObjectBuilder_Ingot":
                         summary = ingot;
-                        if (allowSorting && allowIngot)
+                        if (allowIngot)
                         {
                             containers = FindContainers("ingot") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_Component":
                         summary = component;
-                        if (allowSorting && allowComponent)
+                        if (allowComponent)
                         {
                             containers = FindContainers("component") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
-                        if (allowSorting && allowAmmo)
+                        if (allowAmmo)
                         {
                             containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
                         }
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
-                        if (allowSorting)
+                        if (subTypeName.Contains("weld") ||
+                            subTypeName.Contains("grind") ||
+                            subTypeName.Contains("drill"))
                         {
-                            if (subTypeName.Contains("weld") ||
-                                subTypeName.Contains("grind") ||
-                                subTypeName.Contains("drill"))
-                            {
-                                containers = FindContainers("tool") ?? FindContainers("");
-                            }
-                            else
-                            {
-                                containers = FindContainers("weapon") ?? FindContainers("ammo") ??
-                                             FindContainers("tool") ?? FindContainers("");
-                            }
+                            containers = FindContainers("tool") ?? FindContainers("");
+                        }
+                        else
+                        {
+                            containers = FindContainers("weapon") ?? FindContainers("ammo") ??
+                                         FindContainers("tool") ?? FindContainers("");
                         }
 
                         break;
                     case "MyObjectBuilder_Datapad":
                         summary = other;
-                        if(allowSorting)
-                        {
-                            containers = FindContainers("tool") ?? FindContainers("");
-                        }
+                        containers = FindContainers("tool") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_GasContainerObject":
                         summary = other;
-                        if(allowSorting)
-                        {
-                            containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
-                        }
+                        containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
                         summary = other;
-                        if(allowSorting)
-                        {
-                            containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
-                        }
+                        containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_PhysicalObject":
                         summary = other;
-                        if(allowSorting)
-                        {
-                            containers = FindContainers("tool") ?? FindContainers("");
-                        }
+                        containers = FindContainers("tool") ?? FindContainers("");
                         break;
                     case "MyObjectBuilder_ConsumableItem":
                         summary = other;
-                        if(allowSorting)
-                        {
-                            containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
-                        }
+                        containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
                         break;
                     default:
                         Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
@@ -1016,10 +999,14 @@ namespace CentralInventory
             int panelRowCount)
         {
             var page = new StringBuilder();
+            var lineCount = 0;
 
-            page.AppendLine(Capitalize(kind));
-            page.AppendLine(new String('-', kind.Length));
-            var lineCount = 2;
+            if (SHOW_HEADERS)
+            {
+                page.AppendLine(Capitalize(kind));
+                page.AppendLine(new String('-', kind.Length));
+                lineCount = 2;
+            }
 
             var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
             var maxWidth = maxValue >= 10
