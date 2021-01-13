@@ -444,26 +444,28 @@ namespace SolarTower
         private double AxisControl(double powerDelta, double currentAngle, double previousAngle)
         {
             var angleDelta = RotationDelta(currentAngle, previousAngle);
-            var gradient = Gradient(powerDelta, angleDelta);
-            return gradient > 0 ? 1 : (gradient < 0 ? -1 : 0);
-        }
 
-        private double Gradient(double powerDelta, double angleDelta)
-        {
-            Log("angleDelta {0}", angleDelta);
-            if (Math.Abs(angleDelta) < 0.01)
+            if (Math.Abs(angleDelta) < 0.1)
             {
-                return 1;
+                return Math.Abs(angleDelta) >= 0 ? 1 : -1;
             }
 
-            var gradient = powerDelta / angleDelta;
-            Log("gradient {0}", gradient);
-            if (Math.Abs(gradient) < 0.01)
+            if (powerDelta > 0)
             {
-                return 0;
+                if (angleDelta < 3)
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                if (angleDelta > -3)
+                {
+                    return -1;
+                }
             }
 
-            return gradient;
+            return 0;
         }
 
         private static double RotationDelta(double current, double previous)
