@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -64,8 +65,20 @@ namespace GarageCranes
             Surface.WriteText(text, true);
         }
 
+        private IMyBlockGroup CranePistons => GridTerminalSystem.GetBlockGroupWithName("Crane Pistons");
+        private Dictionary<string, IList<IMyPistonBase>> _pistons = new Dictionary<string, IList<IMyPistonBase>>(8);
+
         public Program()
         {
+            var pistons = new List<IMyPistonBase>();
+            CranePistons?.GetBlocksOfType(pistons);
+
+            foreach (var piston in pistons)
+            {
+                if (!_pistons.ContainsKey(piston.CustomName))
+                    _pistons[piston.CustomName] = new List<IMyPistonBase>(3);
+                _pistons[piston.CustomName].Add(piston);
+            }
         }
 
         public void Main(string argument, UpdateType updateSource)
@@ -96,39 +109,29 @@ namespace GarageCranes
 
         private void PrintPistons()
         {
-            var cranePistons = GridTerminalSystem.GetBlockGroupWithName("Crane Pistons");
-
-            var pistons = new List<IMyPistonBase>();
-            cranePistons?.GetBlocksOfType(pistons);
-
-            pistons.SortNoAlloc((a, b) => string.Compare(a.CustomName, b.CustomName, StringComparison.Ordinal));
+            var names = _pistons.Keys.ToList();
+            names.SortNoAlloc(string.CompareOrdinal);
 
             Cls();
-
-            foreach (var piston in pistons)
-            {
-                Print($"{piston.CustomName}\n");
-            }
+            foreach (var name in names)
+                Print($"{_pistons[name].Count} {name}\n");
         }
 
         private void ExtendPiston(char number)
         {
-            foreach (var letter in "ab")
+            foreach (var piston in _pistons[$"Crane Piston {number}"])
             {
-                var piston = GridTerminalSystem.GetBlockWithName($"Crane Piston {number}{letter}") as IMyPistonBase;
-                if (piston == null) continue;
-                piston.MaxLimit = Math.Min(2.0f, piston.CurrentPosition + 0.25f);
+                var left = 2.0f - piston.CurrentPosition;
+                piston.MaxLimit = Math.Min(2.0f, piston.CurrentPosition + 0.1f + left * 0.05f);
                 piston.Velocity = 1;
             }
         }
 
         private void RetractPiston(char number)
         {
-            foreach (var letter in "ab")
+            foreach (var piston in _pistons[$"Crane Piston {number}"])
             {
-                var piston = GridTerminalSystem.GetBlockWithName($"Crane Piston {number}{letter}") as IMyPistonBase;
-                if (piston == null) continue;
-                piston.MinLimit = Math.Max(0, piston.CurrentPosition - 0.25f);
+                piston.MinLimit = Math.Min(2.0f, piston.CurrentPosition - 0.2f);
                 piston.Velocity = -1;
             }
         }
