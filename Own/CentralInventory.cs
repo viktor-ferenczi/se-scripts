@@ -343,9 +343,9 @@ namespace CentralInventory
         {
             ScanCargo,
             ScanBatteries,
-            Report,
             ScanAssemblerQueues,
             ProduceMissing,
+            Report,
             Reset,
         }
 
@@ -355,6 +355,7 @@ namespace CentralInventory
         private double cargoCapacity;
         private double cargoVolume;
         private double cargoMass;
+        private bool movedCargo;
 
         private int batteryIndex;
         private double batteryCharge;
@@ -509,6 +510,7 @@ namespace CentralInventory
             cargoCapacity = 0f;
             cargoVolume = 0f;
             cargoMass = 0f;
+            movedCargo = false;
 
             batteryIndex = 0;
             batteryCapacity = 0f;
@@ -705,7 +707,7 @@ namespace CentralInventory
                     {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
-                            state = State.ScanAssemblerQueues;
+                            state = movedCargo ? State.Report : State.ScanAssemblerQueues;
                             break;
                         }
                         ScanBattery();
@@ -921,6 +923,7 @@ namespace CentralInventory
                             {
                                 if (cargo.Mass != mass)
                                 {
+                                    movedCargo = true;
                                     break;
                                 }
                             }
@@ -1237,12 +1240,9 @@ namespace CentralInventory
             
             foreach (var item in queue)
             {
-                if (item.BlueprintId.TypeId.ToString() == "MyObjectBuilder_Component")
-                {
-                    var subtypeName = item.BlueprintId.SubtypeName;
-                    var amount = queuedComponents.GetValueOrDefault(subtypeName, 0);
-                    queuedComponents[subtypeName] = amount + (int)item.Amount;
-                }
+                var subtypeName = item.BlueprintId.SubtypeName;
+                var amount = queuedComponents.GetValueOrDefault(subtypeName, 0);
+                queuedComponents[subtypeName] = amount + (int)item.Amount;
             }
         }
         
@@ -1268,14 +1268,26 @@ namespace CentralInventory
             foreach (var kv in refillComponents)
             {
                 var subtypeName = kv.Key;
+                var subtypeNameComponent = subtypeName + "Component";
+                
                 var stock = (int)component.GetValueOrDefault(subtypeName);
+                if (stock == 0)
+                {
+                    stock = (int)component.GetValueOrDefault(subtypeNameComponent);
+                }
+
                 var queued = queuedComponents.GetValueOrDefault(subtypeName);
+                if (queued == 0)
+                {
+                    queued = queuedComponents.GetValueOrDefault(subtypeNameComponent);
+                }
+                
                 var missing = REFILL_MINIMUM - queued - stock;
                 if (missing > 0)
                 {
                     var definitionId = kv.Value;
                     Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
-                    //mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
+                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
                 }
             }
         }
