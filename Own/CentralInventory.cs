@@ -1274,7 +1274,7 @@ namespace CentralInventory
                 if (missing > 0)
                 {
                     var definitionId = kv.Value;
-                    Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.ToString()));
+                    Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
                     //mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
                 }
             }
