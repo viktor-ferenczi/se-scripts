@@ -81,6 +81,22 @@ For safety reasons sorting functionality will NOT pull
 Sorting collects items from the programmable block's own grid.
 This is to prevent pulling out cargo from all docked ships.
 
+=== How to set up restocking of components ===
+
+It is useful to restock the components automatically if the inventory
+drops below a certain level, so welding can continue uninterrupted
+without manually managing the assembler queues.
+
+Restocking of components can be enabled by assigning your designated
+assemblers to the "Restock Assemblers" group. Only the components seen
+in the inventory are restocked. Build one of any new component to 
+trigger restocking.
+
+The minimum stock amount is the same for all components and is defined
+at the top of the source code, search for RESTOCK_MINIMUM. If welding 
+interrupts often due to lack of components, then increase this value
+and restart the PB.
+
 === Remarks ===
 
 Display updates and sorting will be slower if you have more blocks.
@@ -156,8 +172,8 @@ namespace CentralInventory
 
         private const string PANELS_GROUP = "Inventory Panels";
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
-        private const string REFILL_ASSEMBLERS_GROUP = "Refill Assemblers";
-        private const int REFILL_MINIMUM = 5;
+        private const string RESTOCK_ASSEMBLERS_GROUP = "Restock Assemblers";
+        private const int RESTOCK_MINIMUM = 10;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
@@ -369,7 +385,7 @@ namespace CentralInventory
         Dictionary<string, double> ammo = new Dictionary<string, double>();
         Dictionary<string, double> other = new Dictionary<string, double>();
 
-        private Dictionary<string, MyDefinitionId> refillComponents = new Dictionary<string, MyDefinitionId>();
+        private Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
         private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
 
         class Container : IComparable<Container>
@@ -524,7 +540,7 @@ namespace CentralInventory
             ammo.Clear();
             other.Clear();
             
-            // DO NOT CLEAR: refillComponents.Clear();
+            // DO NOT CLEAR: restockComponents.Clear();
             queuedComponents.Clear();
 
             cargoBlocks.Clear();
@@ -538,7 +554,7 @@ namespace CentralInventory
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
-            GridTerminalSystem.GetBlockGroupWithName(REFILL_ASSEMBLERS_GROUP)?.GetBlocksOfType<IMyAssembler>(assemblerBlocks);
+            GridTerminalSystem.GetBlockGroupWithName(RESTOCK_ASSEMBLERS_GROUP)?.GetBlocksOfType<IMyAssembler>(assemblerBlocks);
             mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
             
             var containerBlocks = new List<IMyTerminalBlock>();
@@ -593,7 +609,7 @@ namespace CentralInventory
             Log("Blocks with items: {0}", cargoBlocks.Count);
             Log("Sorted containers: {0}", containerBlocks.Count);
             Log("Battery blocks: {0}", batteryBlocks.Count);
-            Log("Refill assemblers: {0}", assemblerBlocks.Count);
+            Log("Restock assemblers: {0}", assemblerBlocks.Count);
         }
 
         private void ClearDisplays()
@@ -847,7 +863,7 @@ namespace CentralInventory
                         {
                             containers = FindContainers("component") ?? FindContainers("");
                         }
-                        if (mainAssemblerIsUsable && !refillComponents.ContainsKey(subtypeId))
+                        if (mainAssemblerIsUsable && !restockComponents.ContainsKey(subtypeId))
                         {
                             // See https://forum.keenswh.com/threads/how-to-add-an-individual-component-to-the-assembler-queue.7393616/
                             // See https://steamcommunity.com/app/244850/discussions/0/527273452877873614/
@@ -859,7 +875,7 @@ namespace CentralInventory
                             }
                             if (mainAssembler.CanUseBlueprint(definitionId))
                             {
-                                refillComponents[subtypeId] = definitionId;
+                                restockComponents[subtypeId] = definitionId;
                             }
                         }
                         break;
@@ -1248,7 +1264,7 @@ namespace CentralInventory
         
         private void ProduceMissing()
         {
-            if (mainAssembler == null || refillComponents.Count == 0 || mainAssembler.Closed || !mainAssembler.IsFunctional)
+            if (mainAssembler == null || restockComponents.Count == 0 || mainAssembler.Closed || !mainAssembler.IsFunctional)
             {
                 return;
             }
@@ -1268,7 +1284,7 @@ namespace CentralInventory
                 Log("---");
             }
             
-            foreach (var kv in refillComponents)
+            foreach (var kv in restockComponents)
             {
                 var subtypeName = kv.Key;
                 var subtypeNameComponent = subtypeName + "Component";
@@ -1285,7 +1301,7 @@ namespace CentralInventory
                     queued = queuedComponents.GetValueOrDefault(subtypeNameComponent);
                 }
                 
-                var missing = REFILL_MINIMUM - queued - stock;
+                var missing = RESTOCK_MINIMUM - queued - stock;
                 if (missing > 0)
                 {
                     var definitionId = kv.Value;
