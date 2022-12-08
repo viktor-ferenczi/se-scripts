@@ -355,7 +355,7 @@ namespace CentralInventory
         private double cargoCapacity;
         private double cargoVolume;
         private double cargoMass;
-        private bool hasMovedCargo;
+        private bool attemptedToMoveCargo;
 
         private int batteryIndex;
         private double batteryCharge;
@@ -510,7 +510,7 @@ namespace CentralInventory
             cargoCapacity = 0f;
             cargoVolume = 0f;
             cargoMass = 0f;
-            hasMovedCargo = false;
+            attemptedToMoveCargo = false;
 
             batteryIndex = 0;
             batteryCapacity = 0f;
@@ -707,7 +707,7 @@ namespace CentralInventory
                     {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
-                            state = State.ScanAssemblerQueues;
+                            state = attemptedToMoveCargo ? State.Report : State.ScanAssemblerQueues;
                             break;
                         }
                         ScanBattery();
@@ -717,7 +717,7 @@ namespace CentralInventory
 
                 case State.ScanAssemblerQueues:
                     ScanAssemblerQueues();
-                    state = hasMovedCargo ? State.Report : State.ProduceMissing;
+                    state = State.ProduceMissing;
                     break;
                 
                 case State.ProduceMissing:
@@ -910,12 +910,13 @@ namespace CentralInventory
                         continue;
                 }
 
-                if (containers != null)
+                if (containers != null && containers.Count != 0)
                 {
                     var alreadyInTheRightPlace = containers.Find(container => container.IsTheSameBlock(cargo)) != null;
 
                     if (!alreadyInTheRightPlace)
                     {
+                        attemptedToMoveCargo = true;
                         foreach (var container in containers)
                         {
                             var mass = cargo.Mass;
@@ -923,7 +924,6 @@ namespace CentralInventory
                             {
                                 if (cargo.Mass != mass)
                                 {
-                                    hasMovedCargo = true;
                                     break;
                                 }
                             }
