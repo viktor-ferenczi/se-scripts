@@ -93,9 +93,21 @@ in the inventory are restocked. Build one of any new component to
 trigger restocking.
 
 The minimum stock amount is the same for all components and is defined
-at the top of the source code, search for RESTOCK_MINIMUM. If welding 
-interrupts often due to lack of components, then increase this value
-and restart the PB.
+at the top of the source code, search for RESTOCK_MINIMUM. The default 
+value is 10.
+
+If welding interrupts often due to lack of components, then modify
+RESTOCK_OVERHEAD to be higher. The default value is 20% of 
+RESTOCK_MINIMUM (rounded down).
+
+The minimum inventory amounts will be RESTOCK_MINIMUM + RESTOCK_OVERHEAD
+or more if no components are consumed and the assembler queue is fully
+processes. This is the "steady state" minimum inventory.
+
+In order to remove a component from restocking turn OFF the PB, then 
+remove all of that component from the grid completely. When the PB is
+turned ON the next time it will not find that component, therefore no
+restocking will happen. 
 
 === Remarks ===
 
@@ -174,6 +186,7 @@ namespace CentralInventory
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
         private const string RESTOCK_ASSEMBLERS_GROUP = "Restock Assemblers";
         private const int RESTOCK_MINIMUM = 10;
+        private const int RESTOCK_OVERHEAD = RESTOCK_MINIMUM / 5;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
@@ -512,6 +525,9 @@ namespace CentralInventory
 
             Reset();
             ClearDisplays();
+            
+            var panel = FindPanels("status").FirstOrDefault();
+            panel?.WriteText("Loading...");
 
             Runtime.UpdateFrequency = UPDATE_FREQUENCY;
         }
@@ -603,6 +619,8 @@ namespace CentralInventory
                     panel.Font = "Monospace";
                     panel.FontSize = DEFAULT_FONT_SIZE;
                 }
+
+                panel.TextPadding = 2f * panel.FontSize;
             }
 
             Log("Text panels: {0}", textPanels.Count);
@@ -1302,14 +1320,14 @@ namespace CentralInventory
                 }
                 
                 var missing = RESTOCK_MINIMUM - queued - stock;
-                if (missing > 0)
+                if (missing > queued)
                 {
                     var definitionId = kv.Value;
                     if (DEBUG)
                     {
                         Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
                     }
-                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
+                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)(missing + RESTOCK_OVERHEAD));
                 }
             }
         }
