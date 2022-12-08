@@ -1252,18 +1252,21 @@ namespace CentralInventory
             {
                 return;
             }
-            
-            foreach (var kv in component)
+
+            if (DEBUG)
             {
-                Log(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
-            }
-            Log("---");
+                foreach (var kv in component)
+                {
+                    Log(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
+                }
+                Log("---");
             
-            foreach (var kv in queuedComponents)
-            {
-                Log(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
+                foreach (var kv in queuedComponents)
+                {
+                    Log(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
+                }
+                Log("---");
             }
-            Log("---");
             
             foreach (var kv in refillComponents)
             {
@@ -1286,7 +1289,10 @@ namespace CentralInventory
                 if (missing > 0)
                 {
                     var definitionId = kv.Value;
-                    Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
+                    if (DEBUG)
+                    {
+                        Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
+                    }
                     mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
                 }
             }
