@@ -157,7 +157,7 @@ namespace CentralInventory
         private const string PANELS_GROUP = "Inventory Panels";
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
         private const string REFILL_ASSEMBLERS_GROUP = "Refill Assemblers";
-        private const int REFILL_MINIMUM = 30;
+        private const int REFILL_MINIMUM = 5;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
