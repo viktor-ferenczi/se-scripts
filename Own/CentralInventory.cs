@@ -355,7 +355,7 @@ namespace CentralInventory
         private double cargoCapacity;
         private double cargoVolume;
         private double cargoMass;
-        private bool movedCargo;
+        private bool hasMovedCargo;
 
         private int batteryIndex;
         private double batteryCharge;
@@ -510,7 +510,7 @@ namespace CentralInventory
             cargoCapacity = 0f;
             cargoVolume = 0f;
             cargoMass = 0f;
-            movedCargo = false;
+            hasMovedCargo = false;
 
             batteryIndex = 0;
             batteryCapacity = 0f;
@@ -707,7 +707,7 @@ namespace CentralInventory
                     {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
-                            state = movedCargo ? State.Report : State.ScanAssemblerQueues;
+                            state = State.ScanAssemblerQueues;
                             break;
                         }
                         ScanBattery();
@@ -717,7 +717,7 @@ namespace CentralInventory
 
                 case State.ScanAssemblerQueues:
                     ScanAssemblerQueues();
-                    state = State.ProduceMissing;
+                    state = hasMovedCargo ? State.Report : State.ProduceMissing;
                     break;
                 
                 case State.ProduceMissing:
@@ -923,7 +923,7 @@ namespace CentralInventory
                             {
                                 if (cargo.Mass != mass)
                                 {
-                                    movedCargo = true;
+                                    hasMovedCargo = true;
                                     break;
                                 }
                             }
