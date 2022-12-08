@@ -19,7 +19,7 @@ Build large text panels with the following words in their name (case insensitive
 - Ammo
 - Other
 - Status
-- Error
+- Log
 - Raw
 
 Assign your text panels to the "Inventory Panels" group.
@@ -75,7 +75,7 @@ For safety reasons sorting functionality will NOT pull
 - ice out of gas generators
 - ingots out of assemblers
 - ingots (Uranium) out of reactors
-- components out of welders
+- components out of enabled welders
 - zone chips out from safe zone generators
 
 Sorting collects items from the programmable block's own grid.
@@ -118,20 +118,32 @@ using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.World;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Interfaces;
 using Sandbox.ModAPI.Weapons;
+using VRage;
+using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Profiler;
 using VRageMath;
 using ContentType = VRage.Game.GUI.TextPanel.ContentType;
+using IMyAirtightSlideDoor = Sandbox.ModAPI.Ingame.IMyAirtightSlideDoor;
+using IMyAssembler = Sandbox.ModAPI.Ingame.IMyAssembler;
 using IMyBatteryBlock = Sandbox.ModAPI.Ingame.IMyBatteryBlock;
 using IMyBlockGroup = Sandbox.ModAPI.Ingame.IMyBlockGroup;
 using IMyCargoContainer = Sandbox.ModAPI.Ingame.IMyCargoContainer;
 using IMyCubeBlock = VRage.Game.ModAPI.Ingame.IMyCubeBlock;
+using IMyGasGenerator = Sandbox.ModAPI.Ingame.IMyGasGenerator;
+using IMyReactor = Sandbox.ModAPI.Ingame.IMyReactor;
+using IMyRefinery = Sandbox.ModAPI.Ingame.IMyRefinery;
+using IMyShipWelder = Sandbox.ModAPI.Ingame.IMyShipWelder;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 using IMyTextPanel = Sandbox.ModAPI.Ingame.IMyTextPanel;
+using IMyTextSurface = Sandbox.ModAPI.Ingame.IMyTextSurface;
+using IMyUserControllableGun = Sandbox.ModAPI.Ingame.IMyUserControllableGun;
 using MyInventoryItem = VRage.Game.ModAPI.Ingame.MyInventoryItem;
 
 namespace CentralInventory
@@ -144,6 +156,8 @@ namespace CentralInventory
 
         private const string PANELS_GROUP = "Inventory Panels";
         private const string SORTED_CONTAINERS_GROUP = "Sorted Containers";
+        private const string REFILL_ASSEMBLERS_GROUP = "Refill Assemblers";
+        private const int REFILL_MINIMUM = 30;
         private const int PANEL_ROW_COUNT = 17;
         private const int PANEL_COLUMN_COUNT = 25;
         private const double DISPLAY_PRECISION = 1;
@@ -152,6 +166,7 @@ namespace CentralInventory
         private const bool SHOW_HEADERS = true;
         private const float DEFAULT_FONT_SIZE = 1f;
         private const float STATUS_FONT_SIZE = 1.6f;
+        private const float LOG_FONT_SIZE = 0.667f;
         private const UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10;
 
         // Debugging
@@ -319,18 +334,22 @@ namespace CentralInventory
         private List<IMyTerminalBlock> cargoBlocks = new List<IMyTerminalBlock>();
         private List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
         private List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
+        private List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
+        private IMyAssembler mainAssembler = null;
 
         // State
 
         private enum State
         {
-            Cargo,
-            Battery,
+            ScanCargo,
+            ScanBatteries,
             Report,
-            Done,
+            ScanAssemblerQueues,
+            ProduceMissing,
+            Reset,
         }
 
-        private State state = State.Cargo;
+        private State state = State.ScanCargo;
 
         private int cargoIndex;
         private double cargoCapacity;
@@ -348,6 +367,9 @@ namespace CentralInventory
         Dictionary<string, double> component = new Dictionary<string, double>();
         Dictionary<string, double> ammo = new Dictionary<string, double>();
         Dictionary<string, double> other = new Dictionary<string, double>();
+
+        private Dictionary<string, MyDefinitionId> refillComponents = new Dictionary<string, MyDefinitionId>();
+        private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
 
         class Container : IComparable<Container>
         {
@@ -472,18 +494,16 @@ namespace CentralInventory
             Surface.FontSize = 4f;
 
             Reset();
+            ClearDisplays();
 
             Runtime.UpdateFrequency = UPDATE_FREQUENCY;
         }
 
         private void Reset()
         {
-            if (!DEBUG)
-            {
-                ClearLog();
-            }
+            ClearLog();
 
-            state = State.Cargo;
+            state = State.ScanCargo;
 
             cargoIndex = 0;
             cargoCapacity = 0f;
@@ -501,6 +521,9 @@ namespace CentralInventory
             component.Clear();
             ammo.Clear();
             other.Clear();
+            
+            // DO NOT CLEAR: refillComponents.Clear();
+            queuedComponents.Clear();
 
             cargoBlocks.Clear();
             textPanels.Clear();
@@ -513,6 +536,9 @@ namespace CentralInventory
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
             GridTerminalSystem.GetBlockGroupWithName(PANELS_GROUP)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
+            GridTerminalSystem.GetBlockGroupWithName(REFILL_ASSEMBLERS_GROUP)?.GetBlocksOfType<IMyAssembler>(assemblerBlocks);
+            mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
+            
             var containerBlocks = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlockGroupWithName(SORTED_CONTAINERS_GROUP)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
 
@@ -549,6 +575,11 @@ namespace CentralInventory
                     panel.Font = "InfoMessageBoxText";
                     panel.FontSize = STATUS_FONT_SIZE;
                 }
+                else if (panel.CustomName.ToLower().Contains("log"))
+                {
+                    panel.Font = "InfoMessageBoxText";
+                    panel.FontSize = LOG_FONT_SIZE;
+                }
                 else
                 {
                     panel.Font = "Monospace";
@@ -560,6 +591,17 @@ namespace CentralInventory
             Log("Blocks with items: {0}", cargoBlocks.Count);
             Log("Sorted containers: {0}", containerBlocks.Count);
             Log("Battery blocks: {0}", batteryBlocks.Count);
+            Log("Refill assemblers: {0}", assemblerBlocks.Count);
+        }
+
+        private void ClearDisplays()
+        {
+            Surface.WriteText("Init");
+            
+            foreach (var panel in textPanels)
+            {
+                panel.WriteText("");
+            }
         }
 
         private void Load()
@@ -581,7 +623,7 @@ namespace CentralInventory
                 case UpdateType.None:
                 case UpdateType.Terminal:
                 case UpdateType.Trigger:
-                case UpdateType.Antenna:
+                //case UpdateType.Antenna:
                 case UpdateType.Mod:
                 case UpdateType.Script:
                 case UpdateType.Once:
@@ -612,6 +654,7 @@ namespace CentralInventory
                     if (highestLogLogSeverity >= LogSeverity.Error)
                     {
                         StopPeriodicProcessing();
+                        DisplayLog();
                     }
 
                     break;
@@ -644,12 +687,12 @@ namespace CentralInventory
         {
             switch (state)
             {
-                case State.Cargo:
+                case State.ScanCargo:
                     for (int batch = 0; batch < CARGO_BATCH_SIZE; batch++)
                     {
                         if (cargoIndex >= cargoBlocks.Count)
                         {
-                            state = State.Battery;
+                            state = State.ScanBatteries;
                             break;
                         }
                         ScanCargo();
@@ -657,12 +700,12 @@ namespace CentralInventory
                     }
                     break;
 
-                case State.Battery:
+                case State.ScanBatteries:
                     for (int batch = 0; batch < BATTERY_BATCH_SIZE; batch++)
                     {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
-                            state = State.Report;
+                            state = State.ScanAssemblerQueues;
                             break;
                         }
                         ScanBattery();
@@ -670,12 +713,22 @@ namespace CentralInventory
                     }
                     break;
 
-                case State.Report:
-                    Report();
-                    state = State.Done;
+                case State.ScanAssemblerQueues:
+                    ScanAssemblerQueues();
+                    state = State.ProduceMissing;
+                    break;
+                
+                case State.ProduceMissing:
+                    ProduceMissing();
+                    state = State.Report;
                     break;
 
-                default:
+                case State.Report:
+                    Report();
+                    state = State.Reset;
+                    break;
+                
+                case State.Reset:
                     Reset();
                     break;
             }
@@ -696,7 +749,7 @@ namespace CentralInventory
                 return;
             }
 
-            if (!block.IsWorking && block is IMyCargoContainer)
+            if (block is IMyCargoContainer && !block.IsWorking)
             {
                 Warning("Disabled cargo: " + block.CustomName);
                 return;
@@ -753,6 +806,8 @@ namespace CentralInventory
                 return;
             }
 
+            bool mainAssemblerIsUsable = mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsFunctional;
+            
             List<Container> containers = null;
 
             for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
@@ -764,7 +819,8 @@ namespace CentralInventory
                     continue;
                 }
 
-                var subTypeName = item.Type.SubtypeId.ToLower();
+                var subtypeId = item.Type.SubtypeId;
+                var lowercaseSubTypeName = subtypeId.ToLower();
 
                 Dictionary<string, double> summary;
                 switch (item.Type.TypeId)
@@ -789,6 +845,21 @@ namespace CentralInventory
                         {
                             containers = FindContainers("component") ?? FindContainers("");
                         }
+                        if (mainAssemblerIsUsable && !refillComponents.ContainsKey(subtypeId))
+                        {
+                            // See https://forum.keenswh.com/threads/how-to-add-an-individual-component-to-the-assembler-queue.7393616/
+                            // See https://steamcommunity.com/app/244850/discussions/0/527273452877873614/
+                            var definitionString = "MyObjectBuilder_BlueprintDefinition/" + subtypeId;
+                            var definitionId = MyDefinitionId.Parse(definitionString);
+                            if (!mainAssembler.CanUseBlueprint(definitionId))
+                            {
+                                definitionId = MyDefinitionId.Parse(definitionString + "Component");
+                            }
+                            if (mainAssembler.CanUseBlueprint(definitionId))
+                            {
+                                refillComponents[subtypeId] = definitionId;
+                            }
+                        }
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
                         summary = ammo;
@@ -799,9 +870,9 @@ namespace CentralInventory
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
                         summary = other;
-                        if (subTypeName.Contains("weld") ||
-                            subTypeName.Contains("grind") ||
-                            subTypeName.Contains("drill"))
+                        if (lowercaseSubTypeName.Contains("weld") ||
+                            lowercaseSubTypeName.Contains("grind") ||
+                            lowercaseSubTypeName.Contains("drill"))
                         {
                             containers = FindContainers("tool") ?? FindContainers("");
                         }
@@ -857,7 +928,7 @@ namespace CentralInventory
                     }
                 }
 
-                Accumulate(summary, item.Type.SubtypeId, (double) item.Amount);
+                Accumulate(summary, subtypeId, (double) item.Amount);
             }
         }
 
@@ -881,7 +952,7 @@ namespace CentralInventory
                 return;
             }
 
-            if (!battery.IsWorking)
+            if (!battery.Enabled)
             {
                 Warning("Disabled battery: " + battery.CustomName);
                 return;
@@ -917,7 +988,7 @@ namespace CentralInventory
             DisplaySummary("other", other, null);
 
             DisplayStatus();
-            DisplayErrors();
+            DisplayLog();
             DisplayRawData();
         }
 
@@ -961,7 +1032,7 @@ namespace CentralInventory
             var panels = FindPanels(kind).ToList();
             if (panels.Count == 0)
             {
-                Log("No text panel for {0}", kind);
+                Debug("No text panel for {0}", kind);
                 return;
             }
 
@@ -1041,8 +1112,8 @@ namespace CentralInventory
 
         private void DisplayStatus()
         {
-            var panels = FindPanels("status").ToList();
-            if (panels.Count == 0)
+            var panel = FindPanels("status").FirstOrDefault();
+            if (panel == null)
             {
                 Warning("No status panel");
                 return;
@@ -1063,34 +1134,32 @@ namespace CentralInventory
             text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(cargoMass * 1e-6)));
             text.AppendLine("");
 
-            var panel = panels.First();
             panel.WriteText(text);
         }
 
-        private void DisplayErrors()
+        private void DisplayLog()
         {
-            var panels = FindPanels("error").ToList();
-            if (panels.Count == 0)
+            var panel = FindPanels("log").FirstOrDefault();
+            if (panel == null)
             {
-                Log("No error panel");
+                Log("No log panel");
                 return;
             }
 
-            var text = Wrap(log.ToString(), PANEL_COLUMN_COUNT);
-
-            var panel = panels.First();
+            //var text = Wrap(log.ToString(), (int)(PANEL_COLUMN_COUNT / LOG_FONT_SIZE));
+            var text = log.ToString();
             panel.WriteText(text);
         }
 
         private void DisplayRawData()
         {
-            var panels = FindPanels("raw").ToList();
-            if (panels.Count == 0)
+            var panel = FindPanels("raw").FirstOrDefault();
+            if (panel == null)
             {
                 return;
             }
 
-            panels[0].WriteText(rawData);
+            panel.WriteText(rawData);
         }
 
         private static string FormatDateTime(DateTime dt)
@@ -1147,6 +1216,68 @@ namespace CentralInventory
                 }
             }
             return output.ToString();
+        }
+
+        private void ScanAssemblerQueues()
+        {
+            foreach (var assembler in assemblerBlocks)
+            {
+                if (assembler.Closed || !assembler.IsFunctional)
+                {
+                    continue;
+                }
+                SummarizeAssemblerQueue(assembler);
+            }
+        }
+
+        private void SummarizeAssemblerQueue(IMyAssembler assembler)
+        {
+            var queue = new List<MyProductionItem>();
+            assembler.GetQueue(queue);
+            
+            foreach (var item in queue)
+            {
+                if (item.BlueprintId.TypeId.ToString() == "MyObjectBuilder_Component")
+                {
+                    var subtypeName = item.BlueprintId.SubtypeName;
+                    var count = queuedComponents.GetValueOrDefault(subtypeName, 0);
+                    queuedComponents[subtypeName] = count + 1;
+                }
+            }
+        }
+        
+        private void ProduceMissing()
+        {
+            if (mainAssembler == null || refillComponents.Count == 0 || mainAssembler.Closed || !mainAssembler.IsFunctional)
+            {
+                return;
+            }
+            
+            foreach (var kv in component)
+            {
+                Log(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
+            }
+            Log("---");
+            
+            foreach (var kv in queuedComponents)
+            {
+                Log(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
+            }
+            Log("---");
+            
+            foreach (var kv in refillComponents)
+            {
+                var subtypeName = kv.Key;
+                var stock = (int)component.GetValueOrDefault(subtypeName);
+                var queued = queuedComponents.GetValueOrDefault(subtypeName);
+                var missing = REFILL_MINIMUM - queued - stock;
+                if (missing > 0)
+                {
+                    var definitionId = kv.Value;
+                    Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.ToString()));
+                    //mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)missing);
+                }
+            }
         }
 
         #endregion
