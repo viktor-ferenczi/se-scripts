@@ -1240,8 +1240,8 @@ namespace CentralInventory
                 if (item.BlueprintId.TypeId.ToString() == "MyObjectBuilder_Component")
                 {
                     var subtypeName = item.BlueprintId.SubtypeName;
-                    var count = queuedComponents.GetValueOrDefault(subtypeName, 0);
-                    queuedComponents[subtypeName] = count + 1;
+                    var amount = queuedComponents.GetValueOrDefault(subtypeName, 0);
+                    queuedComponents[subtypeName] = amount + (int)item.Amount;
                 }
             }
         }
