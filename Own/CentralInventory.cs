@@ -620,7 +620,7 @@ namespace CentralInventory
                     panel.FontSize = DEFAULT_FONT_SIZE;
                 }
 
-                panel.TextPadding = 2f * panel.FontSize;
+                panel.TextPadding = panel.FontSize;
             }
 
             Log("Text panels: {0}", textPanels.Count);
