@@ -4,7 +4,7 @@ using IMyGridTerminalSystem = Sandbox.ModAPI.Ingame.IMyGridTerminalSystem;
 using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
 using IMyGridProgram = Sandbox.ModAPI.IMyGridProgram;
 
-namespace MultigridProjectorPrograms.Skeleton
+namespace SpaceEngineersScripts.Skeleton
 {
     public class SpaceEngineersProgram : IMyGridProgram
     {

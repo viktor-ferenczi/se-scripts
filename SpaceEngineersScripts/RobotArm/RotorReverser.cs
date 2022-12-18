@@ -1,7 +1,7 @@
 using System;
 using Sandbox.ModAPI.Ingame;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class RotorReverser
     {

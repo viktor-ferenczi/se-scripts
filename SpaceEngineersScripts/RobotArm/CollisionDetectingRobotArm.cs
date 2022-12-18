@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Sandbox.ModAPI.Ingame;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class CollisionDetectingRobotArm : RobotArm
     {

@@ -2,7 +2,7 @@
 using VRageMath;
 using Sandbox.ModAPI.Ingame;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public static class Tests
     {

@@ -5,7 +5,7 @@ using VRageMath;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.GUI.TextPanel;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     class Program : MyGridProgram
     {

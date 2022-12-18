@@ -2,7 +2,7 @@ using System.Text;
 using Sandbox.ModAPI.Ingame;
 using VRageMath;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public static class Util
     {

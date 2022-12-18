@@ -4,7 +4,7 @@ using System.Text;
 using Sandbox.ModAPI.Ingame;
 using VRageMath;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class Shipyard
     {

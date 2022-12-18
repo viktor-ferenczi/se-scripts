@@ -7,9 +7,12 @@ import re
 import sys
 from typing import List, Set
 
-OUTPUT_FILENAME = 'Program-for-code-editor.cs'
-
 WRITE_USINGS = False
+
+CWD = os.getcwd()
+SOURCE_FOLDER_NAME = os.path.split(CWD)[1]
+PROGRAMS_DIR = os.path.join(os.getenv('APPDATA'), 'SpaceEngineers', 'Programs')
+OUTPUT_FILENAME = ''  # 'Program-for-code-editor.cs'
 
 RX_MAIN_CLASS = re.compile(r'.*?class\s+[_a-zA-Z]+\s*:\s*MyGridProgram.*')
 
@@ -49,8 +52,9 @@ class Source:
 
 class Converter:
 
-    def __init__(self, folder: str):
+    def __init__(self, folder: str, name: str):
         self.folder = folder
+        self.name = name
 
         self.sources: List[Source] = self.load_source_files()
         self.sources = [source for source in self.sources if source.is_valid]
@@ -80,6 +84,7 @@ class Converter:
 
     def write_program(self, output_path: str) -> None:
         with open(output_path, 'wt', encoding='utf-8') as f:
+            print(f'// Program: {self.name}', file=f)
 
             if WRITE_USINGS:
 
@@ -133,8 +138,10 @@ def measure_indentation(lines: List[str]) -> int:
 
 
 def main() -> None:
-    converter = Converter('.')
-    converter.write_program(OUTPUT_FILENAME)
+    os.makedirs(PROGRAMS_DIR, exist_ok=True)
+    path = os.path.join(PROGRAMS_DIR, f'{SOURCE_FOLDER_NAME}.cs')
+    converter = Converter(CWD, SOURCE_FOLDER_NAME)
+    converter.write_program(path)
 
 
 if __name__ == '__main__':

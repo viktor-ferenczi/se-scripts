@@ -3,7 +3,7 @@ using System.Linq;
 using VRage.Game;
 using VRageMath;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class Subgrid
     {

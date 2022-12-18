@@ -1,6 +1,6 @@
 ﻿using Sandbox.ModAPI.Ingame;
 
-namespace MultigridProjectorPrograms.Skeleton.Explained
+namespace SpaceEngineersScripts.Skeleton.Explained
 {
     partial class Program: MyGridProgram
     {

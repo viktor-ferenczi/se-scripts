@@ -88,6 +88,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Inventory\CentralInventory.cs" />
         <Compile Include="Others\Eloka.cs" />
         <Compile Include="Others\GravityDrive.cs" />
         <Compile Include="Others\LAMP.cs" />
@@ -110,8 +111,25 @@
         <Compile Include="Own\SpaceEngineersProgram.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="RobotArm\Cfg.cs" />
+        <Compile Include="RobotArm\CollisionDetectingRobotArm.cs" />
+        <Compile Include="RobotArm\Main.cs" />
+        <Compile Include="RobotArm\MgpApi.cs" />
+        <Compile Include="RobotArm\RobotArm.cs" />
+        <Compile Include="RobotArm\RotorReverser.cs" />
+        <Compile Include="RobotArm\Segments.cs" />
+        <Compile Include="RobotArm\Shipyard.cs" />
+        <Compile Include="RobotArm\Subgrid.cs" />
+        <Compile Include="RobotArm\Tests.cs" />
+        <Compile Include="RobotArm\Util.cs" />
+        <Compile Include="RobotArm\WelderArm.cs" />
+        <Compile Include="RobotArm\WelderArmState.cs" />
+        <Compile Include="Skeleton\Explained\ProgramExplained.cs" />
+        <Compile Include="Skeleton\Skeleton.cs" />
+        <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
     </ItemGroup>
     <ItemGroup>
+      <Content Include="merge_program.py" />
       <Content Include="Others\Others.csproj" />
       <Content Include="Own\Own.csproj" />
     </ItemGroup>

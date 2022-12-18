@@ -5,7 +5,7 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRageMath;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class RobotArm
     {

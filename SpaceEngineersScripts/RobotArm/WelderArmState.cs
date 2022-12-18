@@ -1,4 +1,4 @@
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public enum WelderArmState
     {

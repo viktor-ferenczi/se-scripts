@@ -4,7 +4,7 @@ using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRageMath;
 
-namespace MultigridProjectorPrograms.RobotArm
+namespace SpaceEngineersScripts.RobotArm
 {
     public class WelderArm : CollisionDetectingRobotArm
     {

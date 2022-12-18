@@ -19,7 +19,7 @@ using System.Text;
 using Sandbox.ModAPI.Ingame;
 using ContentType = VRage.Game.GUI.TextPanel.ContentType;
 
-namespace MultigridProjectorPrograms.Skeleton
+namespace SpaceEngineersScripts.Skeleton
 {
     public class Program: SpaceEngineersProgram
     {
