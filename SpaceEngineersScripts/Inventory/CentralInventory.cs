@@ -12,31 +12,25 @@ namespace SpaceEngineersScripts.Inventory
 {
     public static class Cfg
     {
-        
+        public const string PanelsGroup = "Inventory Panels";
+        public const string SortedContainersGroup = "Sorted Containers";
+        public const string RestockAssemblersGroup = "Restock Assemblers";
+        public const int RestockMinimum = 10;
+        public const int RestockOverhead = RestockMinimum / 5;
+        public const int PanelRowCount = 17;
+        public const int PanelColumnCount = 25;
+        public const double DisplayPrecision = 1;
+        public const int CargoBatchSize = 3;
+        public const int BatteryBatchSize = 10;
+        public const bool ShowHeaders = true;
+        public const float DefaultFontSize = 1f;
+        public const float StatusFontSize = 1.6f;
+        public const float LogFontSize = 0.667f;
+        public const UpdateFrequency UpdateFrequency = Sandbox.ModAPI.Ingame.UpdateFrequency.Update10;
     }
     
     public class Program: MyGridProgram
     {
-        #region CodeEditor
-
-        // Config
-
-        private const string PanelsGroup = "Inventory Panels";
-        private const string SortedContainersGroup = "Sorted Containers";
-        private const string RestockAssemblersGroup = "Restock Assemblers";
-        private const int RestockMinimum = 10;
-        private const int RestockOverhead = RestockMinimum / 5;
-        private const int PanelRowCount = 17;
-        private const int PanelColumnCount = 25;
-        private const double DisplayPrecision = 1;
-        private const int CargoBatchSize = 3;
-        private const int BatteryBatchSize = 10;
-        private const bool ShowHeaders = true;
-        private const float DefaultFontSize = 1f;
-        private const float StatusFontSize = 1.6f;
-        private const float LogFontSize = 0.667f;
-        private const UpdateFrequency UpdateFrequency = Sandbox.ModAPI.Ingame.UpdateFrequency.Update10;
-
         // Debugging
 
         enum LogSeverity
@@ -368,7 +362,7 @@ namespace SpaceEngineersScripts.Inventory
             var panel = FindPanels("status").FirstOrDefault();
             panel?.WriteText("Loading...");
 
-            Runtime.UpdateFrequency = UpdateFrequency;
+            Runtime.UpdateFrequency = Cfg.UpdateFrequency;
         }
 
         private void Reset()
@@ -407,13 +401,13 @@ namespace SpaceEngineersScripts.Inventory
             cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
 
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
-            GridTerminalSystem.GetBlockGroupWithName(PanelsGroup)?.GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(Cfg.PanelsGroup)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
-            GridTerminalSystem.GetBlockGroupWithName(RestockAssemblersGroup)?.GetBlocksOfType<IMyAssembler>(assemblerBlocks);
+            GridTerminalSystem.GetBlockGroupWithName(Cfg.RestockAssemblersGroup)?.GetBlocksOfType<IMyAssembler>(assemblerBlocks);
             mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
             
             var containerBlocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlockGroupWithName(SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
+            GridTerminalSystem.GetBlockGroupWithName(Cfg.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
 
             foreach (var containerBlock in containerBlocks)
             {
@@ -435,7 +429,7 @@ namespace SpaceEngineersScripts.Inventory
 
             if (textPanels == null || textPanels.Count == 0)
             {
-                Error("No text panels in group {0}", PanelsGroup);
+                Error("No text panels in group {0}", Cfg.PanelsGroup);
                 return;
             }
 
@@ -446,17 +440,17 @@ namespace SpaceEngineersScripts.Inventory
                 if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = StatusFontSize;
+                    panel.FontSize = Cfg.StatusFontSize;
                 }
                 else if (panel.CustomName.ToLower().Contains("log"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = LogFontSize;
+                    panel.FontSize = Cfg.LogFontSize;
                 }
                 else
                 {
                     panel.Font = "Monospace";
-                    panel.FontSize = DefaultFontSize;
+                    panel.FontSize = Cfg.DefaultFontSize;
                 }
 
                 panel.TextPadding = panel.FontSize;
@@ -563,7 +557,7 @@ namespace SpaceEngineersScripts.Inventory
             switch (state)
             {
                 case State.ScanCargo:
-                    for (int batch = 0; batch < CargoBatchSize; batch++)
+                    for (int batch = 0; batch < Cfg.CargoBatchSize; batch++)
                     {
                         if (cargoIndex >= cargoBlocks.Count)
                         {
@@ -576,7 +570,7 @@ namespace SpaceEngineersScripts.Inventory
                     break;
 
                 case State.ScanBatteries:
-                    for (int batch = 0; batch < BatteryBatchSize; batch++)
+                    for (int batch = 0; batch < Cfg.BatteryBatchSize; batch++)
                     {
                         if (batteryIndex >= batteryBlocks.Count)
                         {
@@ -850,7 +844,7 @@ namespace SpaceEngineersScripts.Inventory
             AppendRawData("cargoVolume", cargoVolume);
             AppendRawData("cargoMass", cargoMass * 1e-6);
 
-            GridTerminalSystem.GetBlockGroupWithName(PanelsGroup)?.GetBlocksOfType<IMyTextPanel>(textPanels);
+            GridTerminalSystem.GetBlockGroupWithName(Cfg.PanelsGroup)?.GetBlocksOfType<IMyTextPanel>(textPanels);
 
             foreach (var panel in textPanels)
             {
@@ -912,7 +906,7 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            var panelRowCount = (int)Math.Floor(PanelRowCount / panels[0].FontSize);
+            var panelRowCount = (int)Math.Floor(Cfg.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
             foreach (var page in FormatSummary(kind, summary, resourceNameFormatter, panelRowCount))
@@ -948,7 +942,7 @@ namespace SpaceEngineersScripts.Inventory
             var page = new StringBuilder();
             var lineCount = 0;
 
-            if (ShowHeaders)
+            if (Cfg.ShowHeaders)
             {
                 page.AppendLine(Capitalize(kind));
                 page.AppendLine(new String('-', kind.Length));
@@ -957,7 +951,7 @@ namespace SpaceEngineersScripts.Inventory
 
             var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
             var maxWidth = maxValue >= 10
-                ? string.Format("{0:n0}", Math.Round(maxValue / DisplayPrecision) * DisplayPrecision).Length
+                ? string.Format("{0:n0}", Math.Round(maxValue / Cfg.DisplayPrecision) * Cfg.DisplayPrecision).Length
                 : 1;
 
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
@@ -965,7 +959,7 @@ namespace SpaceEngineersScripts.Inventory
             {
                 AppendRawData(kind + item.Key, item.Value);
 
-                var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / DisplayPrecision) * DisplayPrecision);
+                var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / Cfg.DisplayPrecision) * Cfg.DisplayPrecision);
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + name;
 
@@ -1158,7 +1152,7 @@ namespace SpaceEngineersScripts.Inventory
                     queued = queuedComponents.GetValueOrDefault(subtypeNameComponent);
                 }
                 
-                var missing = RestockMinimum - queued - stock;
+                var missing = Cfg.RestockMinimum - queued - stock;
                 if (missing > queued)
                 {
                     var definitionId = kv.Value;
@@ -1166,11 +1160,9 @@ namespace SpaceEngineersScripts.Inventory
                     {
                         Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
                     }
-                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)(missing + RestockOverhead));
+                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)(missing + Cfg.RestockOverhead));
                 }
             }
         }
-
-        #endregion
     }
 }
