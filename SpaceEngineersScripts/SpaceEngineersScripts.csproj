@@ -129,9 +129,11 @@
         <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
     </ItemGroup>
     <ItemGroup>
+      <Content Include="Inventory\README.md" />
       <Content Include="merge_program.py" />
       <Content Include="Others\Others.csproj" />
       <Content Include="Own\Own.csproj" />
+      <Content Include="RobotArm\README.md" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
