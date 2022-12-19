@@ -10,37 +10,9 @@ using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory
 {
-    public static class Cfg
-    {
-        public const string PanelsGroup = "Inventory Panels";
-        public const string SortedContainersGroup = "Sorted Containers";
-        public const string RestockAssemblersGroup = "Restock Assemblers";
-        public const int RestockMinimum = 10;
-        public const int RestockOverhead = RestockMinimum / 5;
-        public const int PanelRowCount = 17;
-        public const int PanelColumnCount = 25;
-        public const double DisplayPrecision = 1;
-        public const int CargoBatchSize = 3;
-        public const int BatteryBatchSize = 10;
-        public const bool ShowHeaders = true;
-        public const float DefaultFontSize = 1f;
-        public const float StatusFontSize = 1.6f;
-        public const float LogFontSize = 0.667f;
-        public const UpdateFrequency UpdateFrequency = Sandbox.ModAPI.Ingame.UpdateFrequency.Update10;
-    }
-    
     public class Program: MyGridProgram
     {
-        // Debugging
-
-        enum LogSeverity
-        {
-            Ok,
-            Warning,
-            Error,
-        }
-
-        private bool DEBUG = false;
+        private bool debug = false;
         private LogSeverity highestLogLogSeverity = LogSeverity.Ok;
         private readonly StringBuilder log = new StringBuilder();
 
@@ -51,7 +23,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void Debug(string formatString, params object[] args)
         {
-            if (DEBUG)
+            if (debug)
             {
                 Log("D: " + formatString, args);
             }
@@ -99,97 +71,6 @@ namespace SpaceEngineersScripts.Inventory
 
         // Tables
 
-        private enum Component
-        {
-            BulletproofGlass,
-            ComputerComponent,
-            ConstructionComponent,
-            DetectorComponent,
-            Display,
-            ExplosivesComponent,
-            GirderComponent,
-            GravityGeneratorComponent,
-            InteriorPlate,
-            LargeTube,
-            MedicalComponent,
-            MetalGrid,
-            MotorComponent,
-            PowerCell,
-            RadioCommunicationComponent,
-            ReactorComponent,
-            SmallTube,
-            SolarCell,
-            SteelPlate,
-            Superconductor,
-            ThrustComponent,
-            ZoneChip,
-        }
-
-        private readonly Dictionary<Component, string> componentNames = new Dictionary<Component, string>()
-        {
-            [Component.BulletproofGlass] = "Bulletproof Glass",
-            [Component.ComputerComponent] = "Computer",
-            [Component.ConstructionComponent] = "Construction Component",
-            [Component.DetectorComponent] = "Detector Component",
-            [Component.Display] = "Display",
-            [Component.ExplosivesComponent] = "Explosive",
-            [Component.GirderComponent] = "Girder",
-            [Component.GravityGeneratorComponent] = "Gravity Gen Component",
-            [Component.InteriorPlate] = "Interior Plate",
-            [Component.LargeTube] = "Large Steel Tube",
-            [Component.MedicalComponent] = "Medical Component",
-            [Component.MetalGrid] = "Metal Grid",
-            [Component.MotorComponent] = "Motor Component",
-            [Component.PowerCell] = "Power Cell",
-            [Component.RadioCommunicationComponent] = "Radio-Comm Component",
-            [Component.ReactorComponent] = "Reactor Component",
-            [Component.SmallTube] = "Small Steel Tube",
-            [Component.SolarCell] = "Solar Cell",
-            [Component.SteelPlate] = "Steel Plate",
-            [Component.Superconductor] = "Superconductor Component",
-            [Component.ThrustComponent] = "Thruster Component",
-            [Component.ZoneChip] = "Zone Chip",
-        };
-
-        private enum Ingot
-        {
-            Cobalt, Gold, Iron, Magnesium, Nickel, Platinum, Silicon, Silver, Stone, Uranium
-        }
-
-        private readonly Dictionary<Ingot, string> ingotNames = new Dictionary<Ingot, string>()
-        {
-            [Ingot.Cobalt] = "Cobalt Ingot",
-            [Ingot.Gold] = "Gold Ingot",
-            [Ingot.Iron] = "Iron Ingot",
-            [Ingot.Magnesium] = "Magnesium Powder",
-            [Ingot.Nickel] = "Nickel Ingot",
-            [Ingot.Platinum] = "Platinum Ingot",
-            [Ingot.Silicon] = "Silicon Wafer",
-            [Ingot.Silver] = "Silver Ingot",
-            [Ingot.Stone] = "Gravel",
-            [Ingot.Uranium] = "Uranium Ingot",
-        };
-
-        private enum Ore
-        {
-            Cobalt, Gold, Ice, Iron, Magnesium, Nickel, Platinum, Scrap, Silicon, Silver, Stone, Uranium
-        }
-
-        private readonly Dictionary<Ore, string> oreNames = new Dictionary<Ore, string>()
-        {
-            [Ore.Cobalt] = "Cobalt Ore",
-            [Ore.Gold] = "Gold Ore",
-            [Ore.Ice] = "Ice Ore",
-            [Ore.Iron] = "Iron Ore",
-            [Ore.Magnesium] = "Magnesium Ore",
-            [Ore.Nickel] = "Nickel Ore",
-            [Ore.Platinum] = "Platinum Ore",
-            [Ore.Scrap] = "Scrap Metal",
-            [Ore.Silicon] = "Silicon Ore",
-            [Ore.Silver] = "Silver Ore",
-            [Ore.Stone] = "Stone",
-            [Ore.Uranium] = "Uranium Ore",
-        };
 
         // Blocks
 
@@ -867,7 +748,7 @@ namespace SpaceEngineersScripts.Inventory
             Ore enumValue;
             if (Ore.TryParse(key, out enumValue))
             {
-                return oreNames[enumValue];
+                return Naming.OreNames[enumValue];
             }
 
             return key;
@@ -878,7 +759,7 @@ namespace SpaceEngineersScripts.Inventory
             Ingot enumValue;
             if (Ingot.TryParse(key, out enumValue))
             {
-                return ingotNames[enumValue];
+                return Naming.IngotNames[enumValue];
             }
 
             return key;
@@ -889,7 +770,7 @@ namespace SpaceEngineersScripts.Inventory
             Component enumValue;
             if (Component.TryParse(key, out enumValue))
             {
-                return componentNames[enumValue];
+                return Naming.ComponentNames[enumValue];
             }
 
             return key;
@@ -1120,7 +1001,7 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            if (DEBUG)
+            if (debug)
             {
                 foreach (var kv in component)
                 {
@@ -1156,7 +1037,7 @@ namespace SpaceEngineersScripts.Inventory
                 if (missing > queued)
                 {
                     var definitionId = kv.Value;
-                    if (DEBUG)
+                    if (debug)
                     {
                         Log(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
                     }
