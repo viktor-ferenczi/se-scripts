@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RobotArm" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Inventory" type="PythonConfigurationType" factoryName="Python">
     <module name="rider.module" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -7,7 +7,7 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="C:\Python39\python.exe" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/SpaceEngineersScripts/RobotArm" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/SpaceEngineersScripts/Inventory" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
