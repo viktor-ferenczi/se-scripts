@@ -436,16 +436,14 @@ namespace SpaceEngineersScripts.Inventory
             }
 
             var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
-            var maxWidth = maxValue >= 10
-                ? string.Format("{0:n0}", Math.Round(maxValue / cfg.DisplayPrecision) * cfg.DisplayPrecision).Length
-                : 1;
+            var maxWidth = maxValue >= 10 ? $"{Math.Round(maxValue / cfg.DisplayPrecision) * cfg.DisplayPrecision:n0}".Length : 1;
 
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
                 rawData.Append(kind + item.Key, item.Value);
 
-                var formattedAmount = string.Format("{0:n0}", Math.Round(item.Value / cfg.DisplayPrecision) * cfg.DisplayPrecision);
+                var formattedAmount = $"{Math.Round(item.Value / cfg.DisplayPrecision) * cfg.DisplayPrecision:n0}";
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + name;
 

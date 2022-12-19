@@ -15,12 +15,12 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Append(string name, string value)
         {
-            text.AppendLine(string.Format("{0}: \"{1}\"", name, value));
+            text.AppendLine($"{name}: \"{value}\"");
         }
 
         public void Append(string name, double value)
         {
-            text.AppendLine(string.Format("{0}: {1}", name, value));
+            text.AppendLine($"{name}: {value}");
         }
     }
 }

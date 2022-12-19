@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
-using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 
 namespace SpaceEngineersScripts.Inventory
@@ -49,8 +48,9 @@ namespace SpaceEngineersScripts.Inventory
         private double batteryCharge;
         private double batteryCapacity;
 
-        private Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
-        private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
+        // FIXME:
+        //private Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
+        //private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
 
 
 
@@ -113,13 +113,13 @@ namespace SpaceEngineersScripts.Inventory
             rawData.Clear();
             
             // DO NOT CLEAR: restockComponents.Clear();
-            queuedComponents.Clear();
+            // FIXME: queuedComponents.Clear();
 
             // FIXME: Refactor 
             //GridTerminalSystem.GetBlockGroupWithName(cfg.RestockAssemblersGroup)?.GetBlocksOfType(assemblerBlocks, block => block.IsSameConstructAs(Me));
             //mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
             
-            GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks);
+            GridTerminalSystem.GetBlocksOfType(batteryBlocks);
 
             
 
@@ -323,14 +323,14 @@ namespace SpaceEngineersScripts.Inventory
             text.AppendLine(FormatDateTime(DateTime.UtcNow));
             text.AppendLine("");
 
-            text.AppendLine(string.Format("Battery: {0:p0}", batteryCharge / Math.Max(1, batteryCapacity)));
-            text.AppendLine(string.Format("Energy: {0:n2} MWh", Math.Round(batteryCharge)));
+            text.AppendLine($"Battery: {batteryCharge / Math.Max(1, batteryCapacity):p0}");
+            text.AppendLine($"Energy: {Math.Round(batteryCharge):n2} MWh");
             text.AppendLine("");
 
-            text.AppendLine(string.Format("Cargo: {0:p0}", inventory.CargoVolume / Math.Max(1, inventory.CargoCapacity)));
-            text.AppendLine(string.Format(" Capacity: {0:n0} ML", Math.Round(inventory.CargoCapacity * 1e-6)));
-            text.AppendLine(string.Format(" Volume: {0:n0} ML", Math.Round(inventory.CargoVolume * 1e-6)));
-            text.AppendLine(string.Format(" Mass: {0:n0} kg", Math.Round(inventory.CargoMass * 1e-6)));
+            text.AppendLine($"Cargo: {inventory.CargoVolume / Math.Max(1, inventory.CargoCapacity):p0}");
+            text.AppendLine($" Capacity: {Math.Round(inventory.CargoCapacity * 1e-6):n0} ML");
+            text.AppendLine($" Volume: {Math.Round(inventory.CargoVolume * 1e-6):n0} ML");
+            text.AppendLine($" Mass: {Math.Round(inventory.CargoMass * 1e-6):n0} kg");
             text.AppendLine("");
 
             panel.WriteText(text);
@@ -363,7 +363,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private static string FormatDateTime(DateTime dt)
         {
-            return string.Format("{0:yyyy-MM-dd HH:mm:ss} UTC", dt);
+            return $"{dt:yyyy-MM-dd HH:mm:ss} UTC";
         }
 
         // FIXME: Refactor
