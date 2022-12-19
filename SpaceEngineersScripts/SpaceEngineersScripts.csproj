@@ -15,7 +15,7 @@
         <LangVersion>6</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
+        <PlatformTarget>x64</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
         <Optimize>false</Optimize>
@@ -25,7 +25,7 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
+        <PlatformTarget>x64</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
         <OutputPath>bin\Release\</OutputPath>
@@ -88,32 +88,35 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Inventory\Container.cs" />
         <Compile Include="Inventory\Main.cs" />
         <Compile Include="Inventory\Cfg.cs" />
         <Compile Include="Inventory\Log.cs" />
         <Compile Include="Inventory\LogSeverity.cs" />
         <Compile Include="Inventory\Naming.cs" />
         <Compile Include="Inventory\Inventory.cs" />
-        <Compile Include="Others\Eloka.cs" />
-        <Compile Include="Others\GravityDrive.cs" />
-        <Compile Include="Others\LAMP.cs" />
-        <Compile Include="Others\Program.cs" />
-        <Compile Include="Others\ProjectorInventory.cs" />
-        <Compile Include="Others\Robot10-Resupply-script.cs" />
-        <Compile Include="Others\ShipInventory.cs" />
-        <Compile Include="Others\ShipLayout.cs" />
-        <Compile Include="Others\SimpleSorter.cs" />
-        <Compile Include="Others\TheGalleryAirlock.cs" />
-        <Compile Include="Others\TheGalleryBlockInfo.cs" />
-        <Compile Include="Others\TheGalleryMacros.cs" />
-        <Compile Include="Own\AirlockController.cs" />
-        <Compile Include="Own\CentralInventory.cs" />
-        <Compile Include="Own\GarageCranes.cs" />
-        <Compile Include="Own\PrinterController.cs" />
-        <Compile Include="Own\ProjectorInventory.cs" />
-        <Compile Include="Own\Skeleton.cs" />
-        <Compile Include="Own\SolarTower.cs" />
-        <Compile Include="Own\SpaceEngineersProgram.cs" />
+        <Compile Include="Inventory\RawData.cs" />
+        <Compile Include="Inventory\TextPanels.cs" />
+        <Compile Include="Inventory\Util.cs" />
+        <None Include="Others\Eloka.cs" />
+        <None Include="Others\GravityDrive.cs" />
+        <None Include="Others\LAMP.cs" />
+        <None Include="Others\Program.cs" />
+        <None Include="Others\ProjectorInventory.cs" />
+        <None Include="Others\Robot10-Resupply-script.cs" />
+        <None Include="Others\ShipInventory.cs" />
+        <None Include="Others\ShipLayout.cs" />
+        <None Include="Others\SimpleSorter.cs" />
+        <None Include="Others\TheGalleryAirlock.cs" />
+        <None Include="Others\TheGalleryBlockInfo.cs" />
+        <None Include="Others\TheGalleryMacros.cs" />
+        <None Include="Own\AirlockController.cs" />
+        <None Include="Own\GarageCranes.cs" />
+        <None Include="Own\PrinterController.cs" />
+        <None Include="Own\ProjectorInventory.cs" />
+        <None Include="Own\Skeleton.cs" />
+        <None Include="Own\SolarTower.cs" />
+        <None Include="Own\SpaceEngineersProgram.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="RobotArm\Cfg.cs" />
@@ -129,15 +132,13 @@
         <Compile Include="RobotArm\Util.cs" />
         <Compile Include="RobotArm\WelderArm.cs" />
         <Compile Include="RobotArm\WelderArmState.cs" />
-        <Compile Include="Skeleton\Explained\ProgramExplained.cs" />
-        <Compile Include="Skeleton\Skeleton.cs" />
-        <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
+        <None Include="Skeleton\Explained\ProgramExplained.cs" />
+        <None Include="Skeleton\Skeleton.cs" />
+        <None Include="Skeleton\SpaceEngineersProgram.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="Inventory\README.md" />
       <Content Include="merge_program.py" />
-      <Content Include="Others\Others.csproj" />
-      <Content Include="Own\Own.csproj" />
       <Content Include="RobotArm\README.md" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

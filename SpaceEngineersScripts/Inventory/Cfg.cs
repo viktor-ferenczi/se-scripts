@@ -7,6 +7,7 @@ namespace SpaceEngineersScripts.Inventory
         public string PanelsGroup = "Inventory Panels";
         public string SortedContainersGroup = "Sorted Containers";
         public string RestockAssemblersGroup = "Restock Assemblers";
+        public bool PullFromConnectedShips = false;        
         public int RestockMinimum = 10;
         public int RestockOverhead = 2;
         public int PanelRowCount = 17;
