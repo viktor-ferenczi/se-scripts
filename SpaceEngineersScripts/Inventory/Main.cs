@@ -380,8 +380,11 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
+        !!! AggregateAssemblerQueue
         private void SummarizeAssemblerQueue(IMyAssembler assembler)
         {
+            !!! Summarize only if the assembler is in assembly mode, ignore if the assembler is in disassembly mode!
+        
             var queue = new List<MyProductionItem>();
             assembler.GetQueue(queue);
             
@@ -399,6 +402,8 @@ namespace SpaceEngineersScripts.Inventory
             {
                 return;
             }
+            
+            !!! Enqueue only if the assembler is in assembly mode. Don't touch the queue if it is in disassembly mode! 
 
             if (cfg.Debug)
             {
