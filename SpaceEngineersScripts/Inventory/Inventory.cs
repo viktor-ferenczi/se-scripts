@@ -212,7 +212,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = ore;
                         if (allowOre)
                         {
-                            containers = FindContainers("ore");
+                            containers = FindContainers("ore") ?? new List<Container>();
                         }
 
                         break;
@@ -220,7 +220,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = ingot;
                         if (allowIngot)
                         {
-                            containers = FindContainers("ingot") ?? FindContainers("");
+                            containers = FindContainers("ingot") ?? new List<Container>();
                         }
 
                         break;
@@ -228,7 +228,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = component;
                         if (allowComponent)
                         {
-                            containers = FindContainers("component") ?? FindContainers("");
+                            containers = FindContainers("component") ?? new List<Container>();
                         }
 
                         // FIXME: Factor out
@@ -348,65 +348,50 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Display()
         {
-            DisplaySummary("ore", ore, formatOreName);
-            DisplaySummary("ingot", ingot, formatIngotName);
-            DisplaySummary("component", component, formatComponentName);
-            DisplaySummary("ammo", ammo, null);
-            DisplaySummary("other", other, null);
+            DisplaySummary(Category.Ore, ore, FormatOreName);
+            DisplaySummary(Category.Ingot, ingot, FormatIngotName);
+            DisplaySummary(Category.Component, component, FormatComponentName);
+            DisplaySummary(Category.Ammo, ammo);
+            DisplaySummary(Category.Other, other);
         }
         
-        private string formatOreName(string key)
+        private static string FormatOreName(string key)
         {
             Ore enumValue;
-            if (Ore.TryParse(key, out enumValue))
-            {
-                return Naming.OreNames[enumValue];
-            }
-
-            return key;
+            return Enum.TryParse(key, out enumValue) ? Naming.OreNames[enumValue] : key;
         }
 
-        private string formatIngotName(string key)
+        private static string FormatIngotName(string key)
         {
             Ingot enumValue;
-            if (Ingot.TryParse(key, out enumValue))
-            {
-                return Naming.IngotNames[enumValue];
-            }
-
-            return key;
+            return Enum.TryParse(key, out enumValue) ? Naming.IngotNames[enumValue] : key;
         }
 
-        private string formatComponentName(string key)
+        private static string FormatComponentName(string key)
         {
             Component enumValue;
-            if (Component.TryParse(key, out enumValue))
-            {
-                return Naming.ComponentNames[enumValue];
-            }
-
-            return key;
+            return Enum.TryParse(key, out enumValue) ? Naming.ComponentNames[enumValue] : key;
         }
 
         private delegate string ResourceNameFormatter(string key);
 
-        private void DisplaySummary(string kind, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter)
+        private void DisplaySummary(Category category, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter = null)
         {
-            var panels = textPanels.Find(kind).ToList();
+            var panels = textPanels.Find(category).ToList();
             if (panels.Count == 0)
             {
-                log.Debug("No text panel for {0}", kind);
+                log.Debug("No text panel for {0}", category);
                 return;
             }
 
             var panelRowCount = (int)Math.Floor(cfg.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
-            foreach (var page in FormatSummary(kind, summary, resourceNameFormatter, panelRowCount))
+            foreach (var page in FormatSummary(category, summary, resourceNameFormatter, panelRowCount))
             {
                 if (panelIndex >= panels.Count)
                 {
-                    log.Warning("Not enough panels to display full {0} information", kind);
+                    log.Warning("Not enough panels to display full {0} information", category);
                     break;
                 }
 
@@ -420,7 +405,7 @@ namespace SpaceEngineersScripts.Inventory
         }
         
         private IEnumerable<StringBuilder> FormatSummary(
-            string kind,
+            Category category,
             Dictionary<string, double> summary,
             ResourceNameFormatter resourceNameFormatter,
             int panelRowCount)
@@ -428,10 +413,13 @@ namespace SpaceEngineersScripts.Inventory
             var page = new StringBuilder();
             var lineCount = 0;
 
+            var categoryName = category.ToString();
+            var categoryNameLc = categoryName.ToLower();
+            
             if (cfg.ShowHeaders)
             {
-                page.AppendLine(Util.Capitalize(kind));
-                page.AppendLine(new String('-', kind.Length));
+                page.AppendLine(categoryName);
+                page.AppendLine(new String('-', categoryName.Length));
                 lineCount = 2;
             }
 
@@ -441,7 +429,7 @@ namespace SpaceEngineersScripts.Inventory
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
-                rawData.Append(kind + item.Key, item.Value);
+                rawData.Append(categoryNameLc + item.Key, item.Value);
 
                 var formattedAmount = $"{Math.Round(item.Value / cfg.DisplayPrecision) * cfg.DisplayPrecision:n0}";
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);

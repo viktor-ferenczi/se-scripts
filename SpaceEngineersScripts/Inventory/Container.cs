@@ -18,13 +18,13 @@ namespace SpaceEngineersScripts.Inventory
 
         private struct NameMapping
         {
-            public readonly string customNamePart;
-            public readonly string nameInMap;
+            public readonly string CustomNamePart;
+            public readonly string NameInMap;
 
             public NameMapping(string customNamePart, string nameInMap)
             {
-                this.customNamePart = customNamePart;
-                this.nameInMap = nameInMap;
+                CustomNamePart = customNamePart;
+                NameInMap = nameInMap;
             }
         }
 
@@ -55,9 +55,9 @@ namespace SpaceEngineersScripts.Inventory
             var name = container.CustomName.ToLower();
             foreach (var nameMapping in nameMappings)
             {
-                if (name.Contains(nameMapping.customNamePart))
+                if (name.Contains(nameMapping.CustomNamePart))
                 {
-                    Map(map, nameMapping.nameInMap);
+                    Map(map, nameMapping.NameInMap);
                     return;
                 }
             }

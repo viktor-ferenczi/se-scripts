@@ -92,7 +92,7 @@ namespace SpaceEngineersScripts.Inventory
             Reset();
             ClearDisplays();
             
-            var panel = textPanels.Find("status").FirstOrDefault();
+            var panel = textPanels.Find(Category.Status).FirstOrDefault();
             panel?.WriteText("Loading...");
 
             Runtime.UpdateFrequency = cfg.UpdateFrequency;
@@ -311,7 +311,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayStatus()
         {
-            var panel = textPanels.Find("status").FirstOrDefault();
+            var panel = textPanels.Find(Category.Status).FirstOrDefault();
             if (panel == null)
             {
                 log.Warning("No status panel");
@@ -338,7 +338,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayLog()
         {
-            var panel = textPanels.Find("log").FirstOrDefault();
+            var panel = textPanels.Find(Category.Log).FirstOrDefault();
             if (panel == null)
             {
                 log.Info("No log panel");
@@ -352,7 +352,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayRawData()
         {
-            var panel = textPanels.Find("raw").FirstOrDefault();
+            var panel = textPanels.Find(Category.Raw).FirstOrDefault();
             if (panel == null)
             {
                 return;

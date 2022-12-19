@@ -67,10 +67,11 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        public IOrderedEnumerable<IMyTextPanel> Find(string kind)
+        public IOrderedEnumerable<IMyTextPanel> Find(Category category)
         {
+            var substring = category.ToString().ToLower(); 
             return textPanels
-                .Where(panel => panel.CustomName.ToLower().Contains(kind))
+                .Where(panel => panel.CustomName.ToLower().Contains(substring))
                 .OrderBy(panel => panel.CustomName);
         }
 

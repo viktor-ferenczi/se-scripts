@@ -88,6 +88,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Inventory\Category.cs" />
         <Compile Include="Inventory\Container.cs" />
         <Compile Include="Inventory\Main.cs" />
         <Compile Include="Inventory\Cfg.cs" />
