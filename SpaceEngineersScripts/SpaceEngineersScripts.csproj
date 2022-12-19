@@ -88,10 +88,12 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Inventory\CentralInventory.cs" />
+        <Compile Include="Inventory\Main.cs" />
         <Compile Include="Inventory\Cfg.cs" />
+        <Compile Include="Inventory\Log.cs" />
         <Compile Include="Inventory\LogSeverity.cs" />
         <Compile Include="Inventory\Naming.cs" />
+        <Compile Include="Inventory\Inventory.cs" />
         <Compile Include="Others\Eloka.cs" />
         <Compile Include="Others\GravityDrive.cs" />
         <Compile Include="Others\LAMP.cs" />

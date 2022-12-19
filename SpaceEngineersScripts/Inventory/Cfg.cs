@@ -2,22 +2,23 @@ using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory
 {
-    public static class Cfg
+    public class Cfg
     {
-        public const string PanelsGroup = "Inventory Panels";
-        public const string SortedContainersGroup = "Sorted Containers";
-        public const string RestockAssemblersGroup = "Restock Assemblers";
-        public const int RestockMinimum = 10;
-        public const int RestockOverhead = RestockMinimum / 5;
-        public const int PanelRowCount = 17;
-        public const int PanelColumnCount = 25;
-        public const double DisplayPrecision = 1;
-        public const int CargoBatchSize = 3;
-        public const int BatteryBatchSize = 10;
-        public const bool ShowHeaders = true;
-        public const float DefaultFontSize = 1f;
-        public const float StatusFontSize = 1.6f;
-        public const float LogFontSize = 0.667f;
-        public const UpdateFrequency UpdateFrequency = Sandbox.ModAPI.Ingame.UpdateFrequency.Update10;
+        public string PanelsGroup = "Inventory Panels";
+        public string SortedContainersGroup = "Sorted Containers";
+        public string RestockAssemblersGroup = "Restock Assemblers";
+        public int RestockMinimum = 10;
+        public int RestockOverhead = 2;
+        public int PanelRowCount = 17;
+        public int PanelColumnCount = 25;
+        public double DisplayPrecision = 1;
+        public int CargoBatchSize = 3;
+        public int BatteryBatchSize = 10;
+        public bool ShowHeaders = true;
+        public float DefaultFontSize = 1f;
+        public float StatusFontSize = 1.6f;
+        public float LogFontSize = 0.667f;
+        public UpdateFrequency UpdateFrequency = UpdateFrequency.Update10;
+        public bool Debug = false;
     }
 }
