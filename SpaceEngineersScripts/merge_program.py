@@ -4,15 +4,15 @@
 """
 import os
 import re
-import sys
 from typing import List, Set
 
-WRITE_USINGS = False
+KEEP_USING_STATEMENTS = False
+FLATTEN_INDENTATION = False
+HEADER_COMMENT_PREFIX = '//>> '
 
 CWD = os.getcwd()
 SOURCE_FOLDER_NAME = os.path.split(CWD)[1]
 PROGRAMS_DIR = os.path.join(os.getenv('APPDATA'), 'SpaceEngineers', 'Programs')
-OUTPUT_FILENAME = ''  # 'Program-for-code-editor.cs'
 
 RX_MAIN_CLASS = re.compile(r'.*?class\s+[_a-zA-Z]+\s*:\s*MyGridProgram.*')
 
@@ -59,11 +59,11 @@ class Converter:
         self.sources: List[Source] = self.load_source_files()
         self.sources = [source for source in self.sources if source.is_valid]
         if not self.sources:
-            raise ValueError(f'No valid .cs source files found in {self.folder}', file=sys.stderr)
+            raise ValueError(f'No valid .cs source files found in {self.folder}')
 
         main_sources: List[Source] = [source for source in self.sources if source.is_main]
         if len(main_sources) != 1:
-            raise ValueError('Exactly one source file must contain a class inherited from MyGridProgram', file=sys.stderr)
+            raise ValueError('Exactly one source file must contain a class inherited from MyGridProgram')
 
         self.main_source: Source = main_sources[0]
 
@@ -79,14 +79,14 @@ class Converter:
         return [
             Source(os.path.join(self.folder, filename))
             for filename in sorted(os.listdir(self.folder))
-            if filename.endswith('.cs') and filename != OUTPUT_FILENAME
+            if filename.endswith('.cs')
         ]
 
     def write_program(self, output_path: str) -> None:
         with open(output_path, 'wt', encoding='utf-8') as f:
-            print(f'// Program: {self.name}', file=f)
+            print(f'{HEADER_COMMENT_PREFIX}{self.name}', file=f)
 
-            if WRITE_USINGS:
+            if KEEP_USING_STATEMENTS:
 
                 for line in sorted(self.using_namespaces):
                     print(line, file=f)
@@ -104,6 +104,8 @@ class Converter:
                 # FIXME: Fragile fixed indexing, should use proper C# parsing instead
                 lines = remove_indentation(source.code_lines[2:-1])
                 strip_empty_lines(lines)
+                if FLATTEN_INDENTATION:
+                    lines = flatten_indentation(lines)
                 for line in lines:
                     print(line, file=f)
                 print(file=f)
@@ -135,6 +137,10 @@ def measure_indentation(lines: List[str]) -> int:
         return 0
 
     return min((len(line) - len(line.lstrip())) for line in lines if line.lstrip())
+
+
+def flatten_indentation(lines: List[str]) -> List[str]:
+    return [line.lstrip() for line in lines]
 
 
 def main() -> None:
