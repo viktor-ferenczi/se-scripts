@@ -4,6 +4,7 @@
 """
 import os
 import re
+import shutil
 from typing import List, Set
 
 KEEP_USING_STATEMENTS = False
@@ -146,8 +147,10 @@ def flatten_indentation(lines: List[str]) -> List[str]:
 def main() -> None:
     os.makedirs(PROGRAMS_DIR, exist_ok=True)
     path = os.path.join(PROGRAMS_DIR, f'{SOURCE_FOLDER_NAME}.cs')
+    new_path = f'{path}.new'
     converter = Converter(CWD, SOURCE_FOLDER_NAME)
-    converter.write_program(path)
+    converter.write_program(new_path)
+    shutil.move(new_path, path)
 
 
 if __name__ == '__main__':
