@@ -444,7 +444,7 @@ namespace SpaceEngineersScripts.Inventory
         
         public void MoveItems()
         {
-            Log.Info("Items to move: {0}", itemsToMove.Count);
+            Log.Debug("Items to move: {0}", itemsToMove.Count);
             
             // Reverse order, so moving the items don't change the index of the further items
             // (ideally, unless some concurrent moves happen)
