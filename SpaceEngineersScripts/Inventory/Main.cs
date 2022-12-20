@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
@@ -11,14 +12,14 @@ namespace SpaceEngineersScripts.Inventory
     {
         private readonly Config config;
         private readonly Log log;
-        
+
         private readonly TextPanels panels;
         private readonly Inventory inventory;
         private readonly Electric electric;
         private readonly Production production;
-        
+
         private readonly RawData data;
-        
+
         private State state = State.ScanInventory;
 
         private IMyTextSurface Surface => Me.GetSurface(0);
@@ -47,16 +48,44 @@ namespace SpaceEngineersScripts.Inventory
         {
             config = new Config();
             log = new Log(config);
-            
+
+            if (!LoadConfig())
+                return;
+
             panels = new TextPanels(config, log, Me, GridTerminalSystem);
             inventory = new Inventory(config, log, Me, GridTerminalSystem);
             electric = new Electric(config, log, Me, GridTerminalSystem);
             production = new Production(config, log, Me, GridTerminalSystem);
-            
+
             data = new RawData();
 
             Initialize();
             Load();
+        }
+
+        private bool LoadConfig()
+        {
+            if (string.IsNullOrEmpty(Me.CustomData))
+            {
+                Me.CustomData = config.ToString();
+            }
+            else
+            {
+                var defaults = new Config();
+                var errors = new List<string>();
+                if (!config.TryParse(Me.CustomData, defaults, errors))
+                {
+                    log.Warning("Configuration errors:");
+                    foreach (var line in errors)
+                    {
+                        log.Warning(line);
+                    }
+
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void Initialize()
@@ -67,7 +96,7 @@ namespace SpaceEngineersScripts.Inventory
             Reset();
 
             ClearDisplays();
-            
+
             var panel = panels.Find(Category.Status).FirstOrDefault();
             panel?.WriteText("Loading...");
 
@@ -77,14 +106,14 @@ namespace SpaceEngineersScripts.Inventory
         private void Reset()
         {
             log.Clear();
-            
+
             panels.Reset();
             inventory.Reset();
             electric.Reset();
             production.Reset();
 
             data.Clear();
-            
+
             log.Info("Text panels: {0}", panels.Count);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
             log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
@@ -199,12 +228,14 @@ namespace SpaceEngineersScripts.Inventory
 
         private bool ProcessStep()
         {
+            Echo(state.ToString());
             switch (state)
             {
                 case State.Reset:
                     Reset();
+                    state = State.ScanBatteries;
                     break;
-                
+
                 case State.ScanBatteries:
                     for (int batch = 0; batch < config.BatteryBatchSize; batch++)
                     {
@@ -233,29 +264,27 @@ namespace SpaceEngineersScripts.Inventory
 
                 case State.MoveItems:
                     inventory.MoveItems();
-                    
                     state = State.ScanAssemblerQueues;
-                    
                     return inventory.ItemsToMoveCount == 0;
 
                 case State.ScanAssemblerQueues:
-                    // FIXME: ScanAssemblerQueues();
+                    production.ScanAssemblerQueues();
                     state = State.ProduceMissing;
-                    return true;
-                
+                    return production.AssemblerCount == 0;
+
                 case State.ProduceMissing:
-                    // FIXME: ProduceMissing();
+                    production.ProduceMissing(inventory);
                     state = State.Report;
-                    return true;
+                    return production.AssemblerCount == 0;
 
                 case State.Report:
                     Report();
-                    
+
                     if (config.SingleRun)
                     {
                         Stop();
                     }
-                    
+
                     state = State.Reset;
                     break;
             }
@@ -340,7 +369,7 @@ namespace SpaceEngineersScripts.Inventory
         {
             return $"{dt:yyyy-MM-dd HH:mm:ss} UTC";
         }
-        
+
         private void ShowLog()
         {
             var text = log.Text;

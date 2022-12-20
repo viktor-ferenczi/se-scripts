@@ -9,11 +9,11 @@ namespace SpaceEngineersScripts.Inventory
 {
     public class Inventory: ProgramModule
     {
-        private readonly Dictionary<string, double> ore = new Dictionary<string, double>();
-        private readonly Dictionary<string, double> ingot = new Dictionary<string, double>();
-        private readonly Dictionary<string, double> component = new Dictionary<string, double>();
-        private readonly Dictionary<string, double> ammo = new Dictionary<string, double>();
-        private readonly Dictionary<string, double> other = new Dictionary<string, double>();
+        private readonly Dictionary<string, double> oreStock = new Dictionary<string, double>();
+        private readonly Dictionary<string, double> ingotStock = new Dictionary<string, double>();
+        private readonly Dictionary<string, double> componentStock = new Dictionary<string, double>();
+        private readonly Dictionary<string, double> ammoStock = new Dictionary<string, double>();
+        private readonly Dictionary<string, double> otherStock = new Dictionary<string, double>();
 
         private readonly List<IMyTerminalBlock> allBlocksWithInventory = new List<IMyTerminalBlock>();
         private readonly List<IMyTerminalBlock> sortedContainerBlocks = new List<IMyTerminalBlock>();
@@ -36,12 +36,19 @@ namespace SpaceEngineersScripts.Inventory
         private double volume;
         private double mass;
 
-        public int CargoBlockCount => allBlocksWithInventory.Count;
         public double Capacity => capacity;
         public double Volume => volume;
         public double Mass => mass;
+        
+        public int CargoBlockCount => allBlocksWithInventory.Count;
         public int ItemsToMoveCount => itemsToMove.Count;
         public int SortedContainerCount => sortedContainerBlocks.Count;
+        
+        public IReadOnlyDictionary<string, double> OreStock => oreStock; 
+        public IReadOnlyDictionary<string, double> IngotStock => ingotStock;
+        public IReadOnlyDictionary<string, double> ComponentStock => componentStock;
+        public IReadOnlyDictionary<string, double> AmmoStock => ammoStock;
+        public IReadOnlyDictionary<string, double> OtherStock => otherStock;
         
         public Inventory(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts): base(config, log, me, gts)
         {
@@ -49,11 +56,11 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Reset()
         {
-            ore.Clear();
-            ingot.Clear();
-            component.Clear();
-            ammo.Clear();
-            other.Clear();
+            oreStock.Clear();
+            ingotStock.Clear();
+            componentStock.Clear();
+            ammoStock.Clear();
+            otherStock.Clear();
 
             allBlocksWithInventory.Clear();
             sortedContainerBlocks.Clear();
@@ -223,7 +230,7 @@ namespace SpaceEngineersScripts.Inventory
                 switch (item.Type.TypeId)
                 {
                     case "MyObjectBuilder_Ore":
-                        summary = ore;
+                        summary = oreStock;
                         if (allowOre)
                         {
                             containers = oreContainers;
@@ -231,7 +238,7 @@ namespace SpaceEngineersScripts.Inventory
 
                         break;
                     case "MyObjectBuilder_Ingot":
-                        summary = ingot;
+                        summary = ingotStock;
                         if (allowIngot)
                         {
                             containers = ingotContainers;
@@ -239,35 +246,14 @@ namespace SpaceEngineersScripts.Inventory
 
                         break;
                     case "MyObjectBuilder_Component":
-                        summary = component;
+                        summary = componentStock;
                         if (allowComponent)
                         {
                             containers = componentContainers;
                         }
-
-                        // FIXME: Factor out
-                        /*
-                        if (mainAssemblerIsUsable && !restockComponents.ContainsKey(subtypeId))
-                        {
-                            // See https://forum.keenswh.com/threads/how-to-add-an-individual-component-to-the-assembler-queue.7393616/
-                            // See https://steamcommunity.com/app/244850/discussions/0/527273452877873614/
-                            var definitionString = "MyObjectBuilder_BlueprintDefinition/" + subtypeId;
-                            var definitionId = MyDefinitionId.Parse(definitionString);
-                            if (!mainAssembler.CanUseBlueprint(definitionId))
-                            {
-                                definitionId = MyDefinitionId.Parse(definitionString + "Component");
-                            }
-
-                            if (mainAssembler.CanUseBlueprint(definitionId))
-                            {
-                                restockComponents[subtypeId] = definitionId;
-                            }
-                        }
-                        */
-
                         break;
                     case "MyObjectBuilder_AmmoMagazine":
-                        summary = ammo;
+                        summary = ammoStock;
                         if (allowAmmo)
                         {
                             containers = ammoContainers;
@@ -275,7 +261,7 @@ namespace SpaceEngineersScripts.Inventory
 
                         break;
                     case "MyObjectBuilder_PhysicalGunObject":
-                        summary = other;
+                        summary = otherStock;
                         if (lowercaseSubTypeName.Contains("weld") ||
                             lowercaseSubTypeName.Contains("grind") ||
                             lowercaseSubTypeName.Contains("drill"))
@@ -289,23 +275,23 @@ namespace SpaceEngineersScripts.Inventory
 
                         break;
                     case "MyObjectBuilder_Datapad":
-                        summary = other;
+                        summary = otherStock;
                         containers = toolContainers;
                         break;
                     case "MyObjectBuilder_ConsumableItem":
-                        summary = other;
+                        summary = otherStock;
                         containers = foodContainers;
                         break;
                     case "MyObjectBuilder_GasContainerObject":
-                        summary = other;
+                        summary = otherStock;
                         containers = hydrogenContainers;
                         break;
                     case "MyObjectBuilder_OxygenContainerObject":
-                        summary = other;
+                        summary = otherStock;
                         containers = oxygenContainers;
                         break;
                     case "MyObjectBuilder_PhysicalObject":
-                        summary = other;
+                        summary = otherStock;
                         containers = toolContainers;
                         break;
                     default:
@@ -346,29 +332,11 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Display(TextPanels panels, RawData data)
         {
-            DisplaySummary(panels, data, Category.Ore, ore, FormatOreName);
-            DisplaySummary(panels, data, Category.Ingot, ingot, FormatIngotName);
-            DisplaySummary(panels, data, Category.Component, component, FormatComponentName);
-            DisplaySummary(panels, data, Category.Ammo, ammo);
-            DisplaySummary(panels, data, Category.Other, other);
-        }
-        
-        private static string FormatOreName(string key)
-        {
-            Ore enumValue;
-            return Enum.TryParse(key, out enumValue) ? Naming.OreNames[enumValue] : key;
-        }
-
-        private static string FormatIngotName(string key)
-        {
-            Ingot enumValue;
-            return Enum.TryParse(key, out enumValue) ? Naming.IngotNames[enumValue] : key;
-        }
-
-        private static string FormatComponentName(string key)
-        {
-            Component enumValue;
-            return Enum.TryParse(key, out enumValue) ? Naming.ComponentNames[enumValue] : key;
+            DisplaySummary(panels, data, Category.Ore, oreStock, Naming.FormatOreName);
+            DisplaySummary(panels, data, Category.Ingot, ingotStock, Naming.FormatIngotName);
+            DisplaySummary(panels, data, Category.Component, componentStock, Naming.FormatComponentName);
+            DisplaySummary(panels, data, Category.Ammo, ammoStock);
+            DisplaySummary(panels, data, Category.Other, otherStock);
         }
 
         private delegate string ResourceNameFormatter(string key);

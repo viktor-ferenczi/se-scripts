@@ -6,18 +6,43 @@ namespace SpaceEngineersScripts.Inventory
 {
     public class BaseConfig : Dictionary<string, object>
     {
-        private static StringBuilder sb = new StringBuilder();
+        private static readonly StringBuilder Sb = new StringBuilder();
+        
+        protected readonly Dictionary<string, object> Defaults = new Dictionary<string, object>();
+
+        protected BaseConfig()
+        {
+            AddOptions();
+
+            foreach (var p in Defaults)
+            {
+                Add(p.Key, p.Value);
+            }
+        }
+
+        protected virtual void AddOptions()
+        {
+        }
 
         public override string ToString()
         {
-            sb.Clear();
+            Sb.Clear();
 
             foreach (var p in this)
             {
-                sb.Append($"{p.Key}={p.Value}\r\n");
+                var isDefault = p.Value == Defaults[p.Key];
+                var prefix = isDefault ? "#" : "";
+                if (p.Value is float || p.Value is double)
+                {
+                    Sb.Append($"{prefix}{p.Key}={p.Value:F3}\r\n");
+                }
+                else
+                {
+                    Sb.Append($"{prefix}{p.Key}={p.Value}\r\n");
+                }
             }
 
-            return sb.ToString();
+            return Sb.ToString();
         }
 
         public bool TryParse(string text, Dictionary<string, object> defaults, List<string> errors = null)
@@ -33,7 +58,13 @@ namespace SpaceEngineersScripts.Inventory
 
             foreach (var line in text.Replace('\r', '\n').Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                var s = line.Split(new[] { '=' }, 2);
+                var trimmed = line.Trim();
+                if (trimmed.StartsWith("#"))
+                {
+                    continue;
+                }
+
+                var s = trimmed.Split(new[] { '=' }, 2);
                 if (s.Length != 2)
                 {
                     errors?.Add($"Invalid: {line}");

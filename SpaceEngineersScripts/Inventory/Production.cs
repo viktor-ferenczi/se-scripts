@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sandbox.ModAPI.Ingame;
-using VRage;
 using VRage.Game;
 
 namespace SpaceEngineersScripts.Inventory
@@ -9,11 +8,14 @@ namespace SpaceEngineersScripts.Inventory
     public class Production : ProgramModule
     {
         private IMyAssembler mainAssembler;
-        
         private readonly List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
         private readonly Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
-        private readonly Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
-        
+        private readonly Dictionary<Component, MyDefinitionId> componentDefinitions = new Dictionary<Component, MyDefinitionId>();
+        private IReadOnlyDictionary<Component, int> restockTargetAmounts;
+
+        public int AssemblerCount => assemblerBlocks.Count;
+        public bool IsMainAssemblerAvailable => mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsWorking && mainAssembler.Mode == MyAssemblerMode.Assembly;
+
         public Production(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(config, log, me, gts)
         {
         }
@@ -22,33 +24,53 @@ namespace SpaceEngineersScripts.Inventory
         {
             assemblerBlocks.Clear();
             queuedComponents.Clear();
+            componentDefinitions.Clear();
+
+            restockTargetAmounts = Config.GetRestockTargetAmounts();
 
             Gts.GetBlockGroupWithName(Config.RestockAssemblersGroup)?.GetBlocksOfType(assemblerBlocks, block => block.IsSameConstructAs(Me));
-            mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
+            mainAssembler = assemblerBlocks.FirstOrDefault(assembler => assembler.CooperativeMode) ?? assemblerBlocks.FirstOrDefault();
+
+            FillComponentDefinitions();
         }
 
-        private void ScanAssemblerQueues()
+        private void FillComponentDefinitions()
+        {
+            // See https://forum.keenswh.com/threads/how-to-add-an-individual-component-to-the-assembler-queue.7393616/
+            // See https://steamcommunity.com/app/244850/discussions/0/527273452877873614/
+            foreach (var component in Naming.ComponentNames.Keys)
+            {
+                var definitionString = $"MyObjectBuilder_BlueprintDefinition/{component.ToString()}";
+                var definitionId = MyDefinitionId.Parse(definitionString);
+                if (!mainAssembler.CanUseBlueprint(definitionId))
+                {
+                    definitionId = MyDefinitionId.Parse($"{definitionString}Component");
+                }
+
+                if (mainAssembler.CanUseBlueprint(definitionId))
+                {
+                    componentDefinitions[component] = definitionId;
+                }
+            }
+        }
+
+        public void ScanAssemblerQueues()
         {
             foreach (var assembler in assemblerBlocks)
             {
-                if (assembler.Closed || !assembler.IsFunctional)
-                {
-                    continue;
-                }
-
                 AggregateAssemblerQueue(assembler);
             }
         }
-        
+
         private void AggregateAssemblerQueue(IMyAssembler assembler)
         {
-            if (assembler.Mode != MyAssemblerMode.Assembly)
+            if (assembler.Closed || !assembler.IsWorking || assembler.Mode != MyAssemblerMode.Assembly)
             {
                 return;
             }
-            
+
             var queue = new List<MyProductionItem>();
-            
+
             assembler.GetQueue(queue);
 
             foreach (var item in queue)
@@ -59,59 +81,71 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        private void ProduceMissing()
+        public void ProduceMissing(Inventory inventory)
         {
-            if (mainAssembler == null || restockComponents.Count == 0 || mainAssembler.Closed || !mainAssembler.IsFunctional)
+            if (!IsMainAssemblerAvailable || restockTargetAmounts.Count == 0)
             {
                 return;
             }
 
-            !!!Enqueue only if the assembler is in assembly mode.Don't touch the queue if it is in disassembly mode!
-
-            if (cfg.Debug)
+            if (Config.Debug)
             {
-                foreach (var kv in component)
+                foreach (var kv in inventory.ComponentStock)
                 {
-                    log.Info(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
+                    Log.Info(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
                 }
 
-                log.Info("---");
+                Log.Info("---");
 
                 foreach (var kv in queuedComponents)
                 {
-                    log.Info(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
+                    Log.Info(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
                 }
 
-                log.Info("---");
+                Log.Info("---");
             }
 
-            foreach (var kv in restockComponents)
+            var stock = inventory.ComponentStock;
+
+            foreach (var p in restockTargetAmounts)
             {
-                var subtypeName = kv.Key;
-                var subtypeNameComponent = subtypeName + "Component";
-
-                var stock = (int)component.GetValueOrDefault(subtypeName);
-                if (stock == 0)
+                MyDefinitionId definitionId;
+                if (!componentDefinitions.TryGetValue(p.Key, out definitionId))
                 {
-                    stock = (int)component.GetValueOrDefault(subtypeNameComponent);
+                    Log.Warning($"No definition: {p.Key}");
+                    continue;
+                }
+                
+                int target;
+                if (!restockTargetAmounts.TryGetValue(p.Key, out target) || target < 1)
+                {
+                    continue;
                 }
 
-                var queued = queuedComponents.GetValueOrDefault(subtypeName);
-                if (queued == 0)
+                var subtypeName = p.Key.ToString();
+                var subtypeNameComponent = $"{subtypeName}Component";
+
+                int queued;
+                if (!queuedComponents.TryGetValue(subtypeName, out queued))
                 {
-                    queued = queuedComponents.GetValueOrDefault(subtypeNameComponent);
+                    queuedComponents.TryGetValue(subtypeNameComponent, out queued);
                 }
 
-                var missing = cfg.RestockMinimum - queued - stock;
-                if (missing > queued)
+                var inStock = 0;
+                double d;
+                if (stock.TryGetValue(subtypeName, out d) || stock.TryGetValue(subtypeNameComponent, out d)) {
+                    inStock = (int)d;
+                }
+                
+                var missing = target - inStock - queued;
+                if (missing > 0 && (queued == 0 || missing >= target / 2))
                 {
-                    var definitionId = kv.Value;
-                    if (cfg.Debug)
+                    if (Config.Debug)
                     {
-                        log.Info(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
+                        Log.Info(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", inStock, queued, missing, definitionId.SubtypeName));
                     }
 
-                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)(missing + cfg.RestockOverhead));
+                    mainAssembler.AddQueueItem(definitionId, (decimal)missing);
                 }
             }
         }

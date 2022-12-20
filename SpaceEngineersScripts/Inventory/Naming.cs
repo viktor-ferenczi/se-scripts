@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SpaceEngineersScripts.Inventory
@@ -5,26 +6,26 @@ namespace SpaceEngineersScripts.Inventory
     public enum Component
     {
         BulletproofGlass,
-        ComputerComponent,
-        ConstructionComponent,
-        DetectorComponent,
+        Computer,
+        Construction,
+        Detector,
         Display,
-        ExplosivesComponent,
-        GirderComponent,
-        GravityGeneratorComponent,
+        Explosives,
+        Girder,
+        GravityGenerator,
         InteriorPlate,
         LargeTube,
-        MedicalComponent,
+        Medical,
         MetalGrid,
-        MotorComponent,
+        Motor,
         PowerCell,
-        RadioCommunicationComponent,
-        ReactorComponent,
+        RadioCommunication,
+        Reactor,
         SmallTube,
         SolarCell,
         SteelPlate,
         Superconductor,
-        ThrustComponent,
+        Thrust,
         ZoneChip,
     }
 
@@ -63,26 +64,26 @@ namespace SpaceEngineersScripts.Inventory
         public static readonly Dictionary<Component, string> ComponentNames = new Dictionary<Component, string>()
         {
             [Component.BulletproofGlass] = "Bulletproof Glass",
-            [Component.ComputerComponent] = "Computer",
-            [Component.ConstructionComponent] = "Construction Component",
-            [Component.DetectorComponent] = "Detector Component",
+            [Component.Computer] = "Computer",
+            [Component.Construction] = "Construction Comp",
+            [Component.Detector] = "Detector Comp",
             [Component.Display] = "Display",
-            [Component.ExplosivesComponent] = "Explosive",
-            [Component.GirderComponent] = "Girder",
-            [Component.GravityGeneratorComponent] = "Gravity Gen Component",
+            [Component.Explosives] = "Explosive",
+            [Component.Girder] = "Girder",
+            [Component.GravityGenerator] = "Gravity Gen",
             [Component.InteriorPlate] = "Interior Plate",
             [Component.LargeTube] = "Large Steel Tube",
-            [Component.MedicalComponent] = "Medical Component",
+            [Component.Medical] = "Medical Comp",
             [Component.MetalGrid] = "Metal Grid",
-            [Component.MotorComponent] = "Motor Component",
+            [Component.Motor] = "Motor",
             [Component.PowerCell] = "Power Cell",
-            [Component.RadioCommunicationComponent] = "Radio-Comm Component",
-            [Component.ReactorComponent] = "Reactor Component",
+            [Component.RadioCommunication] = "Radio Comp",
+            [Component.Reactor] = "Reactor Comp",
             [Component.SmallTube] = "Small Steel Tube",
             [Component.SolarCell] = "Solar Cell",
             [Component.SteelPlate] = "Steel Plate",
-            [Component.Superconductor] = "Superconductor Component",
-            [Component.ThrustComponent] = "Thruster Component",
+            [Component.Superconductor] = "Superconductor",
+            [Component.Thrust] = "Thruster Comp",
             [Component.ZoneChip] = "Zone Chip",
         };
 
@@ -115,5 +116,38 @@ namespace SpaceEngineersScripts.Inventory
             [Ore.Stone] = "Stone",
             [Ore.Uranium] = "Uranium Ore",
         };
+
+        public static string FormatOreName(string key)
+        {
+            Ore ore;
+            return Enum.TryParse(key, out ore) ? OreNames[ore] : key;
+        }
+
+        public static string FormatIngotName(string key)
+        {
+            Ingot ingot;
+            return Enum.TryParse(key, out ingot) ? IngotNames[ingot] : key;
+        }
+
+        public static string FormatComponentName(string key)
+        {
+            if (key.EndsWith("Component"))
+            {
+                key = key.Substring(0, key.Length - 9);
+            }
+
+            Component component;
+            return Enum.TryParse(key, out component) ? ComponentNames[component] : key;
+        }
+        
+        public static bool TryParseComponent(string s, out Component c)
+        {
+            if (s.EndsWith("Component"))
+            {
+                s = s.Substring(0, s.Length - 9);
+            }
+            
+            return Enum.TryParse(s, out c);
+        }
     }
 }

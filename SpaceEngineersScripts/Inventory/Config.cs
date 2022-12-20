@@ -1,49 +1,86 @@
+using System.Collections.Generic;
+
 namespace SpaceEngineersScripts.Inventory
 {
-    public class Config: BaseConfig
+    public class Config : BaseConfig
     {
-        public Config()
+        protected override void AddOptions()
         {
             // Defaults
-            this["SingleRun"] = false;
-            this["PanelsGroup"] = "Inventory Panels";
-            this["SortedContainersGroup"] = "Sorted Containers";
-            this["RestockAssemblersGroup"] = "Restock Assemblers";
-            this["PullFromConnectedShips"] = false;
-            this["MaxItemsToMove"] = 20;
-            this["RestockMinimum"] = 10;
-            this["RestockOverhead"] = 2;
-            this["PanelRowCount"] = 17;
-            this["PanelColumnCount"] = 25;
-            this["DisplayPrecision"] = 1;
-            this["CargoBatchSize"] = 2;
-            this["BatteryBatchSize"] = 5;
-            this["ShowHeaders"] = true;
-            this["DefaultFontSize"] = 1f;
-            this["StatusFontSize"] = 1.6f;
-            this["LogFontSize"] = 0.667f;
-            this["UseUpdate100"] = false;
-            this["Debug"] = false;
+            Defaults["Debug"] = true;
+            Defaults["SingleRun"] = false;
+            Defaults["PanelsGroup"] = "Inventory Panels";
+            Defaults["SortedContainersGroup"] = "Sorted Containers";
+            Defaults["RestockAssemblersGroup"] = "Restock Assemblers";
+            Defaults["PullFromConnectedShips"] = false;
+            Defaults["MaxItemsToMove"] = 20;
+            Defaults["PanelRowCount"] = 17;
+            Defaults["DisplayPrecision"] = 1.0;
+            Defaults["CargoBatchSize"] = 2;
+            Defaults["BatteryBatchSize"] = 5;
+            Defaults["ShowHeaders"] = true;
+            Defaults["DefaultFontSize"] = 1f;
+            Defaults["StatusFontSize"] = 1.6f;
+            Defaults["LogFontSize"] = 0.667f;
+            Defaults["UseUpdate100"] = false;
+
+            // Restock components
+            Defaults["RestockBulletproofGlass"] = 10;
+            Defaults["RestockComputer"] = 10;
+            Defaults["RestockConstruction"] = 10;
+            Defaults["RestockDetector"] = 1;
+            Defaults["RestockDisplay"] = 10;
+            Defaults["RestockExplosives"] = 0;
+            Defaults["RestockGirder"] = 100;
+            Defaults["RestockGravityGenerator"] = 0;
+            Defaults["RestockInteriorPlate"] = 100;
+            Defaults["RestockLargeTube"] = 10;
+            Defaults["RestockMedical"] = 0;
+            Defaults["RestockMetalGrid"] = 10;
+            Defaults["RestockMotor"] = 100;
+            Defaults["RestockPowerCell"] = 10;
+            Defaults["RestockRadioCommunication"] = 1;
+            Defaults["RestockReactor"] = 0;
+            Defaults["RestockSmallTube"] = 50;
+            Defaults["RestockSolarCell"] = 10;
+            Defaults["RestockSteelPlate"] = 100;
+            Defaults["RestockSuperconductor"] = 0;
+            Defaults["RestockThrust"] = 0;
         }
-        
-        public bool SingleRun { get { return (bool)this["SingleRun"]; } set { this["SingleRun"] = value; } }
-        public string PanelsGroup { get { return (string)this["PanelsGroup"]; } set { this["PanelsGroup"] = value; } }
-        public string SortedContainersGroup { get { return (string)this["SortedContainersGroup"]; } set { this["SortedContainersGroup"] = value; } }
-        public string RestockAssemblersGroup { get { return (string)this["RestockAssemblersGroup"]; } set { this["RestockAssemblersGroup"] = value; } }
-        public bool PullFromConnectedShips { get { return (bool)this["PullFromConnectedShips"]; } set { this["PullFromConnectedShips"] = value; } }
-        public int MaxItemsToMove { get { return (int)this["MaxItemsToMove"]; } set { this["MaxItemsToMove"] = value; } }
-        public int RestockMinimum { get { return (int)this["RestockMinimum"]; } set { this["RestockMinimum"] = value; } }
-        public int RestockOverhead { get { return (int)this["RestockOverhead"]; } set { this["RestockOverhead"] = value; } }
-        public int PanelRowCount { get { return (int)this["PanelRowCount"]; } set { this["PanelRowCount"] = value; } }
-        public int PanelColumnCount { get { return (int)this["PanelColumnCount"]; } set { this["PanelColumnCount"] = value; } }
-        public float DisplayPrecision { get { return (float)this["DisplayPrecision"]; } set { this["DisplayPrecision"] = value; } }
-        public int CargoBatchSize { get { return (int)this["CargoBatchSize"]; } set { this["CargoBatchSize"] = value; } }
-        public int BatteryBatchSize { get { return (int)this["BatteryBatchSize"]; } set { this["BatteryBatchSize"] = value; } }
-        public bool ShowHeaders { get { return (bool)this["ShowHeaders"]; } set { this["ShowHeaders"] = value; } }
-        public float DefaultFontSize { get { return (float)this["DefaultFontSize"]; } set { this["DefaultFontSize"] = value; } }
-        public float StatusFontSize { get { return (float)this["StatusFontSize"]; } set { this["StatusFontSize"] = value; } }
-        public float LogFontSize { get { return (float)this["LogFontSize"]; } set { this["LogFontSize"] = value; } }
-        public bool UseUpdate100 { get { return (bool)this["UseUpdate100"]; } set { this["UseUpdate100"] = value; } }
-        public bool Debug { get { return (bool)this["Debug"]; } set { this["Debug"] = value; } }
+
+        public bool Debug => (bool)this["Debug"];
+        public bool SingleRun => (bool)this["SingleRun"];
+        public string PanelsGroup => (string)this["PanelsGroup"];
+        public string SortedContainersGroup => (string)this["SortedContainersGroup"];
+        public string RestockAssemblersGroup => (string)this["RestockAssemblersGroup"];
+        public bool PullFromConnectedShips => (bool)this["PullFromConnectedShips"];
+        public int MaxItemsToMove => (int)this["MaxItemsToMove"];
+        public int PanelRowCount => (int)this["PanelRowCount"];
+        public double DisplayPrecision => (double)this["DisplayPrecision"];
+        public int CargoBatchSize => (int)this["CargoBatchSize"];
+        public int BatteryBatchSize => (int)this["BatteryBatchSize"];
+        public bool ShowHeaders => (bool)this["ShowHeaders"];
+        public float DefaultFontSize => (float)this["DefaultFontSize"];
+        public float StatusFontSize => (float)this["StatusFontSize"];
+        public float LogFontSize => (float)this["LogFontSize"];
+        public bool UseUpdate100 => (bool)this["UseUpdate100"];
+
+        public IReadOnlyDictionary<Component, int> GetRestockTargetAmounts()
+        {
+            var d = new Dictionary<Component, int>();
+            foreach (var p in this)
+            {
+                if (p.Key.StartsWith("Restock"))
+                {
+                    Component c;
+                    if (Naming.TryParseComponent(p.Key.Substring(7), out c))
+                    {
+                        d[c] = (int)p.Value;
+                    }
+                }
+            }
+
+            return d;
+        }
     }
 }
