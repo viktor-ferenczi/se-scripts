@@ -5,7 +5,7 @@
 import os
 import re
 import shutil
-from typing import List, Set
+from typing import List, Set, Iterator
 
 KEEP_USING_STATEMENTS = False
 FLATTEN_INDENTATION = False
@@ -27,7 +27,6 @@ class Source:
         self.is_main = False
         self.namespace = ''
         self.read_source()
-        strip_empty_lines(self.code_lines)
         self.is_valid: bool = self.code_lines and self.code_lines[0].strip() != '#if false'
 
     def read_source(self) -> None:
@@ -35,12 +34,14 @@ class Source:
             for line in f:
                 line = line.rstrip()
                 stripped_line = line.lstrip()
+                if not stripped_line:
+                    continue
 
                 if stripped_line.startswith('using '):
                     self.using_lines.append(line)
                     continue
 
-                self.code_lines.append(line)
+                self.code_lines.append(line.rstrip())
 
                 if stripped_line.startswith('namespace '):
                     if not self.namespace:
@@ -102,20 +103,23 @@ class Converter:
             for source in self.sources:
                 if source.is_main:
                     continue
-                # FIXME: Fragile fixed indexing, should use proper C# parsing instead
-                lines = remove_indentation(source.code_lines[2:-1])
-                strip_empty_lines(lines)
-                if FLATTEN_INDENTATION:
-                    lines = flatten_indentation(lines)
-                for line in lines:
-                    print(line, file=f)
+                    
+                write_source(f, source.code_lines)
                 print(file=f)
+                
+            write_source(f, self.main_source.code_lines)
 
-            # FIXME: Fragile fixed indexing, should use proper C# parsing instead
-            lines = remove_indentation(self.main_source.code_lines[4:-2])
-            strip_empty_lines(lines)
-            for line in lines:
-                print(line, file=f)
+
+def strip_top_namespace(lines):
+    if lines[0].lstrip().startswith('namespace ') and lines[1] == '{' and lines[-1] == '}':
+        del lines[:2]
+        del lines[-1]
+
+
+def strip_program_class(lines):
+    if lines[0].lstrip().endswith(': MyGridProgram') and lines[1] == '{' and lines[-1] == '}':
+        del lines[:2]
+        del lines[-1]
 
 
 def strip_empty_lines(lines: List[str]) -> None:
@@ -142,6 +146,34 @@ def measure_indentation(lines: List[str]) -> int:
 
 def flatten_indentation(lines: List[str]) -> List[str]:
     return [line.lstrip() for line in lines]
+
+
+def remove_comments(lines: List[str]) -> Iterator[str]:
+    multiline_comment = False
+    for line in lines:
+        if multiline_comment:
+            if line.endswith('*/'):
+                multiline_comment = False
+        else:
+            sl = line.lstrip()
+            if sl.startswith('/*'):
+                multiline_comment = True
+            elif not sl.startswith('//'):
+                yield line
+
+
+def write_source(f, lines):
+    lines = list(remove_comments(lines))
+    strip_top_namespace(lines)
+    lines = remove_indentation(lines)
+    strip_program_class(lines)
+    lines = remove_indentation(lines)
+
+    if FLATTEN_INDENTATION:
+        lines = flatten_indentation(lines)
+
+    for line in lines:
+        print(line, file=f)
 
 
 def main() -> None:
