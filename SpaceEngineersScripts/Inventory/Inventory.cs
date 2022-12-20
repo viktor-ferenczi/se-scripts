@@ -7,12 +7,8 @@ using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory
 {
-    public class Inventory
+    public class Inventory: ProgramModule
     {
-        private readonly Cfg cfg;
-        private readonly Log log;
-        private readonly IMyProgrammableBlock me;
-        private readonly IMyGridTerminalSystem gts;
         private readonly TextPanels textPanels;
         private readonly RawData rawData;
 
@@ -22,26 +18,22 @@ namespace SpaceEngineersScripts.Inventory
         private readonly Dictionary<string, double> ammo = new Dictionary<string, double>();
         private readonly Dictionary<string, double> other = new Dictionary<string, double>();
 
-        private readonly List<IMyTerminalBlock> cargoBlocks = new List<IMyTerminalBlock>();
+        private readonly List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
         private readonly Dictionary<string, List<Container>> containerMap = new Dictionary<string, List<Container>>();
 
-        private int cargoIndex;
-        private double cargoCapacity;
-        private double cargoVolume;
-        private double cargoMass;
+        private int index;
+        private double capacity;
+        private double volume;
+        private double mass;
         // FIXME: private bool attemptedToMoveCargo;
 
-        public int CargoBlockCount => cargoBlocks.Count;
-        public double CargoCapacity => cargoCapacity;
-        public double CargoVolume => cargoVolume;
-        public double CargoMass => cargoMass;
-
-        public Inventory(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts, TextPanels textPanels, RawData rawData)
+        public int CargoBlockCount => blocks.Count;
+        public double Capacity => capacity;
+        public double Volume => volume;
+        public double Mass => mass;
+        
+        public Inventory(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts, TextPanels textPanels, RawData rawData): base(cfg, log, me, gts)
         {
-            this.cfg = cfg;
-            this.log = log;
-            this.me = me;
-            this.gts = gts;
             this.textPanels = textPanels;
             this.rawData = rawData;
         }
@@ -54,15 +46,16 @@ namespace SpaceEngineersScripts.Inventory
             ammo.Clear();
             other.Clear();
 
-            cargoBlocks.Clear();
+            blocks.Clear();
             containerMap.Clear();
             
             FindBlocks();
 
-            cargoIndex = 0;
-            cargoCapacity = 0f;
-            cargoVolume = 0f;
-            cargoMass = 0f;
+            index = 0;
+            
+            capacity = 0f;
+            volume = 0f;
+            mass = 0f;
             // FIXME: attemptedToMoveCargo = false;
         }
 
@@ -70,19 +63,19 @@ namespace SpaceEngineersScripts.Inventory
         {
             var blocks = new List<IMyTerminalBlock>();
 
-            if (cfg.PullFromConnectedShips)
+            if (Cfg.PullFromConnectedShips)
             {
-                gts.GetBlocksOfType<IMyTerminalBlock>(blocks);
+                Gts.GetBlocksOfType<IMyTerminalBlock>(blocks);
             }
             else
             {
-                gts.GetBlocksOfType<IMyTerminalBlock>(blocks, block => block.IsSameConstructAs(me));
+                Gts.GetBlocksOfType<IMyTerminalBlock>(blocks, block => block.IsSameConstructAs(Me));
             }
 
-            cargoBlocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
+            this.blocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
             
             var containerBlocks = new List<IMyTerminalBlock>();
-            gts.GetBlockGroupWithName(cfg.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
+            Gts.GetBlockGroupWithName(Cfg.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
 
             foreach (var containerBlock in containerBlocks)
             {
@@ -99,12 +92,12 @@ namespace SpaceEngineersScripts.Inventory
             names.Sort();
             foreach (var name in names)
             {
-                log.Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
+                Log.Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
             }
         }
 
-        public bool Done => cargoIndex >= cargoBlocks.Count; 
-
+        public bool Done => index >= CargoBlockCount; 
+        
         public void Scan()
         {
             if (Done)
@@ -113,31 +106,31 @@ namespace SpaceEngineersScripts.Inventory
             }
             
             ScanBlock();
-            cargoIndex++;
+            index++;
         }
 
         private void ScanBlock()
         {
-            var block = cargoBlocks[cargoIndex];
+            var block = blocks[index];
             if (block == null)
             {
-                log.Debug("Block is missing");
+                Log.Debug("Block is missing");
                 return;
             }
 
             if (!block.IsFunctional)
             {
-                log.Warning("Broken block: " + block.CustomName);
+                Log.Warning("Broken block: " + block.CustomName);
                 return;
             }
 
             if (block is IMyCargoContainer && !block.IsWorking)
             {
-                log.Warning("Disabled cargo: " + block.CustomName);
+                Log.Warning("Disabled cargo: " + block.CustomName);
                 return;
             }
 
-            log.Debug("[{0}]: {1}", cargoIndex, block.CustomName);
+            Log.Debug("[{0}]: {1}", index, block.CustomName);
 
             SummarizeBlockCapacity(block);
             SummarizeBlockContents(block);
@@ -152,9 +145,9 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            cargoCapacity += blockInventory.MaxVolume.RawValue;
-            cargoVolume += blockInventory.CurrentVolume.RawValue;
-            cargoMass += blockInventory.CurrentMass.RawValue;
+            capacity += blockInventory.MaxVolume.RawValue;
+            volume += blockInventory.CurrentVolume.RawValue;
+            mass += blockInventory.CurrentMass.RawValue;
         }
 
         private void SummarizeBlockContents(IMyTerminalBlock cargo)
@@ -296,7 +289,7 @@ namespace SpaceEngineersScripts.Inventory
                         containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
                         break;
                     default:
-                        log.Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
+                        Log.Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
                         continue;
                 }
 
@@ -380,18 +373,18 @@ namespace SpaceEngineersScripts.Inventory
             var panels = textPanels.Find(category).ToList();
             if (panels.Count == 0)
             {
-                log.Debug("No text panel for {0}", category);
+                Log.Debug("No text panel for {0}", category);
                 return;
             }
 
-            var panelRowCount = (int)Math.Floor(cfg.PanelRowCount / panels[0].FontSize);
+            var panelRowCount = (int)Math.Floor(Cfg.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
             foreach (var page in FormatSummary(category, summary, resourceNameFormatter, panelRowCount))
             {
                 if (panelIndex >= panels.Count)
                 {
-                    log.Warning("Not enough panels to display full {0} information", category);
+                    Log.Warning("Not enough panels to display full {0} information", category);
                     break;
                 }
 
@@ -416,7 +409,7 @@ namespace SpaceEngineersScripts.Inventory
             var categoryName = category.ToString();
             var categoryNameLc = categoryName.ToLower();
             
-            if (cfg.ShowHeaders)
+            if (Cfg.ShowHeaders)
             {
                 page.AppendLine(categoryName);
                 page.AppendLine(new String('-', categoryName.Length));
@@ -424,14 +417,14 @@ namespace SpaceEngineersScripts.Inventory
             }
 
             var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
-            var maxWidth = maxValue >= 10 ? $"{Math.Round(maxValue / cfg.DisplayPrecision) * cfg.DisplayPrecision:n0}".Length : 1;
+            var maxWidth = maxValue >= 10 ? $"{Math.Round(maxValue / Cfg.DisplayPrecision) * Cfg.DisplayPrecision:n0}".Length : 1;
 
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
                 rawData.Append(categoryNameLc + item.Key, item.Value);
 
-                var formattedAmount = $"{Math.Round(item.Value / cfg.DisplayPrecision) * cfg.DisplayPrecision:n0}";
+                var formattedAmount = $"{Math.Round(item.Value / Cfg.DisplayPrecision) * Cfg.DisplayPrecision:n0}";
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + name;
 

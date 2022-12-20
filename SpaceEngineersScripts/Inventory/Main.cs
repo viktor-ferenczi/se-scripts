@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
@@ -7,14 +6,16 @@ using VRage.Game.GUI.TextPanel;
 
 namespace SpaceEngineersScripts.Inventory
 {
-    public class Program: MyGridProgram
+    // ReSharper disable once UnusedType.Global
+    public class Program : MyGridProgram
     {
         private readonly Cfg cfg;
         private readonly Log log;
+        private readonly RawData data;
+        private readonly TextPanels panels;
         private readonly Inventory inventory;
-        private readonly TextPanels textPanels;
-        private readonly RawData rawData = new RawData();
-        
+        private readonly Electric electric;
+
         private IMyTextSurface Surface => Me.GetSurface(0);
 
         private void ShowLog()
@@ -26,32 +27,18 @@ namespace SpaceEngineersScripts.Inventory
 
         // Blocks
 
-        private List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
         // FIXME: private List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
         // FIXME: private IMyAssembler mainAssembler = null;
 
         // State
 
-        private enum State
-        {
-            ScanCargo,
-            ScanBatteries,
-            ScanAssemblerQueues,
-            ProduceMissing,
-            Report,
-            Reset,
-        }
 
-        private State state = State.ScanCargo;
+        private State state = State.ScanInventory;
 
-        private int batteryIndex;
-        private double batteryCharge;
-        private double batteryCapacity;
 
         // FIXME:
         //private Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
         //private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
-
 
 
         // Parameter parsing (commands)
@@ -77,9 +64,11 @@ namespace SpaceEngineersScripts.Inventory
         {
             cfg = new Cfg();
             log = new Log(cfg);
-            textPanels = new TextPanels(cfg, log, Me, GridTerminalSystem);
-            inventory = new Inventory(cfg, log, Me, GridTerminalSystem, textPanels, rawData);
-            
+            data = new RawData();
+            panels = new TextPanels(cfg, log, Me, GridTerminalSystem);
+            inventory = new Inventory(cfg, log, Me, GridTerminalSystem, panels, data);
+            electric = new Electric(cfg, log, Me, GridTerminalSystem);
+
             Initialize();
             Load();
         }
@@ -91,8 +80,8 @@ namespace SpaceEngineersScripts.Inventory
 
             Reset();
             ClearDisplays();
-            
-            var panel = textPanels.Find(Category.Status).FirstOrDefault();
+
+            var panel = panels.Find(Category.Status).FirstOrDefault();
             panel?.WriteText("Loading...");
 
             Runtime.UpdateFrequency = cfg.UpdateFrequency;
@@ -101,39 +90,33 @@ namespace SpaceEngineersScripts.Inventory
         private void Reset()
         {
             log.Clear();
-            textPanels.Reset();
+            panels.Reset();
             inventory.Reset();
+            electric.Reset();
 
-            state = State.ScanCargo;
-            
-            batteryIndex = 0;
-            batteryCapacity = 0f;
-            batteryCharge = 0f;
+            state = State.ScanInventory;
 
-            rawData.Clear();
-            
+            data.Clear();
+
             // DO NOT CLEAR: restockComponents.Clear();
             // FIXME: queuedComponents.Clear();
 
             // FIXME: Refactor 
             //GridTerminalSystem.GetBlockGroupWithName(cfg.RestockAssemblersGroup)?.GetBlocksOfType(assemblerBlocks, block => block.IsSameConstructAs(Me));
             //mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
-            
-            GridTerminalSystem.GetBlocksOfType(batteryBlocks);
 
-            
 
-            log.Info("Text panels: {0}", textPanels.Count);
+            log.Info("Text panels: {0}", panels.Count);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
             // FIXME: log.Info("Sorted containers: {0}", containerBlocks.Count);
-            log.Info("Battery blocks: {0}", batteryBlocks.Count);
+            log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
             // FIXME: log.Info("Restock assemblers: {0}", assemblerBlocks.Count);
         }
 
         private void ClearDisplays()
         {
             Surface.WriteText("Init");
-            textPanels.ClearScreen();
+            panels.ClearScreen();
         }
 
         private void Load()
@@ -162,7 +145,8 @@ namespace SpaceEngineersScripts.Inventory
                 case UpdateType.IGC:
                     log.Clear();
 
-                    try {
+                    try
+                    {
                         ProcessCommand(argument);
                     }
                     catch (Exception e)
@@ -175,7 +159,8 @@ namespace SpaceEngineersScripts.Inventory
                 case UpdateType.Update1:
                 case UpdateType.Update10:
                 case UpdateType.Update100:
-                    try {
+                    try
+                    {
                         PeriodicProcessing();
                     }
                     catch (Exception e)
@@ -219,36 +204,37 @@ namespace SpaceEngineersScripts.Inventory
         {
             switch (state)
             {
-                case State.ScanCargo:
+                case State.ScanInventory:
                     for (int batch = 0; batch < cfg.CargoBatchSize; batch++)
                     {
                         inventory.Scan();
                     }
+
                     if (inventory.Done)
                     {
-                        state = State.ScanBatteries;                        
+                        state = State.ScanBatteries;
                     }
+
                     break;
 
                 case State.ScanBatteries:
                     for (int batch = 0; batch < cfg.BatteryBatchSize; batch++)
                     {
-                        if (batteryIndex >= batteryBlocks.Count)
-                        {
-                            // FIXME: state = attemptedToMoveCargo ? State.Report : State.ScanAssemblerQueues;
-                            state = State.ScanAssemblerQueues;
-                            break;
-                        }
-                        ScanBattery();
-                        batteryIndex++;
+                        electric.Scan();
                     }
+
+                    if (electric.Done)
+                    {
+                        state = State.ScanAssemblerQueues;
+                    }
+
                     break;
 
                 case State.ScanAssemblerQueues:
                     // FIXME: ScanAssemblerQueues();
                     state = State.ProduceMissing;
                     break;
-                
+
                 case State.ProduceMissing:
                     // FIXME: ProduceMissing();
                     state = State.Report;
@@ -258,49 +244,22 @@ namespace SpaceEngineersScripts.Inventory
                     Report();
                     state = State.Reset;
                     break;
-                
+
                 case State.Reset:
                     Reset();
                     break;
             }
         }
 
-        private void ScanBattery()
-        {
-            var battery = batteryBlocks[batteryIndex];
-            if (battery == null)
-            {
-                log.Debug("Battery is missing");
-                return;
-            }
-
-            if (!battery.IsFunctional)
-            {
-                log.Warning("Broken battery: " + battery.CustomName);
-                return;
-            }
-
-            if (!battery.Enabled)
-            {
-                log.Warning("Disabled battery: " + battery.CustomName);
-                return;
-            }
-
-            log.Debug("[{0}]: {1}", batteryIndex, battery.CustomName);
-
-            batteryCapacity += battery.MaxStoredPower;
-            batteryCharge += battery.CurrentStoredPower;
-        }
-
         private void Report()
         {
-            rawData.Append("now", FormatDateTime(DateTime.UtcNow));
-            rawData.Append("status", log.HighestSeverity.ToString());
-            rawData.Append("batteryCapacity", batteryCapacity);
-            rawData.Append("batteryCharge", batteryCharge);
-            rawData.Append("cargoCapacity", inventory.CargoCapacity);
-            rawData.Append("cargoVolume", inventory.CargoVolume);
-            rawData.Append("cargoMass", inventory.CargoMass * 1e-6);
+            data.Append("now", FormatDateTime(DateTime.UtcNow));
+            data.Append("status", log.HighestSeverity.ToString());
+            data.Append("batteryCapacity", electric.Capacity);
+            data.Append("batteryCharge", electric.Charge);
+            data.Append("cargoCapacity", inventory.Capacity);
+            data.Append("cargoVolume", inventory.Volume);
+            data.Append("cargoMass", inventory.Mass * 1e-6);
 
             inventory.Display();
 
@@ -311,7 +270,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayStatus()
         {
-            var panel = textPanels.Find(Category.Status).FirstOrDefault();
+            var panel = panels.Find(Category.Status).FirstOrDefault();
             if (panel == null)
             {
                 log.Warning("No status panel");
@@ -323,14 +282,18 @@ namespace SpaceEngineersScripts.Inventory
             text.AppendLine(FormatDateTime(DateTime.UtcNow));
             text.AppendLine("");
 
-            text.AppendLine($"Battery: {batteryCharge / Math.Max(1, batteryCapacity):p0}");
-            text.AppendLine($"Energy: {Math.Round(batteryCharge):n2} MWh");
+            var previous = Math.Round(electric.Previous);
+            var current = Math.Round(electric.Charge);
+            var change = current < previous ? "\\" : (current > previous ? "/" : "--");
+
+            text.AppendLine($"Battery: {electric.Charge / Math.Max(1, electric.Capacity):p0} {change}");
+            text.AppendLine($"Energy: {Math.Round(electric.Charge):n2} MWh");
             text.AppendLine("");
 
-            text.AppendLine($"Cargo: {inventory.CargoVolume / Math.Max(1, inventory.CargoCapacity):p0}");
-            text.AppendLine($" Capacity: {Math.Round(inventory.CargoCapacity * 1e-6):n0} ML");
-            text.AppendLine($" Volume: {Math.Round(inventory.CargoVolume * 1e-6):n0} ML");
-            text.AppendLine($" Mass: {Math.Round(inventory.CargoMass * 1e-6):n0} kg");
+            text.AppendLine($"Cargo: {inventory.Volume / Math.Max(1, inventory.Capacity):p0}");
+            text.AppendLine($" Capacity: {Math.Round(inventory.Capacity * 1e-6):n0} ML");
+            text.AppendLine($" Volume: {Math.Round(inventory.Volume * 1e-6):n0} ML");
+            text.AppendLine($" Mass: {Math.Round(inventory.Mass * 1e-6):n0} kg");
             text.AppendLine("");
 
             panel.WriteText(text);
@@ -338,7 +301,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayLog()
         {
-            var panel = textPanels.Find(Category.Log).FirstOrDefault();
+            var panel = panels.Find(Category.Log).FirstOrDefault();
             if (panel == null)
             {
                 log.Info("No log panel");
@@ -352,13 +315,13 @@ namespace SpaceEngineersScripts.Inventory
 
         private void DisplayRawData()
         {
-            var panel = textPanels.Find(Category.Raw).FirstOrDefault();
+            var panel = panels.Find(Category.Raw).FirstOrDefault();
             if (panel == null)
             {
                 return;
             }
 
-            panel.WriteText(rawData.Text);
+            panel.WriteText(data.Text);
         }
 
         private static string FormatDateTime(DateTime dt)

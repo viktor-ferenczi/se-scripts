@@ -5,21 +5,12 @@ using VRage.Game.GUI.TextPanel;
 
 namespace SpaceEngineersScripts.Inventory
 {
-    public class TextPanels
+    public class TextPanels: ProgramModule
     {
-        private readonly Cfg cfg;
-        private readonly Log log;
-        private readonly IMyProgrammableBlock me;
-        private readonly IMyGridTerminalSystem gts;
-        
         private List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
-
-        public TextPanels(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts)
+        
+        public TextPanels(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(cfg, log, me, gts)
         {
-            this.cfg = cfg;
-            this.log = log;
-            this.me = me;
-            this.gts = gts;
         }
 
         public int Count => textPanels.Count; 
@@ -27,11 +18,11 @@ namespace SpaceEngineersScripts.Inventory
         public void Reset()
         {
             textPanels.Clear();
-            gts.GetBlockGroupWithName(cfg.PanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(me));
+            Gts.GetBlockGroupWithName(Cfg.PanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
 
             if (textPanels == null || textPanels.Count == 0)
             {
-                log.Error("No text panels in group {0}", cfg.PanelsGroup);
+                Log.Error("No text panels in group {0}", Cfg.PanelsGroup);
                 return;
             }
 
@@ -42,27 +33,27 @@ namespace SpaceEngineersScripts.Inventory
                 if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = cfg.StatusFontSize;
+                    panel.FontSize = Cfg.StatusFontSize;
                 }
                 else if (panel.CustomName.ToLower().Contains("log"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = cfg.LogFontSize;
+                    panel.FontSize = Cfg.LogFontSize;
                 }
                 else
                 {
                     panel.Font = "Monospace";
-                    panel.FontSize = cfg.DefaultFontSize;
+                    panel.FontSize = Cfg.DefaultFontSize;
                 }
 
                 panel.TextPadding = panel.FontSize;
             }
 
-            if (cfg.Debug)
+            if (Cfg.Debug)
             {
                 foreach (var panel in textPanels)
                 {
-                    log.Debug("Panel {0}", panel.CustomName);
+                    Log.Debug("Panel {0}", panel.CustomName);
                 }
             }
         }

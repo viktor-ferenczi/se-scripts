@@ -13,8 +13,8 @@ namespace SpaceEngineersScripts.Inventory
         public int PanelRowCount = 17;
         public int PanelColumnCount = 25;
         public double DisplayPrecision = 1;
-        public int CargoBatchSize = 3;
-        public int BatteryBatchSize = 10;
+        public int CargoBatchSize = 2;
+        public int BatteryBatchSize = 5;
         public bool ShowHeaders = true;
         public float DefaultFontSize = 1f;
         public float StatusFontSize = 1.6f;
