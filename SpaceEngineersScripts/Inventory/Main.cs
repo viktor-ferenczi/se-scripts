@@ -30,6 +30,8 @@ namespace SpaceEngineersScripts.Inventory
         private enum Command
         {
             Default,
+            Start,
+            Stop,
             Unknown,
         }
 
@@ -39,6 +41,10 @@ namespace SpaceEngineersScripts.Inventory
             {
                 case "":
                     return Command.Default;
+                case "start":
+                    return Command.Start;
+                case "stop":
+                    return Command.Stop;
                 default:
                     return Command.Unknown;
             }
@@ -205,7 +211,16 @@ namespace SpaceEngineersScripts.Inventory
                     Reset();
                     break;
 
-                default:
+                case Command.Start:
+                    Start();
+                    PeriodicProcessing();
+                    break;
+                    
+                case Command.Stop:
+                    Stop();
+                    break;
+                    
+                case Command.Unknown:
                     log.Error("Unknown command");
                     break;
             }
