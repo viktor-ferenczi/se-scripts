@@ -61,13 +61,13 @@ namespace SpaceEngineersScripts.Inventory
 
             if (!battery.IsFunctional)
             {
-                Log.Warning("Broken battery: " + battery.CustomName);
+                Log.Warning("Broken battery: {0}", battery.CustomName);
                 return;
             }
 
             if (!battery.Enabled)
             {
-                Log.Warning("Disabled battery: " + battery.CustomName);
+                Log.Warning("Disabled battery: {0}", battery.CustomName);
                 return;
             }
 

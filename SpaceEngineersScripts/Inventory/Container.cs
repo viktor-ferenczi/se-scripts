@@ -28,7 +28,7 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        private NameMapping[] nameMappings =
+        private readonly NameMapping[] nameMappings =
         {
             new NameMapping("ore", "ore"),
             new NameMapping("ingot", "ingot"),
@@ -36,7 +36,9 @@ namespace SpaceEngineersScripts.Inventory
             new NameMapping("weapon", "weapon"),
             new NameMapping("ammo", "ammo"),
             new NameMapping("hydrogen", "hydrogen"),
+            new NameMapping("h2", "hydrogen"),
             new NameMapping("oxygen", "oxygen"),
+            new NameMapping("o2", "oxygen"),
             new NameMapping("gas", "gas"),
             new NameMapping("bottle", "gas"),
             new NameMapping("generator", "gas"),
@@ -58,11 +60,8 @@ namespace SpaceEngineersScripts.Inventory
                 if (name.Contains(nameMapping.CustomNamePart))
                 {
                     Map(map, nameMapping.NameInMap);
-                    return;
                 }
             }
-
-            Map(map, "");
         }
 
         private void Map(Dictionary<string, List<Container>> map, string name)

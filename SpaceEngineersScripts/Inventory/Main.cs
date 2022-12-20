@@ -114,11 +114,16 @@ namespace SpaceEngineersScripts.Inventory
 
             data.Clear();
 
-            log.Info("Text panels: {0}", panels.Count);
+            log.Info("Text panels: {0}", panels.TextPanelCount);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
             log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
             log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
             log.Info("Restock assemblers: {0}", production.IsMainAssemblerAvailable ? production.AssemblerCount : 0);
+
+            if (panels.TextPanelCount == 0)
+            {
+                Echo("No text panels");
+            }
         }
 
         private void ClearDisplays()
@@ -261,7 +266,7 @@ namespace SpaceEngineersScripts.Inventory
                         inventory.MoveItems();
                     }
                     state = State.ScanAssemblerQueues;
-                    return !config.EnableItemSorting;
+                    return inventory.MovedItemsCount == 0;
 
                 case State.ScanAssemblerQueues:
                     production.ScanAssemblerQueues();
@@ -271,7 +276,7 @@ namespace SpaceEngineersScripts.Inventory
                 case State.ProduceMissing:
                     production.ProduceMissing(inventory);
                     state = State.Report;
-                    return !production.IsMainAssemblerAvailable;
+                    return production.EnqueueCount == 0;
 
                 case State.Report:
                     Report();
@@ -289,6 +294,10 @@ namespace SpaceEngineersScripts.Inventory
 
         private void Report()
         {
+            log.Info("Enqueued for production: {0}", production.EnqueueCount);
+            log.Info("Items moved: {0}", inventory.MovedItemsCount);
+            log.Info("");
+            
             ShowLog();
             
             data.Append("now", FormatDateTime(DateTime.UtcNow));

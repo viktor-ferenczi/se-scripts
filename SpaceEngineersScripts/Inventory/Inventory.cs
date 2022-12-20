@@ -32,6 +32,8 @@ namespace SpaceEngineersScripts.Inventory
         private List<Container> oxygenContainers;
         
         private int index;
+        private int movedItemsCount;
+        
         private double capacity;
         private double volume;
         private double mass;
@@ -41,8 +43,8 @@ namespace SpaceEngineersScripts.Inventory
         public double Mass => mass;
         
         public int CargoBlockCount => allBlocksWithInventory.Count;
-        public int ItemsToMoveCount => itemsToMove.Count;
         public int SortedContainerCount => sortedContainerBlocks.Count;
+        public int MovedItemsCount => movedItemsCount;
         
         public IReadOnlyDictionary<string, double> OreStock => oreStock; 
         public IReadOnlyDictionary<string, double> IngotStock => ingotStock;
@@ -68,6 +70,7 @@ namespace SpaceEngineersScripts.Inventory
             itemsToMove.Clear();
 
             index = 0;
+            movedItemsCount = 0;
             
             capacity = 0f;
             volume = 0f;
@@ -92,34 +95,53 @@ namespace SpaceEngineersScripts.Inventory
             allBlocksWithInventory.AddRange(terminalBlocks.Where(block => block.InventoryCount > 0));
             
             Gts.GetBlockGroupWithName(Config.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(sortedContainerBlocks);
-            
+
+            var allContainers = new List<Container>();
             foreach (var containerBlock in sortedContainerBlocks)
             {
                 var container = new Container(containerBlock);
                 container.Register(containerMap);
+                allContainers.Add(container);
             }
 
             foreach (var containers in containerMap.Values)
             {
                 containers.Sort();
             }
+
+            if (Config.Debug)
+            {
+                var names = containerMap.Keys.ToList();
+                names.Sort();
+                foreach (var name in names)
+                {
+                    Log.Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
+                }
+            }
             
-            oreContainers = FindContainers("ore") ?? new List<Container>();
-            ingotContainers = FindContainers("ingot") ?? new List<Container>();
-            componentContainers = FindContainers("component") ?? new List<Container>();
-            toolContainers = FindContainers("tool") ?? FindContainers("");
+            oreContainers = FindContainers("ore") ?? allContainers;
+            ingotContainers = FindContainers("ingot") ?? allContainers;
+            componentContainers = FindContainers("component") ?? allContainers;
+            toolContainers = FindContainers("tool") ?? allContainers;
             ammoContainers = FindContainers("ammo") ?? FindContainers("weapon") ?? toolContainers;
             weaponContainers = FindContainers("weapon") ?? FindContainers("ammo") ?? toolContainers;
             foodContainers = FindContainers("food") ?? toolContainers;
-            gasContainers = FindContainers("gas") ?? FindContainers("");
+            gasContainers = FindContainers("gas") ?? toolContainers;
             hydrogenContainers = FindContainers("hydrogen") ?? gasContainers;
             oxygenContainers = FindContainers("oxygen") ?? gasContainers;
 
-            var names = containerMap.Keys.ToList();
-            names.Sort();
-            foreach (var name in names)
+            if (Config.Debug)
             {
-                Log.Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
+                Log.Debug("OreContainers: {0}", oreContainers.Count);
+                Log.Debug("IngotContainers: {0}", ingotContainers.Count);
+                Log.Debug("ComponentContainers: {0}", componentContainers.Count);
+                Log.Debug("ToolContainers: {0}", toolContainers.Count);
+                Log.Debug("AmmoContainers: {0}", ammoContainers.Count);
+                Log.Debug("WeaponContainers: {0}", weaponContainers.Count);
+                Log.Debug("FoodContainers: {0}", foodContainers.Count);
+                Log.Debug("GasContainers: {0}", gasContainers.Count);
+                Log.Debug("HydrogenContainers: {0}", hydrogenContainers.Count);
+                Log.Debug("OxygenContainers: {0}", oxygenContainers.Count);
             }
         }
 
@@ -128,8 +150,8 @@ namespace SpaceEngineersScripts.Inventory
             return containerMap.GetValueOrDefault(name);
         }
 
-        public bool Done => index >= CargoBlockCount; 
-        
+        public bool Done => index >= CargoBlockCount;
+
         public void Scan()
         {
             if (Done)
@@ -152,13 +174,13 @@ namespace SpaceEngineersScripts.Inventory
 
             if (!block.IsFunctional)
             {
-                Log.Warning("Broken block: " + block.CustomName);
+                Log.Warning("Broken block: {0}", block.CustomName);
                 return;
             }
 
             if (block is IMyCargoContainer && !block.IsWorking)
             {
-                Log.Warning("Disabled cargo: " + block.CustomName);
+                Log.Warning("Disabled cargo: {0}", block.CustomName);
                 return;
             }
 
@@ -212,8 +234,6 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            List<Container> containers = null;
-
             for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
             {
                 var item = items[itemIndex];
@@ -222,12 +242,14 @@ namespace SpaceEngineersScripts.Inventory
                     continue;
                 }
 
+                var typeId = item.Type.TypeId;
                 var subtypeId = item.Type.SubtypeId;
                 var lowercaseSubTypeName = subtypeId.ToLower();
 
                 Dictionary<string, double> summary;
-                
-                switch (item.Type.TypeId)
+                List<Container> containers = null;
+
+                switch (typeId)
                 {
                     case "MyObjectBuilder_Ore":
                         summary = oreStock;
@@ -295,20 +317,21 @@ namespace SpaceEngineersScripts.Inventory
                         containers = toolContainers;
                         break;
                     default:
-                        Log.Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
+                        Log.Warning("Skipping item with unknown item.Type.TypeID: {0}", typeId);
                         continue;
                 }
 
                 if (containers != null && containers.Count != 0 && itemsToMove.Count < Config.MaxItemsToMove)
                 {
-                    var itemIsAtTheWrongPlace = containers.Find(container => container.IsTheSameBlock(cargo)) == null;
-                    if (itemIsAtTheWrongPlace)
+                    var isAtTheWrongPlace = containers.Find(container => container.IsTheSameBlock(cargo)) == null;
+                    if (isAtTheWrongPlace)
                     {
                         itemsToMove.Add(new ItemToMove
                         {
                             Inventory = blockInventory,
                             ItemIndex = itemIndex,
-                            ItemType = item.Type.TypeId,
+                            ItemType = typeId,
+                            ItemSubtype = subtypeId,
                             TargetContainers = containers,
                         });
                     }
@@ -418,9 +441,11 @@ namespace SpaceEngineersScripts.Inventory
                 yield return page;
             }
         }
-
+        
         public void MoveItems()
         {
+            Log.Info("Items to move: {0}", itemsToMove.Count);
+            
             // Reverse order, so moving the items don't change the index of the further items
             // (ideally, unless some concurrent moves happen)
             for (int i = itemsToMove.Count - 1; i >= 0; i--)
@@ -429,8 +454,9 @@ namespace SpaceEngineersScripts.Inventory
                 
                 // Verify that it is still the same item type which needs to be moved
                 var item = itemToMove.Inventory.GetItemAt(itemToMove.ItemIndex);
-                if (!item.HasValue || item.Value.Type.TypeId != itemToMove.ItemType)
+                if (!item.HasValue || item.Value.Type.TypeId != itemToMove.ItemType || item.Value.Type.SubtypeId != itemToMove.ItemSubtype)
                 {
+                    Log.Debug("Could not find item [{0}] to move: {1}", itemToMove.ItemIndex, itemToMove.ItemType);
                     continue;
                 }
                     
@@ -443,6 +469,7 @@ namespace SpaceEngineersScripts.Inventory
                         // FIXME: Fragile
                         if (itemToMove.Inventory.CurrentMass != originalMass)
                         {
+                            movedItemsCount++;
                             break;
                         }
                     }

@@ -16,7 +16,7 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["SortedContainersGroup"] = "Sorted Containers";
             Defaults["RestockAssemblersGroup"] = "Restock Assemblers";
             Defaults["PullFromConnectedShips"] = false;
-            Defaults["MaxItemsToMove"] = 20;
+            Defaults["MaxItemsToMove"] = 2;
             Defaults["PanelRowCount"] = 17;
             Defaults["PanelColumnCount"] = 25;
             Defaults["DisplayPrecision"] = 1.0;

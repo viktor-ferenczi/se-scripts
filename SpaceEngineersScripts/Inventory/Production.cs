@@ -7,12 +7,14 @@ namespace SpaceEngineersScripts.Inventory
 {
     public class Production : ProgramModule
     {
+        private int enqueueCount;
         private IMyAssembler mainAssembler;
         private readonly List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
         private readonly Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
         private readonly Dictionary<Component, MyDefinitionId> componentDefinitions = new Dictionary<Component, MyDefinitionId>();
         private IReadOnlyDictionary<Component, int> restockTargetAmounts;
 
+        public int EnqueueCount => enqueueCount;
         public int AssemblerCount => assemblerBlocks.Count;
         public bool IsMainAssemblerAvailable => Config.EnableComponentRestocking && mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsWorking && mainAssembler.Mode == MyAssemblerMode.Assembly;
 
@@ -22,6 +24,8 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Reset()
         {
+            enqueueCount = 0;
+            
             assemblerBlocks.Clear();
             queuedComponents.Clear();
             componentDefinitions.Clear();
@@ -97,14 +101,14 @@ namespace SpaceEngineersScripts.Inventory
             {
                 foreach (var kv in inventory.ComponentStock)
                 {
-                    Log.Info(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
+                    Log.Info("CC S:{1} C:{0}", kv.Key, kv.Value);
                 }
 
                 Log.Info("---");
 
                 foreach (var kv in queuedComponents)
                 {
-                    Log.Info(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
+                    Log.Info("QC Q:{1} C:{0}", kv.Key, kv.Value);
                 }
 
                 Log.Info("---");
@@ -117,7 +121,7 @@ namespace SpaceEngineersScripts.Inventory
                 MyDefinitionId definitionId;
                 if (!componentDefinitions.TryGetValue(p.Key, out definitionId))
                 {
-                    Log.Warning($"No definition: {p.Key}");
+                    Log.Warning("No definition: {0}", p.Key);
                     continue;
                 }
                 
@@ -147,10 +151,11 @@ namespace SpaceEngineersScripts.Inventory
                 {
                     if (Config.Debug)
                     {
-                        Log.Info(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", inStock, queued, missing, definitionId.SubtypeName));
+                        Log.Info("RF S:{0} Q:{1} M:{2} C:{3}", inStock, queued, missing, definitionId.SubtypeName);
                     }
 
                     mainAssembler.AddQueueItem(definitionId, (decimal)missing);
+                    enqueueCount++;
                 }
             }
         }

@@ -13,7 +13,7 @@ namespace SpaceEngineersScripts.Inventory
         {
         }
 
-        public int Count => textPanels.Count; 
+        public int TextPanelCount => textPanels.Count; 
         
         public void Reset()
         {
@@ -22,7 +22,6 @@ namespace SpaceEngineersScripts.Inventory
 
             if (textPanels == null || textPanels.Count == 0)
             {
-                Log.Error("No text panels in group {0}", Config.DisplayPanelsGroup);
                 return;
             }
 

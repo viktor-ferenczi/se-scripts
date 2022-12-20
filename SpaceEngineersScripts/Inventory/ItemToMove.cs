@@ -8,6 +8,7 @@ namespace SpaceEngineersScripts.Inventory
         public IMyInventory Inventory;
         public int ItemIndex;
         public string ItemType;
+        public string ItemSubtype;
         public List<Container> TargetContainers;
     }
 }
