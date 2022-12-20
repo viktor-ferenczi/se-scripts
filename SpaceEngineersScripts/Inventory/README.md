@@ -92,22 +92,23 @@ assemblers to the "Restock Assemblers" group. Only the components seen
 in the inventory are restocked. Build one of any new component to
 trigger restocking.
 
-The minimum stock amount is the same for all components and is defined
-at the top of the source code, search for RESTOCK_MINIMUM. The default
-value is 10.
+The minimum stock amount is set in the configuration in `CustomData`.
 
-If welding interrupts often due to lack of components, then modify
-RESTOCK_OVERHEAD to be higher. The default value is 20% of
-RESTOCK_MINIMUM (rounded down).
+In order to disable restocking of a specific component set the target
+amount to zero in the configuration.
 
-The minimum inventory amounts will be RESTOCK_MINIMUM + RESTOCK_OVERHEAD
-or more if no components are consumed and the assembler queue is fully
-processes. This is the "steady state" minimum inventory.
+Restocking is supported only for the basic vanilla components, since
+they are relatively inexpensive and most commonly used. Some expensive
+components are set to zero restock amount, disabling the automatic
+stock refilling for them.
 
-In order to remove a component from restocking turn OFF the PB, then
-remove all of that component from the grid completely. When the PB is
-turned ON the next time it will not find that component, therefore no
-restocking will happen.
+## Configuration
+
+On first run the PB fill fill the `CustomData` with a template.
+All options are disabled (#) and showing their defaults. The PB
+needs to be re-run in order to pick up modified configuration.
+Clear the `CustomData` and re-run the PB to recover the original
+configuration template.
 
 ## Remarks
 
@@ -115,11 +116,11 @@ Display updates and sorting will be slower if you have more blocks.
 It is normal and the script is designed this way to prevent the PB
 from burning down on multiplayer servers.
 
-You can adjust BATCH_SIZE to change the block scanning speed, higher
-value will result in faster processing at the cost of more computation
-and higher risk of your PB ending up in smoke and fire. If your
-PB burns down, then try to decrease BATCH_SIZE. It may need to be
-tuned for the server you are playing on.
+You can adjust the batch size options to change the scanning speed,
+higher value will result in faster processing at the cost of more 
+computation  and higher risk of your PB ending up in smoke and fire. 
+If your  PB burns down, then try to decrease BATCH_SIZE. It may need 
+to be tuned for the server you are playing on.
 
 Mod compatibility is entirely untested. Works well with vanialla Space Engineers
 in Experimental mode and scripts enabled as of 2019-11-07. Also works
