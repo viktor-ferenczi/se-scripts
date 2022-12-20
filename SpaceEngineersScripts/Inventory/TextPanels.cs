@@ -18,11 +18,11 @@ namespace SpaceEngineersScripts.Inventory
         public void Reset()
         {
             textPanels.Clear();
-            Gts.GetBlockGroupWithName(Config.PanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
+            Gts.GetBlockGroupWithName(Config.DisplayPanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
 
             if (textPanels == null || textPanels.Count == 0)
             {
-                Log.Error("No text panels in group {0}", Config.PanelsGroup);
+                Log.Error("No text panels in group {0}", Config.DisplayPanelsGroup);
                 return;
             }
 

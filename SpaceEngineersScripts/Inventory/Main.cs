@@ -116,9 +116,9 @@ namespace SpaceEngineersScripts.Inventory
 
             log.Info("Text panels: {0}", panels.Count);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
-            log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
             log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
-            // FIXME: log.Info("Restock assemblers: {0}", assemblerBlocks.Count);
+            log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
+            log.Info("Restock assemblers: {0}", production.IsMainAssemblerAvailable ? production.AssemblerCount : 0);
         }
 
         private void ClearDisplays()
@@ -263,6 +263,10 @@ namespace SpaceEngineersScripts.Inventory
                     break;
 
                 case State.MoveItems:
+                    if (!config.EnableItemSorting)
+                    {
+                        return true;
+                    }
                     inventory.MoveItems();
                     state = State.ScanAssemblerQueues;
                     return inventory.ItemsToMoveCount == 0;
@@ -332,9 +336,9 @@ namespace SpaceEngineersScripts.Inventory
             text.AppendLine("");
 
             text.AppendLine($"Cargo: {inventory.Volume / Math.Max(1, inventory.Capacity):p0}");
-            text.AppendLine($" Capacity: {Math.Round(inventory.Capacity * 1e-6):n0} ML");
-            text.AppendLine($" Volume: {Math.Round(inventory.Volume * 1e-6):n0} ML");
-            text.AppendLine($" Mass: {Math.Round(inventory.Mass * 1e-6):n0} kg");
+            text.AppendLine($"Capacity: {Math.Round(inventory.Capacity * 1e-6):n0} ML");
+            text.AppendLine($"Volume: {Math.Round(inventory.Volume * 1e-6):n0} ML");
+            text.AppendLine($"Mass: {Math.Round(inventory.Mass * 1e-6):n0} kg");
             text.AppendLine("");
 
             panel.WriteText(text);

@@ -7,9 +7,11 @@ namespace SpaceEngineersScripts.Inventory
         protected override void AddOptions()
         {
             // Defaults
-            Defaults["Debug"] = true;
+            Defaults["Debug"] = false;
             Defaults["SingleRun"] = false;
-            Defaults["PanelsGroup"] = "Inventory Panels";
+            Defaults["EnableItemSorting"] = true;
+            Defaults["EnableComponentRestocking"] = true;
+            Defaults["DisplayPanelsGroup"] = "Inventory Panels";
             Defaults["SortedContainersGroup"] = "Sorted Containers";
             Defaults["RestockAssemblersGroup"] = "Restock Assemblers";
             Defaults["PullFromConnectedShips"] = false;
@@ -50,7 +52,9 @@ namespace SpaceEngineersScripts.Inventory
 
         public bool Debug => (bool)this["Debug"];
         public bool SingleRun => (bool)this["SingleRun"];
-        public string PanelsGroup => (string)this["PanelsGroup"];
+        public bool EnableItemSorting => (bool)this["EnableItemSorting"];
+        public bool EnableComponentRestocking => (bool)this["EnableComponentRestocking"];
+        public string DisplayPanelsGroup => (string)this["DisplayPanelsGroup"];
         public string SortedContainersGroup => (string)this["SortedContainersGroup"];
         public string RestockAssemblersGroup => (string)this["RestockAssemblersGroup"];
         public bool PullFromConnectedShips => (bool)this["PullFromConnectedShips"];

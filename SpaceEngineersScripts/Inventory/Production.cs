@@ -14,7 +14,7 @@ namespace SpaceEngineersScripts.Inventory
         private IReadOnlyDictionary<Component, int> restockTargetAmounts;
 
         public int AssemblerCount => assemblerBlocks.Count;
-        public bool IsMainAssemblerAvailable => mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsWorking && mainAssembler.Mode == MyAssemblerMode.Assembly;
+        public bool IsMainAssemblerAvailable => Config.EnableComponentRestocking && mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsWorking && mainAssembler.Mode == MyAssemblerMode.Assembly;
 
         public Production(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(config, log, me, gts)
         {
@@ -56,6 +56,11 @@ namespace SpaceEngineersScripts.Inventory
 
         public void ScanAssemblerQueues()
         {
+            if (!IsMainAssemblerAvailable)
+            {
+                return;
+            }
+            
             foreach (var assembler in assemblerBlocks)
             {
                 AggregateAssemblerQueue(assembler);
