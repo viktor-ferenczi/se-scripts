@@ -228,7 +228,6 @@ namespace SpaceEngineersScripts.Inventory
 
         private bool ProcessStep()
         {
-            Echo(state.ToString());
             switch (state)
             {
                 case State.Reset:
@@ -240,55 +239,49 @@ namespace SpaceEngineersScripts.Inventory
                     for (int batch = 0; batch < config.BatteryBatchSize; batch++)
                     {
                         electric.Scan();
+                        if (electric.Done)
+                        {
+                            state = State.ScanInventory;
+                        }
                     }
-
-                    if (electric.Done)
-                    {
-                        state = State.ScanInventory;
-                    }
-
                     break;
 
                 case State.ScanInventory:
                     for (int batch = 0; batch < config.CargoBatchSize; batch++)
                     {
                         inventory.Scan();
+                        if (inventory.Done)
+                        {
+                            state = State.MoveItems;
+                        }
                     }
-
-                    if (inventory.Done)
-                    {
-                        state = State.MoveItems;
-                    }
-
                     break;
 
                 case State.MoveItems:
-                    if (!config.EnableItemSorting)
+                    if (config.EnableItemSorting)
                     {
-                        return true;
+                        inventory.MoveItems();
                     }
-                    inventory.MoveItems();
                     state = State.ScanAssemblerQueues;
-                    return inventory.ItemsToMoveCount == 0;
+                    return !config.EnableItemSorting;
 
                 case State.ScanAssemblerQueues:
                     production.ScanAssemblerQueues();
                     state = State.ProduceMissing;
-                    return production.AssemblerCount == 0;
+                    return !production.IsMainAssemblerAvailable;
 
                 case State.ProduceMissing:
                     production.ProduceMissing(inventory);
                     state = State.Report;
-                    return production.AssemblerCount == 0;
+                    return !production.IsMainAssemblerAvailable;
 
                 case State.Report:
                     Report();
-
                     if (config.SingleRun)
                     {
                         Stop();
+                        break;
                     }
-
                     state = State.Reset;
                     break;
             }
