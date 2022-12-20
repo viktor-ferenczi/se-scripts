@@ -88,15 +88,18 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Inventory\BaseConfig.cs" />
         <Compile Include="Inventory\Category.cs" />
         <Compile Include="Inventory\Container.cs" />
         <Compile Include="Inventory\Electric.cs" />
+        <Compile Include="Inventory\ItemToMove.cs" />
         <Compile Include="Inventory\Main.cs" />
-        <Compile Include="Inventory\Cfg.cs" />
+        <Compile Include="Inventory\Config.cs" />
         <Compile Include="Inventory\Log.cs" />
         <Compile Include="Inventory\LogSeverity.cs" />
         <Compile Include="Inventory\Naming.cs" />
         <Compile Include="Inventory\Inventory.cs" />
+        <Compile Include="Inventory\Production.cs" />
         <Compile Include="Inventory\ProgramModule.cs" />
         <Compile Include="Inventory\RawData.cs" />
         <Compile Include="Inventory\State.cs" />

@@ -15,21 +15,35 @@ namespace SpaceEngineersScripts.Inventory
         private readonly Dictionary<string, double> ammo = new Dictionary<string, double>();
         private readonly Dictionary<string, double> other = new Dictionary<string, double>();
 
-        private readonly List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
+        private readonly List<IMyTerminalBlock> allBlocksWithInventory = new List<IMyTerminalBlock>();
+        private readonly List<IMyTerminalBlock> sortedContainerBlocks = new List<IMyTerminalBlock>();
         private readonly Dictionary<string, List<Container>> containerMap = new Dictionary<string, List<Container>>();
+        private readonly List<ItemToMove> itemsToMove = new List<ItemToMove>();
 
+        private List<Container> oreContainers;
+        private List<Container> ingotContainers;
+        private List<Container> componentContainers;
+        private List<Container> toolContainers;
+        private List<Container> ammoContainers;
+        private List<Container> weaponContainers;
+        private List<Container> foodContainers;
+        private List<Container> gasContainers;
+        private List<Container> hydrogenContainers;
+        private List<Container> oxygenContainers;
+        
         private int index;
         private double capacity;
         private double volume;
         private double mass;
-        // FIXME: private bool attemptedToMoveCargo;
 
-        public int CargoBlockCount => blocks.Count;
+        public int CargoBlockCount => allBlocksWithInventory.Count;
         public double Capacity => capacity;
         public double Volume => volume;
         public double Mass => mass;
+        public int ItemsToMoveCount => itemsToMove.Count;
+        public int SortedContainerCount => sortedContainerBlocks.Count;
         
-        public Inventory(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts): base(cfg, log, me, gts)
+        public Inventory(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts): base(config, log, me, gts)
         {
         }
 
@@ -41,24 +55,25 @@ namespace SpaceEngineersScripts.Inventory
             ammo.Clear();
             other.Clear();
 
-            blocks.Clear();
+            allBlocksWithInventory.Clear();
+            sortedContainerBlocks.Clear();
             containerMap.Clear();
-            
-            FindBlocks();
+            itemsToMove.Clear();
 
             index = 0;
             
             capacity = 0f;
             volume = 0f;
             mass = 0f;
-            // FIXME: attemptedToMoveCargo = false;
+
+            FindBlocks();
         }
 
         private void FindBlocks()
         {
             var terminalBlocks = new List<IMyTerminalBlock>();
 
-            if (Cfg.PullFromConnectedShips)
+            if (Config.PullFromConnectedShips)
             {
                 Gts.GetBlocksOfType<IMyTerminalBlock>(terminalBlocks);
             }
@@ -67,12 +82,11 @@ namespace SpaceEngineersScripts.Inventory
                 Gts.GetBlocksOfType<IMyTerminalBlock>(terminalBlocks, block => block.IsSameConstructAs(Me));
             }
 
-            this.blocks.AddRange(terminalBlocks.Where(block => block.InventoryCount > 0));
+            allBlocksWithInventory.AddRange(terminalBlocks.Where(block => block.InventoryCount > 0));
             
-            var containerBlocks = new List<IMyTerminalBlock>();
-            Gts.GetBlockGroupWithName(Cfg.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
-
-            foreach (var containerBlock in containerBlocks)
+            Gts.GetBlockGroupWithName(Config.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(sortedContainerBlocks);
+            
+            foreach (var containerBlock in sortedContainerBlocks)
             {
                 var container = new Container(containerBlock);
                 container.Register(containerMap);
@@ -82,6 +96,17 @@ namespace SpaceEngineersScripts.Inventory
             {
                 containers.Sort();
             }
+            
+            oreContainers = FindContainers("ore") ?? new List<Container>();
+            ingotContainers = FindContainers("ingot") ?? new List<Container>();
+            componentContainers = FindContainers("component") ?? new List<Container>();
+            toolContainers = FindContainers("tool") ?? FindContainers("");
+            ammoContainers = FindContainers("ammo") ?? FindContainers("weapon") ?? toolContainers;
+            weaponContainers = FindContainers("weapon") ?? FindContainers("ammo") ?? toolContainers;
+            foodContainers = FindContainers("food") ?? toolContainers;
+            gasContainers = FindContainers("gas") ?? FindContainers("");
+            hydrogenContainers = FindContainers("hydrogen") ?? gasContainers;
+            oxygenContainers = FindContainers("oxygen") ?? gasContainers;
 
             var names = containerMap.Keys.ToList();
             names.Sort();
@@ -89,6 +114,11 @@ namespace SpaceEngineersScripts.Inventory
             {
                 Log.Debug("Sort: \"{0}\" => {1} blocks", name, containerMap[name].Count);
             }
+        }
+
+        private List<Container> FindContainers(string name)
+        {
+            return containerMap.GetValueOrDefault(name);
         }
 
         public bool Done => index >= CargoBlockCount; 
@@ -106,7 +136,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void ScanBlock()
         {
-            var block = blocks[index];
+            var block = allBlocksWithInventory[index];
             if (block == null)
             {
                 Log.Debug("Block is missing");
@@ -127,11 +157,11 @@ namespace SpaceEngineersScripts.Inventory
 
             Log.Debug("[{0}]: {1}", index, block.CustomName);
 
-            SummarizeBlockCapacity(block);
-            SummarizeBlockContents(block);
+            AggregateBlockCapacity(block);
+            AggregateBlockContents(block);
         }
 
-        private void SummarizeBlockCapacity(IMyTerminalBlock block)
+        private void AggregateBlockCapacity(IMyTerminalBlock block)
         {
             IMyInventory blockInventory = block.GetInventory(0);
 
@@ -145,21 +175,20 @@ namespace SpaceEngineersScripts.Inventory
             mass += blockInventory.CurrentMass.RawValue;
         }
 
-        private void SummarizeBlockContents(IMyTerminalBlock cargo)
+        private void AggregateBlockContents(IMyTerminalBlock cargo)
         {
             for (int inventoryIndex = 0; inventoryIndex < cargo.InventoryCount; inventoryIndex++)
             {
-                SummarizeCargoInventory(cargo, inventoryIndex);
+                AggregateCargoInventory(cargo, inventoryIndex);
             }
         }
 
-        private void SummarizeCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
+        private void AggregateCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);
-
-            // FIXME: Detect the safe zone by its interface. What is that?
+            // FIXME: Detect the safe zone by its interface
             var allowComponent = !(cargo is IMyShipWelder || cargo.GetProperty("SafeZoneCreate") != null);
 
             var blockInventory = cargo.GetInventory(inventoryIndex);
@@ -176,9 +205,6 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            // FIXME: Factor out
-            //bool mainAssemblerIsUsable = mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsFunctional;
-
             List<Container> containers = null;
 
             for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
@@ -193,13 +219,14 @@ namespace SpaceEngineersScripts.Inventory
                 var lowercaseSubTypeName = subtypeId.ToLower();
 
                 Dictionary<string, double> summary;
+                
                 switch (item.Type.TypeId)
                 {
                     case "MyObjectBuilder_Ore":
                         summary = ore;
                         if (allowOre)
                         {
-                            containers = FindContainers("ore") ?? new List<Container>();
+                            containers = oreContainers;
                         }
 
                         break;
@@ -207,7 +234,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = ingot;
                         if (allowIngot)
                         {
-                            containers = FindContainers("ingot") ?? new List<Container>();
+                            containers = ingotContainers;
                         }
 
                         break;
@@ -215,7 +242,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = component;
                         if (allowComponent)
                         {
-                            containers = FindContainers("component") ?? new List<Container>();
+                            containers = componentContainers;
                         }
 
                         // FIXME: Factor out
@@ -243,7 +270,7 @@ namespace SpaceEngineersScripts.Inventory
                         summary = ammo;
                         if (allowAmmo)
                         {
-                            containers = FindContainers("ammo") ?? FindContainers("weapon") ?? FindContainers("tool") ?? FindContainers("");
+                            containers = ammoContainers;
                         }
 
                         break;
@@ -253,75 +280,59 @@ namespace SpaceEngineersScripts.Inventory
                             lowercaseSubTypeName.Contains("grind") ||
                             lowercaseSubTypeName.Contains("drill"))
                         {
-                            containers = FindContainers("tool") ?? FindContainers("");
+                            containers = toolContainers;
                         }
                         else
                         {
-                            containers = FindContainers("weapon") ?? FindContainers("ammo") ??
-                                FindContainers("tool") ?? FindContainers("");
+                            containers = weaponContainers;
                         }
 
                         break;
                     case "MyObjectBuilder_Datapad":
                         summary = other;
-                        containers = FindContainers("tool") ?? FindContainers("");
-                        break;
-                    case "MyObjectBuilder_GasContainerObject":
-                        summary = other;
-                        containers = FindContainers("hydrogen") ?? FindContainers("gas") ?? FindContainers("");
-                        break;
-                    case "MyObjectBuilder_OxygenContainerObject":
-                        summary = other;
-                        containers = FindContainers("oxygen") ?? FindContainers("gas") ?? FindContainers("");
-                        break;
-                    case "MyObjectBuilder_PhysicalObject":
-                        summary = other;
-                        containers = FindContainers("tool") ?? FindContainers("");
+                        containers = toolContainers;
                         break;
                     case "MyObjectBuilder_ConsumableItem":
                         summary = other;
-                        containers = FindContainers("food") ?? FindContainers("tool") ?? FindContainers("");
+                        containers = foodContainers;
+                        break;
+                    case "MyObjectBuilder_GasContainerObject":
+                        summary = other;
+                        containers = hydrogenContainers;
+                        break;
+                    case "MyObjectBuilder_OxygenContainerObject":
+                        summary = other;
+                        containers = oxygenContainers;
+                        break;
+                    case "MyObjectBuilder_PhysicalObject":
+                        summary = other;
+                        containers = toolContainers;
                         break;
                     default:
                         Log.Warning("Skipping item with unknown item.Type.TypeID: {0}", item.Type.TypeId);
                         continue;
                 }
 
-                if (containers != null && containers.Count != 0)
+                if (containers != null && containers.Count != 0 && itemsToMove.Count < Config.MaxItemsToMove)
                 {
-                    var alreadyInTheRightPlace = containers.Find(container => container.IsTheSameBlock(cargo)) != null;
-
-                    if (!alreadyInTheRightPlace)
+                    var itemIsAtTheWrongPlace = containers.Find(container => container.IsTheSameBlock(cargo)) == null;
+                    if (itemIsAtTheWrongPlace)
                     {
-                        // FIXME: Factor out
-                        /*
-                        attemptedToMoveCargo = true;
-                        foreach (var container in containers)
+                        itemsToMove.Add(new ItemToMove
                         {
-                            var mass = cargo.Mass;
-                            if (container.CollectItem(blockInventory, itemIndex))
-                            {
-                                // FIXME: Fragile
-                                if (cargo.Mass != mass)
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                        */
+                            Inventory = null,
+                            ItemIndex = itemIndex,
+                            ItemType = item.Type.TypeId,
+                            TargetContainers = containers,
+                        });
                     }
                 }
 
-                Accumulate(summary, subtypeId, (double)item.Amount);
+                Aggregate(summary, subtypeId, (double)item.Amount);
             }
         }
 
-        private List<Container> FindContainers(string name)
-        {
-            return containerMap.GetValueOrDefault(name);
-        }
-
-        private static void Accumulate(IDictionary<string, double> summary, string key, double amount)
+        private static void Aggregate(IDictionary<string, double> summary, string key, double amount)
         {
             if (summary.ContainsKey(key))
             {
@@ -371,7 +382,7 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            var panelRowCount = (int)Math.Floor(Cfg.PanelRowCount / panels[0].FontSize);
+            var panelRowCount = (int)Math.Floor(Config.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
             foreach (var page in FormatSummary(data, category, summary, resourceNameFormatter, panelRowCount))
@@ -404,7 +415,7 @@ namespace SpaceEngineersScripts.Inventory
             var categoryName = category.ToString();
             var categoryNameLc = categoryName.ToLower();
             
-            if (Cfg.ShowHeaders)
+            if (Config.ShowHeaders)
             {
                 page.AppendLine(categoryName);
                 page.AppendLine(new String('-', categoryName.Length));
@@ -412,14 +423,14 @@ namespace SpaceEngineersScripts.Inventory
             }
 
             var maxValue = summary.Count == 0 ? 0 : summary.Values.Max();
-            var maxWidth = maxValue >= 10 ? $"{Math.Round(maxValue / Cfg.DisplayPrecision) * Cfg.DisplayPrecision:n0}".Length : 1;
+            var maxWidth = maxValue >= 10 ? $"{Math.Round(maxValue / Config.DisplayPrecision) * Config.DisplayPrecision:n0}".Length : 1;
 
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
                 rawData.Append(categoryNameLc + item.Key, item.Value);
 
-                var formattedAmount = $"{Math.Round(item.Value / Cfg.DisplayPrecision) * Cfg.DisplayPrecision:n0}";
+                var formattedAmount = $"{Math.Round(item.Value / Config.DisplayPrecision) * Config.DisplayPrecision:n0}";
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + name;
 
@@ -437,6 +448,37 @@ namespace SpaceEngineersScripts.Inventory
             if (page.Length > 0)
             {
                 yield return page;
+            }
+        }
+
+        public void MoveItems()
+        {
+            // Reverse order, so moving the items don't change the index of the further items
+            // (ideally, unless some concurrent moves happen)
+            for (int i = itemsToMove.Count - 1; i >= 0; i--)
+            {
+                var itemToMove = itemsToMove[i];
+                
+                // Verify that it is still the same item type which needs to be moved
+                var item = itemToMove.Inventory.GetItemAt(itemToMove.ItemIndex);
+                if (!item.HasValue || item.Value.Type.TypeId != itemToMove.ItemType)
+                {
+                    continue;
+                }
+                    
+                // Verify successful move by the change in source inventory mass
+                var originalMass = itemToMove.Inventory.CurrentMass;
+                foreach (var container in itemToMove.TargetContainers)
+                {
+                    if (container.CollectItem(itemToMove.Inventory, itemToMove.ItemIndex))
+                    {
+                        // FIXME: Fragile
+                        if (itemToMove.Inventory.CurrentMass != originalMass)
+                        {
+                            break;
+                        }
+                    }
+                }
             }
         }
     }

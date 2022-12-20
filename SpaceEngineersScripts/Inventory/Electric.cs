@@ -19,7 +19,7 @@ namespace SpaceEngineersScripts.Inventory
         public double Charge => charge;
         public double Previous => previous;
 
-        public Electric(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(cfg, log, me, gts)
+        public Electric(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(config, log, me, gts)
         {
         }
 
@@ -34,11 +34,6 @@ namespace SpaceEngineersScripts.Inventory
             charge = 0.0;
             capacity = 0.0;
 
-            FindBlocks();
-        }
-
-        private void FindBlocks()
-        {
             Gts.GetBlocksOfType(batteryBlocks);
         }
 

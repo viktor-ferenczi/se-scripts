@@ -9,36 +9,19 @@ namespace SpaceEngineersScripts.Inventory
     // ReSharper disable once UnusedType.Global
     public class Program : MyGridProgram
     {
-        private readonly Cfg cfg;
+        private readonly Config config;
         private readonly Log log;
-        private readonly RawData data;
+        
         private readonly TextPanels panels;
         private readonly Inventory inventory;
         private readonly Electric electric;
-
-        private IMyTextSurface Surface => Me.GetSurface(0);
-
-        private void ShowLog()
-        {
-            var text = log.Text;
-            Surface.WriteText(log.HighestSeverity.ToString());
-            Echo(text);
-        }
-
-        // Blocks
-
-        // FIXME: private List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
-        // FIXME: private IMyAssembler mainAssembler = null;
-
-        // State
-
-
+        private readonly Production production;
+        
+        private readonly RawData data;
+        
         private State state = State.ScanInventory;
 
-
-        // FIXME:
-        //private Dictionary<string, MyDefinitionId> restockComponents = new Dictionary<string, MyDefinitionId>();
-        //private Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
+        private IMyTextSurface Surface => Me.GetSurface(0);
 
 
         // Parameter parsing (commands)
@@ -62,12 +45,15 @@ namespace SpaceEngineersScripts.Inventory
 
         public Program()
         {
-            cfg = new Cfg();
-            log = new Log(cfg);
+            config = new Config();
+            log = new Log(config);
+            
+            panels = new TextPanels(config, log, Me, GridTerminalSystem);
+            inventory = new Inventory(config, log, Me, GridTerminalSystem);
+            electric = new Electric(config, log, Me, GridTerminalSystem);
+            production = new Production(config, log, Me, GridTerminalSystem);
+            
             data = new RawData();
-            panels = new TextPanels(cfg, log, Me, GridTerminalSystem);
-            inventory = new Inventory(cfg, log, Me, GridTerminalSystem);
-            electric = new Electric(cfg, log, Me, GridTerminalSystem);
 
             Initialize();
             Load();
@@ -79,36 +65,29 @@ namespace SpaceEngineersScripts.Inventory
             Surface.FontSize = 4f;
 
             Reset();
-            ClearDisplays();
 
+            ClearDisplays();
+            
             var panel = panels.Find(Category.Status).FirstOrDefault();
             panel?.WriteText("Loading...");
 
-            Runtime.UpdateFrequency = cfg.UpdateFrequency;
+            Start();
         }
 
         private void Reset()
         {
             log.Clear();
+            
             panels.Reset();
             inventory.Reset();
             electric.Reset();
-
-            state = State.ScanInventory;
+            production.Reset();
 
             data.Clear();
-
-            // DO NOT CLEAR: restockComponents.Clear();
-            // FIXME: queuedComponents.Clear();
-
-            // FIXME: Refactor 
-            //GridTerminalSystem.GetBlockGroupWithName(cfg.RestockAssemblersGroup)?.GetBlocksOfType(assemblerBlocks, block => block.IsSameConstructAs(Me));
-            //mainAssembler = assemblerBlocks.Where(assembler => assembler.CooperativeMode).FirstOrDefault() ?? assemblerBlocks.FirstOrDefault();
-
-
+            
             log.Info("Text panels: {0}", panels.Count);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
-            // FIXME: log.Info("Sorted containers: {0}", containerBlocks.Count);
+            log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
             log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
             // FIXME: log.Info("Restock assemblers: {0}", assemblerBlocks.Count);
         }
@@ -202,53 +181,86 @@ namespace SpaceEngineersScripts.Inventory
 
         private void PeriodicProcessing()
         {
+            while (ProcessStep())
+            {
+            }
+        }
+
+        private void Start()
+        {
+            state = State.Reset;
+            Runtime.UpdateFrequency = config.UseUpdate100 ? UpdateFrequency.Update100 : UpdateFrequency.Update10;
+        }
+
+        private void Stop()
+        {
+            Runtime.UpdateFrequency = UpdateFrequency.None;
+        }
+
+        private bool ProcessStep()
+        {
             switch (state)
             {
-                case State.ScanInventory:
-                    for (int batch = 0; batch < cfg.CargoBatchSize; batch++)
-                    {
-                        inventory.Scan();
-                    }
-
-                    if (inventory.Done)
-                    {
-                        state = State.ScanBatteries;
-                    }
-
+                case State.Reset:
+                    Reset();
                     break;
-
+                
                 case State.ScanBatteries:
-                    for (int batch = 0; batch < cfg.BatteryBatchSize; batch++)
+                    for (int batch = 0; batch < config.BatteryBatchSize; batch++)
                     {
                         electric.Scan();
                     }
 
                     if (electric.Done)
                     {
-                        state = State.ScanAssemblerQueues;
+                        state = State.ScanInventory;
                     }
 
                     break;
 
+                case State.ScanInventory:
+                    for (int batch = 0; batch < config.CargoBatchSize; batch++)
+                    {
+                        inventory.Scan();
+                    }
+
+                    if (inventory.Done)
+                    {
+                        state = State.MoveItems;
+                    }
+
+                    break;
+
+                case State.MoveItems:
+                    inventory.MoveItems();
+                    
+                    state = State.ScanAssemblerQueues;
+                    
+                    return inventory.ItemsToMoveCount == 0;
+
                 case State.ScanAssemblerQueues:
                     // FIXME: ScanAssemblerQueues();
                     state = State.ProduceMissing;
-                    break;
-
+                    return true;
+                
                 case State.ProduceMissing:
                     // FIXME: ProduceMissing();
                     state = State.Report;
-                    break;
+                    return true;
 
                 case State.Report:
                     Report();
+                    
+                    if (config.SingleRun)
+                    {
+                        Stop();
+                    }
+                    
                     state = State.Reset;
                     break;
-
-                case State.Reset:
-                    Reset();
-                    break;
             }
+
+            return false;
         }
 
         private void Report()
@@ -328,90 +340,12 @@ namespace SpaceEngineersScripts.Inventory
         {
             return $"{dt:yyyy-MM-dd HH:mm:ss} UTC";
         }
-
-        // FIXME: Refactor
-        /*
-        private void ScanAssemblerQueues()
-        {
-            foreach (var assembler in assemblerBlocks)
-            {
-                if (assembler.Closed || !assembler.IsFunctional)
-                {
-                    continue;
-                }
-                SummarizeAssemblerQueue(assembler);
-            }
-        }
-
-        !!! AggregateAssemblerQueue
-        private void SummarizeAssemblerQueue(IMyAssembler assembler)
-        {
-            !!! Summarize only if the assembler is in assembly mode, ignore if the assembler is in disassembly mode!
         
-            var queue = new List<MyProductionItem>();
-            assembler.GetQueue(queue);
-            
-            foreach (var item in queue)
-            {
-                var subtypeName = item.BlueprintId.SubtypeName;
-                var amount = queuedComponents.GetValueOrDefault(subtypeName, 0);
-                queuedComponents[subtypeName] = amount + (int)item.Amount;
-            }
-        }
-        
-        private void ProduceMissing()
+        private void ShowLog()
         {
-            if (mainAssembler == null || restockComponents.Count == 0 || mainAssembler.Closed || !mainAssembler.IsFunctional)
-            {
-                return;
-            }
-            
-            !!! Enqueue only if the assembler is in assembly mode. Don't touch the queue if it is in disassembly mode! 
-
-            if (cfg.Debug)
-            {
-                foreach (var kv in component)
-                {
-                    log.Info(string.Format("CC S:{1} C:{0}", kv.Key, kv.Value));
-                }
-                log.Info("---");
-            
-                foreach (var kv in queuedComponents)
-                {
-                    log.Info(string.Format("QC Q:{1} C:{0}", kv.Key, kv.Value));
-                }
-                log.Info("---");
-            }
-            
-            foreach (var kv in restockComponents)
-            {
-                var subtypeName = kv.Key;
-                var subtypeNameComponent = subtypeName + "Component";
-                
-                var stock = (int)component.GetValueOrDefault(subtypeName);
-                if (stock == 0)
-                {
-                    stock = (int)component.GetValueOrDefault(subtypeNameComponent);
-                }
-
-                var queued = queuedComponents.GetValueOrDefault(subtypeName);
-                if (queued == 0)
-                {
-                    queued = queuedComponents.GetValueOrDefault(subtypeNameComponent);
-                }
-                
-                var missing = cfg.RestockMinimum - queued - stock;
-                if (missing > queued)
-                {
-                    var definitionId = kv.Value;
-                    if (cfg.Debug)
-                    {
-                        log.Info(string.Format("RF S:{0} Q:{1} M:{2} C:{3}", stock, queued, missing, definitionId.SubtypeName));
-                    }
-                    mainAssembler.AddQueueItem(definitionId, (MyFixedPoint)(missing + cfg.RestockOverhead));
-                }
-            }
+            var text = log.Text;
+            Surface.WriteText(log.HighestSeverity.ToString());
+            Echo(text);
         }
-        */
     }
 }

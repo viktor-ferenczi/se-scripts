@@ -9,7 +9,7 @@ namespace SpaceEngineersScripts.Inventory
     {
         private List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
         
-        public TextPanels(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(cfg, log, me, gts)
+        public TextPanels(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(config, log, me, gts)
         {
         }
 
@@ -18,11 +18,11 @@ namespace SpaceEngineersScripts.Inventory
         public void Reset()
         {
             textPanels.Clear();
-            Gts.GetBlockGroupWithName(Cfg.PanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
+            Gts.GetBlockGroupWithName(Config.PanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
 
             if (textPanels == null || textPanels.Count == 0)
             {
-                Log.Error("No text panels in group {0}", Cfg.PanelsGroup);
+                Log.Error("No text panels in group {0}", Config.PanelsGroup);
                 return;
             }
 
@@ -33,23 +33,23 @@ namespace SpaceEngineersScripts.Inventory
                 if (panel.CustomName.ToLower().Contains("status"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = Cfg.StatusFontSize;
+                    panel.FontSize = Config.StatusFontSize;
                 }
                 else if (panel.CustomName.ToLower().Contains("log"))
                 {
                     panel.Font = "InfoMessageBoxText";
-                    panel.FontSize = Cfg.LogFontSize;
+                    panel.FontSize = Config.LogFontSize;
                 }
                 else
                 {
                     panel.Font = "Monospace";
-                    panel.FontSize = Cfg.DefaultFontSize;
+                    panel.FontSize = Config.DefaultFontSize;
                 }
 
                 panel.TextPadding = panel.FontSize;
             }
 
-            if (Cfg.Debug)
+            if (Config.Debug)
             {
                 foreach (var panel in textPanels)
                 {

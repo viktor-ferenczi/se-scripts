@@ -4,14 +4,14 @@ namespace SpaceEngineersScripts.Inventory
 {
     public abstract class ProgramModule
     {
-        protected readonly Cfg Cfg;
+        protected readonly Config Config;
         protected readonly Log Log;
         protected readonly IMyProgrammableBlock Me;
         protected readonly IMyGridTerminalSystem Gts;
 
-        protected ProgramModule(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts)
+        protected ProgramModule(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts)
         {
-            Cfg = cfg;
+            Config = config;
             Log = log;
             Me = me;
             Gts = gts;

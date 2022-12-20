@@ -2,11 +2,12 @@ namespace SpaceEngineersScripts.Inventory
 {
     public enum State
     {
-        ScanInventory,
+        Reset,
         ScanBatteries,
+        ScanInventory,
+        MoveItems,
         ScanAssemblerQueues,
         ProduceMissing,
         Report,
-        Reset,
     }
 }

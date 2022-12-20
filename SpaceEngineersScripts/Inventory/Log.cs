@@ -4,7 +4,7 @@ namespace SpaceEngineersScripts.Inventory
 {
     public class Log
     {
-        private readonly Cfg cfg;
+        private readonly Config config;
         private LogSeverity highestSeverity = LogSeverity.Ok;
         private readonly StringBuilder text = new StringBuilder();
 
@@ -16,9 +16,9 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        public Log(Cfg cfg)
+        public Log(Config config)
         {
-            this.cfg = cfg;
+            this.config = config;
         }
 
         public LogSeverity HighestSeverity => highestSeverity;
@@ -38,7 +38,7 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Debug(string formatString, params object[] args)
         {
-            if (cfg.Debug)
+            if (config.Debug)
             {
                 Info("D: " + formatString, args);
             }
