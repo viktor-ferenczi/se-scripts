@@ -40,6 +40,11 @@ namespace SpaceEngineersScripts.Inventory
 
         private void FillComponentDefinitions()
         {
+            if (!IsMainAssemblerAvailable)
+            {
+                return;
+            }
+            
             // See https://forum.keenswh.com/threads/how-to-add-an-individual-component-to-the-assembler-queue.7393616/
             // See https://steamcommunity.com/app/244850/discussions/0/527273452877873614/
             foreach (var component in Naming.ComponentNames.Keys)

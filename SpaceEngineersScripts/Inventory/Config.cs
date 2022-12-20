@@ -12,7 +12,7 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["SingleRun"] = false;
             Defaults["EnableItemSorting"] = true;
             Defaults["EnableComponentRestocking"] = true;
-            Defaults["DisplayPanelsGroup"] = "Inventory Panels";
+            Defaults["TextPanelsGroup"] = "Inventory Panels";
             Defaults["SortedContainersGroup"] = "Sorted Containers";
             Defaults["RestockAssemblersGroup"] = "Restock Assemblers";
             Defaults["PullFromConnectedShips"] = false;
@@ -55,9 +55,10 @@ namespace SpaceEngineersScripts.Inventory
         public bool Debug => (bool)this["Debug"];
         public bool WrapLog => (bool)this["WrapLog"];
         public bool SingleRun => (bool)this["SingleRun"];
+        public bool UseUpdate100 => (bool)this["UseUpdate100"];
         public bool EnableItemSorting => (bool)this["EnableItemSorting"];
         public bool EnableComponentRestocking => (bool)this["EnableComponentRestocking"];
-        public string DisplayPanelsGroup => (string)this["DisplayPanelsGroup"];
+        public string TextPanelsGroup => (string)this["TextPanelsGroup"];
         public string SortedContainersGroup => (string)this["SortedContainersGroup"];
         public string RestockAssemblersGroup => (string)this["RestockAssemblersGroup"];
         public bool PullFromConnectedShips => (bool)this["PullFromConnectedShips"];
@@ -71,7 +72,6 @@ namespace SpaceEngineersScripts.Inventory
         public float DefaultFontSize => (float)this["DefaultFontSize"];
         public float StatusFontSize => (float)this["StatusFontSize"];
         public float LogFontSize => (float)this["LogFontSize"];
-        public bool UseUpdate100 => (bool)this["UseUpdate100"];
 
         public IReadOnlyDictionary<Component, int> GetRestockTargetAmounts()
         {

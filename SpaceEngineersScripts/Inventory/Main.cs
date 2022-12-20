@@ -114,16 +114,16 @@ namespace SpaceEngineersScripts.Inventory
 
             data.Clear();
 
+            if (panels.TextPanelCount == 0)
+            {
+                Echo("No text panels");
+            }
+            
             log.Info("Text panels: {0}", panels.TextPanelCount);
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
             log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
             log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
             log.Info("Restock assemblers: {0}", production.IsMainAssemblerAvailable ? production.AssemblerCount : 0);
-
-            if (panels.TextPanelCount == 0)
-            {
-                Echo("No text panels");
-            }
         }
 
         private void ClearDisplays()
