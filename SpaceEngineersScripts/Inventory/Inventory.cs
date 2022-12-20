@@ -306,7 +306,7 @@ namespace SpaceEngineersScripts.Inventory
                     {
                         itemsToMove.Add(new ItemToMove
                         {
-                            Inventory = null,
+                            Inventory = blockInventory,
                             ItemIndex = itemIndex,
                             ItemType = item.Type.TypeId,
                             TargetContainers = containers,
