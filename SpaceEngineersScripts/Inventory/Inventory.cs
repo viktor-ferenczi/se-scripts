@@ -9,9 +9,6 @@ namespace SpaceEngineersScripts.Inventory
 {
     public class Inventory: ProgramModule
     {
-        private readonly TextPanels textPanels;
-        private readonly RawData rawData;
-
         private readonly Dictionary<string, double> ore = new Dictionary<string, double>();
         private readonly Dictionary<string, double> ingot = new Dictionary<string, double>();
         private readonly Dictionary<string, double> component = new Dictionary<string, double>();
@@ -32,10 +29,8 @@ namespace SpaceEngineersScripts.Inventory
         public double Volume => volume;
         public double Mass => mass;
         
-        public Inventory(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts, TextPanels textPanels, RawData rawData): base(cfg, log, me, gts)
+        public Inventory(Cfg cfg, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts): base(cfg, log, me, gts)
         {
-            this.textPanels = textPanels;
-            this.rawData = rawData;
         }
 
         public void Reset()
@@ -61,18 +56,18 @@ namespace SpaceEngineersScripts.Inventory
 
         private void FindBlocks()
         {
-            var blocks = new List<IMyTerminalBlock>();
+            var terminalBlocks = new List<IMyTerminalBlock>();
 
             if (Cfg.PullFromConnectedShips)
             {
-                Gts.GetBlocksOfType<IMyTerminalBlock>(blocks);
+                Gts.GetBlocksOfType<IMyTerminalBlock>(terminalBlocks);
             }
             else
             {
-                Gts.GetBlocksOfType<IMyTerminalBlock>(blocks, block => block.IsSameConstructAs(Me));
+                Gts.GetBlocksOfType<IMyTerminalBlock>(terminalBlocks, block => block.IsSameConstructAs(Me));
             }
 
-            this.blocks.AddRange(blocks.Where(block => block.InventoryCount > 0));
+            this.blocks.AddRange(terminalBlocks.Where(block => block.InventoryCount > 0));
             
             var containerBlocks = new List<IMyTerminalBlock>();
             Gts.GetBlockGroupWithName(Cfg.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(containerBlocks);
@@ -189,8 +184,7 @@ namespace SpaceEngineersScripts.Inventory
             for (int itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
             {
                 var item = items[itemIndex];
-
-                if (item == null || item.Amount <= 0)
+                if (item.Amount <= 0)
                 {
                     continue;
                 }
@@ -339,13 +333,13 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        public void Display()
+        public void Display(TextPanels panels, RawData data)
         {
-            DisplaySummary(Category.Ore, ore, FormatOreName);
-            DisplaySummary(Category.Ingot, ingot, FormatIngotName);
-            DisplaySummary(Category.Component, component, FormatComponentName);
-            DisplaySummary(Category.Ammo, ammo);
-            DisplaySummary(Category.Other, other);
+            DisplaySummary(panels, data, Category.Ore, ore, FormatOreName);
+            DisplaySummary(panels, data, Category.Ingot, ingot, FormatIngotName);
+            DisplaySummary(panels, data, Category.Component, component, FormatComponentName);
+            DisplaySummary(panels, data, Category.Ammo, ammo);
+            DisplaySummary(panels, data, Category.Other, other);
         }
         
         private static string FormatOreName(string key)
@@ -368,9 +362,9 @@ namespace SpaceEngineersScripts.Inventory
 
         private delegate string ResourceNameFormatter(string key);
 
-        private void DisplaySummary(Category category, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter = null)
+        private void DisplaySummary(TextPanels allPanels, RawData data, Category category, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter = null)
         {
-            var panels = textPanels.Find(category).ToList();
+            var panels = allPanels.Find(category).ToList();
             if (panels.Count == 0)
             {
                 Log.Debug("No text panel for {0}", category);
@@ -380,7 +374,7 @@ namespace SpaceEngineersScripts.Inventory
             var panelRowCount = (int)Math.Floor(Cfg.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
-            foreach (var page in FormatSummary(category, summary, resourceNameFormatter, panelRowCount))
+            foreach (var page in FormatSummary(data, category, summary, resourceNameFormatter, panelRowCount))
             {
                 if (panelIndex >= panels.Count)
                 {
@@ -398,6 +392,7 @@ namespace SpaceEngineersScripts.Inventory
         }
         
         private IEnumerable<StringBuilder> FormatSummary(
+            RawData rawData,
             Category category,
             Dictionary<string, double> summary,
             ResourceNameFormatter resourceNameFormatter,

@@ -66,7 +66,7 @@ namespace SpaceEngineersScripts.Inventory
             log = new Log(cfg);
             data = new RawData();
             panels = new TextPanels(cfg, log, Me, GridTerminalSystem);
-            inventory = new Inventory(cfg, log, Me, GridTerminalSystem, panels, data);
+            inventory = new Inventory(cfg, log, Me, GridTerminalSystem);
             electric = new Electric(cfg, log, Me, GridTerminalSystem);
 
             Initialize();
@@ -261,7 +261,7 @@ namespace SpaceEngineersScripts.Inventory
             data.Append("cargoVolume", inventory.Volume);
             data.Append("cargoMass", inventory.Mass * 1e-6);
 
-            inventory.Display();
+            inventory.Display(panels, data);
 
             DisplayStatus();
             DisplayLog();
