@@ -8,6 +8,7 @@ namespace SpaceEngineersScripts.Inventory
         {
             // Defaults
             Defaults["Debug"] = false;
+            Defaults["WrapLog"] = false;
             Defaults["SingleRun"] = false;
             Defaults["EnableItemSorting"] = true;
             Defaults["EnableComponentRestocking"] = true;
@@ -17,13 +18,14 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["PullFromConnectedShips"] = false;
             Defaults["MaxItemsToMove"] = 20;
             Defaults["PanelRowCount"] = 17;
+            Defaults["PanelColumnCount"] = 25;
             Defaults["DisplayPrecision"] = 1.0;
             Defaults["CargoBatchSize"] = 2;
             Defaults["BatteryBatchSize"] = 5;
             Defaults["ShowHeaders"] = true;
             Defaults["DefaultFontSize"] = 1f;
             Defaults["StatusFontSize"] = 1.6f;
-            Defaults["LogFontSize"] = 0.667f;
+            Defaults["LogFontSize"] = 0.8f;
             Defaults["UseUpdate100"] = false;
 
             // Restock components
@@ -51,6 +53,7 @@ namespace SpaceEngineersScripts.Inventory
         }
 
         public bool Debug => (bool)this["Debug"];
+        public bool WrapLog => (bool)this["WrapLog"];
         public bool SingleRun => (bool)this["SingleRun"];
         public bool EnableItemSorting => (bool)this["EnableItemSorting"];
         public bool EnableComponentRestocking => (bool)this["EnableComponentRestocking"];
@@ -60,6 +63,7 @@ namespace SpaceEngineersScripts.Inventory
         public bool PullFromConnectedShips => (bool)this["PullFromConnectedShips"];
         public int MaxItemsToMove => (int)this["MaxItemsToMove"];
         public int PanelRowCount => (int)this["PanelRowCount"];
+        public int PanelColumnCount => (int)this["PanelColumnCount"];
         public double DisplayPrecision => (double)this["DisplayPrecision"];
         public int CargoBatchSize => (int)this["CargoBatchSize"];
         public int BatteryBatchSize => (int)this["BatteryBatchSize"];

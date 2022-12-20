@@ -184,8 +184,6 @@ namespace SpaceEngineersScripts.Inventory
 
                     break;
             }
-
-            ShowLog();
         }
 
         private void StopPeriodicProcessing()
@@ -291,6 +289,8 @@ namespace SpaceEngineersScripts.Inventory
 
         private void Report()
         {
+            ShowLog();
+            
             data.Append("now", FormatDateTime(DateTime.UtcNow));
             data.Append("status", log.HighestSeverity.ToString());
             data.Append("batteryCapacity", electric.Capacity);
@@ -342,12 +342,15 @@ namespace SpaceEngineersScripts.Inventory
             var panel = panels.Find(Category.Log).FirstOrDefault();
             if (panel == null)
             {
-                log.Info("No log panel");
+                Echo("No log panel");
                 return;
             }
 
-            //var text = Util.Wrap(log.ToString(), (int)(PANEL_COLUMN_COUNT / LOG_FONT_SIZE));
             var text = log.ToString();
+            if (config.WrapLog)
+            {
+                text = Util.Wrap(text, (int)(config.PanelColumnCount / config.LogFontSize));
+            }
             panel.WriteText(text);
         }
 
@@ -369,7 +372,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private void ShowLog()
         {
-            var text = log.Text;
+            var text = log.ToString();
             Surface.WriteText(log.HighestSeverity.ToString());
             Echo(text);
         }

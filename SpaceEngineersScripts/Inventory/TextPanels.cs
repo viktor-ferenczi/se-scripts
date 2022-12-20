@@ -46,7 +46,7 @@ namespace SpaceEngineersScripts.Inventory
                     panel.FontSize = Config.DefaultFontSize;
                 }
 
-                panel.TextPadding = panel.FontSize;
+                panel.TextPadding = 2.0f;
             }
 
             if (Config.Debug)

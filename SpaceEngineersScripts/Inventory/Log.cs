@@ -23,7 +23,10 @@ namespace SpaceEngineersScripts.Inventory
 
         public LogSeverity HighestSeverity => highestSeverity;
 
-        public string Text => text.ToString();
+        public override string ToString()
+        {
+            return text.ToString();
+        }
 
         public void Clear()
         {
@@ -33,27 +36,27 @@ namespace SpaceEngineersScripts.Inventory
 
         public void Info(string formatString, params object[] args)
         {
-            text.AppendFormat(formatString + "\n", args);
+            text.AppendFormat($"{formatString}\n", args);
         }
 
         public void Debug(string formatString, params object[] args)
         {
             if (config.Debug)
             {
-                Info("D: " + formatString, args);
+                Info($"D: {formatString}", args);
             }
         }
 
         public void Warning(string formatString, params object[] args)
         {
             IncreaseSeverity(LogSeverity.Warning);
-            Info("W: " + formatString, args);
+            Info($"W: {formatString}", args);
         }
 
         public void Error(string formatString, params object[] args)
         {
             IncreaseSeverity(LogSeverity.Error);
-            Info("E: " + formatString, args);
+            Info($"E: {formatString}", args);
         }
     }
 }
