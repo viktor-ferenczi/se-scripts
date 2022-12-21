@@ -101,7 +101,6 @@
         <Compile Include="Inventory\Inventory.cs" />
         <Compile Include="Inventory\Production.cs" />
         <Compile Include="Inventory\ProgramModule.cs" />
-        <Compile Include="Inventory\RawData.cs" />
         <Compile Include="Inventory\State.cs" />
         <Compile Include="Inventory\TextPanels.cs" />
         <Compile Include="Inventory\Util.cs" />

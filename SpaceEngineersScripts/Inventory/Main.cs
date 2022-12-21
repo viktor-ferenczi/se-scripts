@@ -18,8 +18,6 @@ namespace SpaceEngineersScripts.Inventory
         private readonly Electric electric;
         private readonly Production production;
 
-        private readonly RawData data;
-
         private State state = State.ScanInventory;
 
         private IMyTextSurface Surface => Me.GetSurface(0);
@@ -62,8 +60,6 @@ namespace SpaceEngineersScripts.Inventory
             inventory = new Inventory(config, log, Me, GridTerminalSystem);
             electric = new Electric(config, log, Me, GridTerminalSystem);
             production = new Production(config, log, Me, GridTerminalSystem);
-
-            data = new RawData();
 
             Initialize();
             Load();
@@ -117,8 +113,6 @@ namespace SpaceEngineersScripts.Inventory
             inventory.Reset();
             electric.Reset();
             production.Reset();
-
-            data.Clear();
 
             if (panels.TextPanelCount == 0)
             {
@@ -315,19 +309,10 @@ namespace SpaceEngineersScripts.Inventory
             
             ShowLog();
             
-            data.Append("now", FormatDateTime(DateTime.UtcNow));
-            data.Append("status", log.HighestSeverity.ToString());
-            data.Append("batteryCapacity", electric.Capacity);
-            data.Append("batteryCharge", electric.Charge);
-            data.Append("cargoCapacity", inventory.Capacity);
-            data.Append("cargoVolume", inventory.Volume);
-            data.Append("cargoMass", inventory.Mass * 1e-6);
-
-            inventory.Display(panels, data);
+            inventory.Display(panels);
 
             DisplayStatus();
             DisplayLog();
-            DisplayRawData();
         }
 
         private void DisplayStatus()
@@ -376,17 +361,6 @@ namespace SpaceEngineersScripts.Inventory
                 text = Util.Wrap(text, (int)(config.PanelColumnCount / config.LogFontSize));
             }
             panel.WriteText(text);
-        }
-
-        private void DisplayRawData()
-        {
-            var panel = panels.Find(Category.Raw).FirstOrDefault();
-            if (panel == null)
-            {
-                return;
-            }
-
-            panel.WriteText(data.Text);
         }
 
         private static string FormatDateTime(DateTime dt)

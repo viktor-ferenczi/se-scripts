@@ -20,7 +20,6 @@ Build large text panels with the following words in their name (case insensitive
 - Other
 - Status
 - Log
-- Raw
 
 Assign your text panels to the "Inventory Panels" group.
 
@@ -37,10 +36,6 @@ Panels of the same type are concatenated in ascending name order.
 The Status panel displays top level summaries.
 
 The Error panel displays warnings and errors.
-
-The Raw panel displays raw inventory information in a YAML like format.
-It can be used by compatible programs to quickly acquire inventory
-information without walking on all the blocks again.
 
 ## How to set up inventory sorting
 

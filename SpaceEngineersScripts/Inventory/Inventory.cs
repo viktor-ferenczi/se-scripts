@@ -353,18 +353,18 @@ namespace SpaceEngineersScripts.Inventory
             }
         }
 
-        public void Display(TextPanels panels, RawData data)
+        public void Display(TextPanels panels)
         {
-            DisplaySummary(panels, data, Category.Ore, oreStock, Naming.FormatOreName);
-            DisplaySummary(panels, data, Category.Ingot, ingotStock, Naming.FormatIngotName);
-            DisplaySummary(panels, data, Category.Component, componentStock, Naming.FormatComponentName);
-            DisplaySummary(panels, data, Category.Ammo, ammoStock);
-            DisplaySummary(panels, data, Category.Other, otherStock);
+            DisplaySummary(panels, Category.Ore, oreStock, Naming.FormatOreName);
+            DisplaySummary(panels, Category.Ingot, ingotStock, Naming.FormatIngotName);
+            DisplaySummary(panels, Category.Component, componentStock, Naming.FormatComponentName);
+            DisplaySummary(panels, Category.Ammo, ammoStock);
+            DisplaySummary(panels, Category.Other, otherStock);
         }
 
         private delegate string ResourceNameFormatter(string key);
 
-        private void DisplaySummary(TextPanels allPanels, RawData data, Category category, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter = null)
+        private void DisplaySummary(TextPanels allPanels, Category category, Dictionary<string, double> summary, ResourceNameFormatter resourceNameFormatter = null)
         {
             var panels = allPanels.Find(category).ToList();
             if (panels.Count == 0)
@@ -376,7 +376,7 @@ namespace SpaceEngineersScripts.Inventory
             var panelRowCount = (int)Math.Floor(Config.PanelRowCount / panels[0].FontSize);
             var panelIndex = 0;
 
-            foreach (var page in FormatSummary(data, category, summary, resourceNameFormatter, panelRowCount))
+            foreach (var page in FormatSummary(category, summary, resourceNameFormatter, panelRowCount))
             {
                 if (panelIndex >= panels.Count)
                 {
@@ -394,7 +394,6 @@ namespace SpaceEngineersScripts.Inventory
         }
         
         private IEnumerable<StringBuilder> FormatSummary(
-            RawData rawData,
             Category category,
             Dictionary<string, double> summary,
             ResourceNameFormatter resourceNameFormatter,
@@ -404,8 +403,6 @@ namespace SpaceEngineersScripts.Inventory
             var lineCount = 0;
 
             var categoryName = category.ToString();
-            var categoryNameLc = categoryName.ToLower();
-            
             if (Config.ShowHeaders)
             {
                 page.AppendLine(categoryName);
@@ -419,8 +416,6 @@ namespace SpaceEngineersScripts.Inventory
             var sortedSummary = summary.ToList().OrderBy(pair => pair.Key);
             foreach (KeyValuePair<string, double> item in sortedSummary)
             {
-                rawData.Append(categoryNameLc + item.Key, item.Value);
-
                 var formattedAmount = $"{Math.Round(item.Value / Config.DisplayPrecision) * Config.DisplayPrecision:n0}";
                 var name = resourceNameFormatter == null ? item.Key : resourceNameFormatter(item.Key);
                 var line = formattedAmount.PadLeft(maxWidth) + " " + name;
