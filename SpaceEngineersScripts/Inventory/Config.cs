@@ -10,6 +10,7 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["Debug"] = false;
             Defaults["WrapLog"] = false;
             Defaults["SingleRun"] = false;
+            Defaults["UseUpdate100"] = false;
             Defaults["EnableItemSorting"] = true;
             Defaults["EnableComponentRestocking"] = true;
             Defaults["TextPanelsGroup"] = "Inventory Panels";
@@ -26,7 +27,6 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["DefaultFontSize"] = 1f;
             Defaults["StatusFontSize"] = 1.6f;
             Defaults["LogFontSize"] = 0.8f;
-            Defaults["UseUpdate100"] = false;
 
             // Restock components
             Defaults["RestockBulletproofGlass"] = 10;
