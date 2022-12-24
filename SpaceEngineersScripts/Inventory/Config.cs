@@ -20,8 +20,8 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["PanelRowCount"] = 17;
             Defaults["PanelColumnCount"] = 25;
             Defaults["DisplayPrecision"] = 1.0;
-            Defaults["CargoBatchSize"] = 2;
-            Defaults["BatteryBatchSize"] = 5;
+            Defaults["CargoBatchSize"] = 3;
+            Defaults["BatteryBatchSize"] = 10;
             Defaults["ShowHeaders"] = true;
             Defaults["DefaultFontSize"] = 1f;
             Defaults["StatusFontSize"] = 1.6f;

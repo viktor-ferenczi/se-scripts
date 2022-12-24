@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Sandbox.Game.GameSystems;
 using Sandbox.ModAPI.Ingame;
+using SpaceEngineers.Game.Entities.Blocks;
+using SpaceEngineers.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory

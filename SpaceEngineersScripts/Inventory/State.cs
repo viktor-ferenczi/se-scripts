@@ -3,6 +3,7 @@ namespace SpaceEngineersScripts.Inventory
     public enum State
     {
         Reset,
+        VerifySpawnPoints,
         ScanBatteries,
         ScanInventory,
         MoveItems,

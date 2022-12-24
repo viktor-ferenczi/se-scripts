@@ -65,7 +65,7 @@ namespace SpaceEngineersScripts.Inventory
                 return;
             }
 
-            if (!battery.Enabled)
+            if (!battery.Enabled && !battery.CustomName.ToLower().Contains("emergency"))
             {
                 Log.Warning("Disabled battery: {0}", battery.CustomName);
                 return;

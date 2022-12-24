@@ -93,11 +93,11 @@ namespace SpaceEngineersScripts.Inventory
         private void Initialize()
         {
             Surface.ContentType = ContentType.TEXT_AND_IMAGE;
-            Surface.FontSize = 4f;
+            Surface.FontSize = 2.5f;
 
             Reset();
 
-            ClearDisplays();
+            panels.ClearScreen();
 
             var panel = panels.Find(Category.Status).FirstOrDefault();
             panel?.WriteText("Loading...");
@@ -113,7 +113,7 @@ namespace SpaceEngineersScripts.Inventory
             inventory.Reset();
             electric.Reset();
             production.Reset();
-
+            
             if (panels.TextPanelCount == 0)
             {
                 Echo("No text panels");
@@ -126,10 +126,26 @@ namespace SpaceEngineersScripts.Inventory
             log.Info("Restock assemblers: {0}", production.IsMainAssemblerAvailable ? production.AssemblerCount : 0);
         }
 
-        private void ClearDisplays()
+        private void VerifySpawnPoints()
         {
-            Surface.WriteText("Init");
-            panels.ClearScreen();
+            var brokenSpawnPoints = new List<IMyTerminalBlock>();
+            GridTerminalSystem.GetBlocksOfType(brokenSpawnPoints, IsBrokenSpawnPoint);
+            foreach (var spawnPoint in brokenSpawnPoints)
+            {
+                log.Warning("Broken: {0}", spawnPoint.CustomName);
+                return;
+            }
+        }
+
+        private bool IsBrokenSpawnPoint(IMyTerminalBlock terminalBlock)
+        {
+            if (terminalBlock.IsWorking)
+            {
+                return false;
+            }
+            
+            var subtypeName = terminalBlock.BlockDefinition.SubtypeName;
+            return subtypeName.Contains("SurvivalKit") || subtypeName.Contains("MedicalRoom");
         }
 
         private void Load()
@@ -224,7 +240,16 @@ namespace SpaceEngineersScripts.Inventory
         {
             while (ProcessStep())
             {
+                ShowState();
             }
+            ShowState();
+        }
+
+        private void ShowState()
+        {
+            var stateName = state.ToString();
+            var severityName = log.HighestSeverity.ToString(); 
+            Surface.WriteText($"{stateName}\r\n{severityName}");
         }
 
         private void Start()
@@ -244,6 +269,11 @@ namespace SpaceEngineersScripts.Inventory
             {
                 case State.Reset:
                     Reset();
+                    state = State.VerifySpawnPoints;
+                    break;
+                
+                case State.VerifySpawnPoints:
+                    VerifySpawnPoints();
                     state = State.ScanBatteries;
                     break;
 
@@ -306,11 +336,11 @@ namespace SpaceEngineersScripts.Inventory
             log.Info("Enqueued for production: {0}", production.EnqueueCount);
             log.Info("Items moved: {0}", inventory.MovedItemsCount);
             log.Info("");
-            
-            ShowLog();
+
+            Echo(log.ToString());
             
             inventory.Display(panels);
-
+            
             DisplayStatus();
             DisplayLog();
         }
@@ -366,13 +396,6 @@ namespace SpaceEngineersScripts.Inventory
         private static string FormatDateTime(DateTime dt)
         {
             return $"{dt:yyyy-MM-dd HH:mm:ss} UTC";
-        }
-
-        private void ShowLog()
-        {
-            var text = log.ToString();
-            Surface.WriteText(log.HighestSeverity.ToString());
-            Echo(text);
         }
     }
 }
