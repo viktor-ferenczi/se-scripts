@@ -8,7 +8,9 @@ Optionally sorts items into specific containers.
 ## How to set up inventory display
 
 Build a programmable block.
+
 Copy-paste all code from the CodeEditor region below into the block.
+
 Compile and run the code in the block.
 
 Build large text panels with the following words in their name (case insensitive):
@@ -36,6 +38,10 @@ Panels of the same type are concatenated in ascending name order.
 The Status panel displays top level summaries.
 
 The Error panel displays warnings and errors.
+
+Blocks with `Ignore` in their name (case insensitive) are ignored
+from the inventory calculation, therefore they are not listed and
+not counted for further decisions (like component restocking).
 
 ## How to set up inventory sorting
 

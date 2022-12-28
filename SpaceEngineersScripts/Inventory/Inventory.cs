@@ -217,6 +217,11 @@ namespace SpaceEngineersScripts.Inventory
 
         private void AggregateCargoInventory(IMyTerminalBlock cargo, int inventoryIndex)
         {
+            if ((cargo.CustomName ?? "").ToLower().Contains("ignore"))
+            {
+                return;
+            }
+            
             var allowAmmo = !(cargo is IMyUserControllableGun);
             var allowOre = !(cargo is IMyRefinery || cargo is IMyGasGenerator);
             var allowIngot = !(cargo is IMyReactor || cargo is IMyAssembler);

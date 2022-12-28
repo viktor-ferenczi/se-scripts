@@ -31,7 +31,7 @@ namespace SpaceEngineersScripts.Inventory
             // Restock components
             Defaults["RestockBulletproofGlass"] = 10;
             Defaults["RestockComputer"] = 10;
-            Defaults["RestockConstruction"] = 10;
+            Defaults["RestockConstruction"] = 100;
             Defaults["RestockDetector"] = 1;
             Defaults["RestockDisplay"] = 10;
             Defaults["RestockExplosives"] = 0;
