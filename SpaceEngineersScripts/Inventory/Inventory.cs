@@ -414,7 +414,7 @@ namespace SpaceEngineersScripts.Inventory
             if (Config.ShowHeaders)
             {
                 page.AppendLine(categoryName);
-                page.AppendLine(new String('-', categoryName.Length));
+                page.AppendLine(new String('~', categoryName.Length));
                 lineCount = 2;
             }
 

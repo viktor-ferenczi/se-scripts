@@ -26,7 +26,7 @@ namespace SpaceEngineersScripts.Inventory
             Defaults["ShowHeaders"] = true;
             Defaults["DefaultFontSize"] = 1f;
             Defaults["StatusFontSize"] = 1.6f;
-            Defaults["LogFontSize"] = 0.8f;
+            Defaults["LogFontSize"] = 1.0f;
 
             // Restock components
             Defaults["RestockBulletproofGlass"] = 10;
