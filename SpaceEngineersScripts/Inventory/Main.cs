@@ -249,7 +249,8 @@ namespace SpaceEngineersScripts.Inventory
         {
             var stateName = state.ToString();
             var severityName = log.HighestSeverity.ToString(); 
-            Surface.WriteText($"{stateName}\r\n{severityName}");
+            Surface.WriteText($"{stateName}\n{severityName}");
+            Echo($"{stateName}: {severityName}");
         }
 
         private void Start()
@@ -265,6 +266,7 @@ namespace SpaceEngineersScripts.Inventory
 
         private bool ProcessStep()
         {
+            Echo(state.ToString());
             switch (state)
             {
                 case State.Reset:

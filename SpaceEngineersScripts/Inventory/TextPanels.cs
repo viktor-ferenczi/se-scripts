@@ -33,19 +33,20 @@ namespace SpaceEngineersScripts.Inventory
                 {
                     panel.Font = "InfoMessageBoxText";
                     panel.FontSize = Config.StatusFontSize;
+                    panel.TextPadding = 4.0f;
                 }
                 else if (panel.CustomName.ToLower().Contains("log"))
                 {
                     panel.Font = "InfoMessageBoxText";
                     panel.FontSize = Config.LogFontSize;
+                    panel.TextPadding = 2.0f;
                 }
                 else
                 {
                     panel.Font = "Monospace";
                     panel.FontSize = Config.DefaultFontSize;
+                    panel.TextPadding = 2.0f;
                 }
-
-                panel.TextPadding = 2.0f;
             }
 
             if (Config.Debug)
