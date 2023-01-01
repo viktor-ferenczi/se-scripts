@@ -88,6 +88,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="IceCalc\Main.cs" />
         <Compile Include="Inventory\BaseConfig.cs" />
         <Compile Include="Inventory\Category.cs" />
         <Compile Include="Inventory\Container.cs" />
