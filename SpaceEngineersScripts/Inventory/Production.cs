@@ -8,7 +8,6 @@ namespace SpaceEngineersScripts.Inventory
     public class Production : ProgramModule
     {
         private int enqueueCount;
-        private IMyAssembler mainAssembler;
         private readonly List<IMyAssembler> assemblerBlocks = new List<IMyAssembler>();
         private readonly Dictionary<string, int> queuedComponents = new Dictionary<string, int>();
         private readonly Dictionary<Component, MyDefinitionId> componentDefinitions = new Dictionary<Component, MyDefinitionId>();
@@ -16,7 +15,11 @@ namespace SpaceEngineersScripts.Inventory
 
         public int EnqueueCount => enqueueCount;
         public int AssemblerCount => assemblerBlocks.Count;
-        public bool IsMainAssemblerAvailable => Config.EnableComponentRestocking && mainAssembler != null && !mainAssembler.Closed && mainAssembler.IsWorking && mainAssembler.Mode == MyAssemblerMode.Assembly;
+        private IEnumerable<IMyAssembler> WorkingAssemblers => Config.EnableComponentRestocking ? assemblerBlocks.Where(a => !a.Closed && a.IsWorking && a.Mode == MyAssemblerMode.Assembly) : Enumerable.Empty<IMyAssembler>();
+        private IMyAssembler FirstWorkingAssembler => WorkingAssemblers.FirstOrDefault(); 
+        public bool IsRestockingPossible => WorkingAssemblers.Any();
+        private IMyAssembler mainAssembler;
+        private int assemblerIndex;
 
         public Production(Config config, Log log, IMyProgrammableBlock me, IMyGridTerminalSystem gts) : base(config, log, me, gts)
         {
@@ -33,14 +36,17 @@ namespace SpaceEngineersScripts.Inventory
             restockTargetAmounts = Config.GetRestockTargetAmounts();
 
             Gts.GetBlockGroupWithName(Config.RestockAssemblersGroup)?.GetBlocksOfType(assemblerBlocks, block => block.IsSameConstructAs(Me));
-            mainAssembler = assemblerBlocks.FirstOrDefault(assembler => assembler.CooperativeMode) ?? assemblerBlocks.FirstOrDefault();
+            Util.SortBlocksByName(assemblerBlocks);
+
+            mainAssembler = WorkingAssemblers.Any(a => a.CooperativeMode) ? WorkingAssemblers.FirstOrDefault(a => !a.CooperativeMode) : null;
 
             FillComponentDefinitions();
         }
 
         private void FillComponentDefinitions()
         {
-            if (!IsMainAssemblerAvailable)
+            var assembler = FirstWorkingAssembler;
+            if (assembler == null)
             {
                 return;
             }
@@ -51,12 +57,12 @@ namespace SpaceEngineersScripts.Inventory
             {
                 var definitionString = $"MyObjectBuilder_BlueprintDefinition/{component.ToString()}";
                 var definitionId = MyDefinitionId.Parse(definitionString);
-                if (!mainAssembler.CanUseBlueprint(definitionId))
+                if (!assembler.CanUseBlueprint(definitionId))
                 {
                     definitionId = MyDefinitionId.Parse($"{definitionString}Component");
                 }
 
-                if (mainAssembler.CanUseBlueprint(definitionId))
+                if (assembler.CanUseBlueprint(definitionId))
                 {
                     componentDefinitions[component] = definitionId;
                 }
@@ -65,7 +71,7 @@ namespace SpaceEngineersScripts.Inventory
 
         public void ScanAssemblerQueues()
         {
-            if (!IsMainAssemblerAvailable)
+            if (!IsRestockingPossible)
             {
                 return;
             }
@@ -97,14 +103,16 @@ namespace SpaceEngineersScripts.Inventory
 
         public void ProduceMissing(Inventory inventory)
         {
-            if (!IsMainAssemblerAvailable || restockTargetAmounts.Count == 0)
+            if (!IsRestockingPossible || restockTargetAmounts.Count == 0)
             {
                 return;
             }
-
+            
+            var stock = inventory.ComponentStock;
+            
             if (Config.Debug)
             {
-                foreach (var kv in inventory.ComponentStock)
+                foreach (var kv in stock)
                 {
                     Log.Info("CC S:{1} C:{0}", kv.Key, kv.Value);
                 }
@@ -119,8 +127,18 @@ namespace SpaceEngineersScripts.Inventory
                 Log.Info("---");
             }
 
-            var stock = inventory.ComponentStock;
-
+            // Prefer using the main assembler,
+            // otherwise round-robin on all working ones if no cooperative mode is set
+            var assemblers = new List<IMyAssembler>();
+            if (mainAssembler == null)
+            {
+                assemblers.AddRange(WorkingAssemblers);
+            }
+            else
+            {
+                assemblers.Add(mainAssembler);
+            }
+            
             foreach (var p in restockTargetAmounts)
             {
                 MyDefinitionId definitionId;
@@ -159,7 +177,9 @@ namespace SpaceEngineersScripts.Inventory
                         Log.Info("RF S:{0} Q:{1} M:{2} C:{3}", inStock, queued, missing, definitionId.SubtypeName);
                     }
 
-                    mainAssembler.AddQueueItem(definitionId, (decimal)missing);
+                    assemblerIndex = (assemblerIndex + 1) % assemblers.Count;
+                    var assembler = assemblers[assemblerIndex];
+                    assembler.AddQueueItem(definitionId, (decimal)missing);
                     enqueueCount++;
                 }
             }

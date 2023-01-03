@@ -93,7 +93,7 @@ namespace SpaceEngineersScripts.Inventory
         private void Initialize()
         {
             Surface.ContentType = ContentType.TEXT_AND_IMAGE;
-            Surface.FontSize = 2.5f;
+            Surface.FontSize = 2.0f;
 
             Reset();
 
@@ -123,7 +123,7 @@ namespace SpaceEngineersScripts.Inventory
             log.Info("Blocks with items: {0}", inventory.CargoBlockCount);
             log.Info("Battery blocks: {0}", electric.BatteryBlockCount);
             log.Info("Sorted containers: {0}", inventory.SortedContainerCount);
-            log.Info("Restock assemblers: {0}", production.IsMainAssemblerAvailable ? production.AssemblerCount : 0);
+            log.Info("Restock assemblers: {0}", production.IsRestockingPossible ? production.AssemblerCount : 0);
         }
 
         private void VerifySpawnPoints()
@@ -266,7 +266,6 @@ namespace SpaceEngineersScripts.Inventory
 
         private bool ProcessStep()
         {
-            Echo(state.ToString());
             switch (state)
             {
                 case State.Reset:
@@ -312,7 +311,7 @@ namespace SpaceEngineersScripts.Inventory
                 case State.ScanAssemblerQueues:
                     production.ScanAssemblerQueues();
                     state = State.ProduceMissing;
-                    return !production.IsMainAssemblerAvailable;
+                    return !production.IsRestockingPossible;
 
                 case State.ProduceMissing:
                     production.ProduceMissing(inventory);

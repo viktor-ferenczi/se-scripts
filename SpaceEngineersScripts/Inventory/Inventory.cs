@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Sandbox.Game.GameSystems;
 using Sandbox.ModAPI.Ingame;
-using SpaceEngineers.Game.Entities.Blocks;
-using SpaceEngineers.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory
@@ -98,7 +95,8 @@ namespace SpaceEngineersScripts.Inventory
             allBlocksWithInventory.AddRange(terminalBlocks.Where(block => block.InventoryCount > 0));
             
             Gts.GetBlockGroupWithName(Config.SortedContainersGroup)?.GetBlocksOfType<IMyTerminalBlock>(sortedContainerBlocks);
-
+            Util.SortBlocksByName(sortedContainerBlocks);
+            
             var allContainers = new List<Container>();
             foreach (var containerBlock in sortedContainerBlocks)
             {

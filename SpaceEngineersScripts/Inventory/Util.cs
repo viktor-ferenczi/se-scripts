@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
+using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineersScripts.Inventory
 {
@@ -31,6 +34,11 @@ namespace SpaceEngineersScripts.Inventory
                 }
             }
             return output.ToString();
+        }
+
+        public static void SortBlocksByName<T>(List<T> blocks) where T: IMyTerminalBlock
+        {
+            blocks.Sort((a, b) => string.Compare((a.CustomName ?? a.Name), b.CustomName ?? b.Name, StringComparison.Ordinal));
         }
     }
 }

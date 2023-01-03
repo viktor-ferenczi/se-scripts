@@ -19,6 +19,7 @@ namespace SpaceEngineersScripts.Inventory
         {
             textPanels.Clear();
             Gts.GetBlockGroupWithName(Config.TextPanelsGroup)?.GetBlocksOfType(textPanels, block => block.IsSameConstructAs(Me));
+            Util.SortBlocksByName(textPanels);
 
             if (textPanels == null || textPanels.Count == 0)
             {
