@@ -124,6 +124,7 @@
         <None Include="Own\Skeleton.cs" />
         <None Include="Own\SolarTower.cs" />
         <None Include="Own\SpaceEngineersProgram.cs" />
+        <Compile Include="Others\RaycastLidar.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="RobotArm\Cfg.cs" />
@@ -139,13 +140,19 @@
         <Compile Include="RobotArm\Util.cs" />
         <Compile Include="RobotArm\WelderArm.cs" />
         <Compile Include="RobotArm\WelderArmState.cs" />
+        <Compile Include="Skeleton\EmptyProgram.cs" />
         <None Include="Skeleton\Explained\ProgramExplained.cs" />
-        <None Include="Skeleton\Skeleton.cs" />
-        <None Include="Skeleton\SpaceEngineersProgram.cs" />
+        <Compile Include="Skeleton\Skeleton.cs" />
+        <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="Inventory\README.md" />
       <Content Include="merge_program.py" />
+      <Content Include="RobotArm\Info\steam_description_script.txt" />
+      <Content Include="RobotArm\Info\steam_description_world.txt" />
+      <Content Include="RobotArm\Mod\metadata.mod" />
+      <Content Include="RobotArm\Mod\modinfo.sbmi" />
+      <Content Include="RobotArm\Mod\thumb.png" />
       <Content Include="RobotArm\README.md" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
