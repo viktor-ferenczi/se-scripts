@@ -88,12 +88,15 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="FabricatorArm\ArmState.cs" />
         <Compile Include="FabricatorArm\Cfg.cs" />
         <Compile Include="FabricatorArm\DebugAPI.cs" />
         <Compile Include="FabricatorArm\Main.cs" />
         <Compile Include="FabricatorArm\MgpApi.cs" />
         <Compile Include="FabricatorArm\Shipyard.cs" />
+        <Compile Include="FabricatorArm\ShipyardState.cs" />
         <Compile Include="FabricatorArm\Subgrid.cs" />
+        <Compile Include="FabricatorArm\Target.cs" />
         <Compile Include="FabricatorArm\Util.cs" />
         <Compile Include="FabricatorArm\FabricatorArm.cs" />
         <Compile Include="IceCalc\Main.cs" />

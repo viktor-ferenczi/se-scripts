@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
@@ -23,7 +22,7 @@ namespace SpaceEngineersScripts.FabricatorArm
 
         public static void ShowLog(IMyTextPanel lcd)
         {
-            lcd?.WriteText(LogBuilder.Length == 0 ? "OK" : LogBuilder.ToString());
+            lcd?.WriteText(LogBuilder.ToString());
         }
 
         public static string Format(float v)
@@ -75,11 +74,19 @@ namespace SpaceEngineersScripts.FabricatorArm
 
         public static bool IsHinge(IMyMotorStator stator) => stator.BlockDefinition.SubtypeName.EndsWith("Hinge");
 
-        public static Vector3D GetRandomPoint(Random rng, BoundingBoxD aabb)
+        public static double NormalizeAngle(double angle)
         {
-            var point = aabb.Min + aabb.Size * new Vector3D(rng.NextDouble(), rng.NextDouble(), rng.NextDouble());
-            point.SetDim(rng.Next(3), 0);
-            return point;
+            if (angle > Math.PI)
+            {
+                angle -= Math.PI * 2;
+            }
+
+            if (angle < -Math.PI)
+            {
+                angle += Math.PI * 2;
+            }
+
+            return angle;
         }
     }
 }

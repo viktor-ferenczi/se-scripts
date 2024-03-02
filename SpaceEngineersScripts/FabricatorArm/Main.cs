@@ -13,17 +13,19 @@ namespace SpaceEngineersScripts.FabricatorArm
     {
         private const bool EnableDebugDraw = false;
 
-        private static IMyTextPanel lcdTimer;
-        private static IMyTextPanel lcdDetails;
-        private static IMyTextPanel lcdStatus;
-        private static IMyTextPanel lcdLog;
         private readonly Shipyard shipyard;
+        private readonly DebugAPI debug;
+
+        private IMyTextPanel lcdTimer;
+        private IMyTextPanel lcdDetails;
+        private IMyTextPanel lcdStatus;
+        private IMyTextPanel lcdLog;
 
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
 
-            var debug = EnableDebugDraw ? new DebugAPI(this) : null;
+            debug = EnableDebugDraw ? new DebugAPI(this) : null;
             debug?.RemoveDraw();
 
             PrepareDisplay();
@@ -71,6 +73,7 @@ namespace SpaceEngineersScripts.FabricatorArm
                 textPanel.FontColor = Color.Cyan;
                 textPanel.Font = "DEBUG";
                 textPanel.FontSize = 1.2f;
+                textPanel.TextPadding = 2;
                 textPanel.WriteText("");
             }
 
@@ -83,15 +86,15 @@ namespace SpaceEngineersScripts.FabricatorArm
             {
                 lcdTimer.Font = "Monospace";
                 lcdTimer.FontSize = 4f;
+                lcdTimer.FontColor = Color.Yellow;
                 lcdTimer.Alignment = TextAlignment.CENTER;
-                lcdTimer.TextPadding = 10;
             }
 
             if (lcdStatus != null)
             {
                 lcdStatus.Font = "Monospace";
                 lcdStatus.FontSize = 0.8f;
-                lcdStatus.TextPadding = 0;
+                lcdStatus.FontColor = Color.LimeGreen;
             }
         }
 
@@ -99,13 +102,22 @@ namespace SpaceEngineersScripts.FabricatorArm
         public void Main(string argument, UpdateType updateSource)
         {
             Util.ClearLog();
+
             try
             {
                 try
                 {
-                    if (((int) updateSource & (int) UpdateType.Update10) > 0)
+                    debug?.RemoveDraw();
+                    Util.Log(shipyard.State.ToString());
+                    Util.Log("");
+
+                    if (((int) updateSource & (int) UpdateType.Update10) != 0)
                     {
                         shipyard.Update();
+                    }
+                    else
+                    {
+                        Command(argument);
                     }
                 }
                 catch (Exception e)
@@ -118,6 +130,20 @@ namespace SpaceEngineersScripts.FabricatorArm
             finally
             {
                 Util.ShowLog(lcdLog);
+            }
+        }
+
+        private void Command(string argument)
+        {
+            switch (argument.ToLower().Trim())
+            {
+                case "start":
+                    shipyard.Start();
+                    break;
+
+                case "stop":
+                    shipyard.Stop();
+                    break;
             }
         }
     }

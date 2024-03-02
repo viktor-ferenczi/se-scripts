@@ -8,18 +8,17 @@ namespace SpaceEngineersScripts.FabricatorArm
     public class Subgrid
     {
         public readonly int Index;
+        public IMyCubeGrid PreviewGrid { get; }
         public bool HasBuilt { get; private set; }
-        public bool HasFinished { get; private set; }
+        public bool HasFinished => HasBuilt && RemainingBlockCount == 0;
+        public bool IsWeldable => HasBuilt && RemainingBlockCount > 0;
         public int RemainingBlockCount => blockStates.Count;
 
         private static readonly BoundingBoxI MaxBox = new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue);
         private readonly long projectorEntityId;
         private readonly MultigridProjectorProgrammableBlockAgent mgp;
         private readonly Dictionary<Vector3I, BlockState> blockStates = new Dictionary<Vector3I, BlockState>();
-        private readonly Random rng = new Random();
         private ulong latestStateHash;
-
-        public IMyCubeGrid PreviewGrid { get; }
 
         public Subgrid(long projectorEntityId, MultigridProjectorProgrammableBlockAgent mgp, int index)
         {
@@ -28,15 +27,31 @@ namespace SpaceEngineersScripts.FabricatorArm
             this.mgp = mgp;
 
             PreviewGrid = mgp.GetPreviewGrid(projectorEntityId, index);
+            if (PreviewGrid == null)
+            {
+                return;
+            }
+
+            Update();
         }
 
         public void Update()
         {
-            HasBuilt = mgp.GetBuiltGrid(projectorEntityId, Index) != null;
-            HasFinished = HasBuilt && mgp.IsSubgridComplete(projectorEntityId, Index);
+            if (PreviewGrid == null)
+            {
+                return;
+            }
 
+            HasBuilt = mgp.GetBuiltGrid(projectorEntityId, Index) != null;
+            if (!HasBuilt)
+            {
+                latestStateHash = 0;
+                return;
+            }
+
+            // Optimization: Update the block states only the first time and whenever there is any change
             var stateHash = mgp.GetStateHash(projectorEntityId, Index);
-            if (stateHash == latestStateHash)
+            if (stateHash == latestStateHash && latestStateHash != 0)
             {
                 return;
             }
@@ -46,7 +61,7 @@ namespace SpaceEngineersScripts.FabricatorArm
             mgp.GetBlockStates(blockStates, projectorEntityId, Index, MaxBox, (int) BlockState.Buildable | (int) BlockState.BeingBuilt);
         }
 
-        public bool IsWeldable(Vector3I location)
+        public bool IsWeldableBlock(Vector3I location)
         {
             BlockState blockState;
             if (!blockStates.TryGetValue(location, out blockState))
@@ -57,11 +72,28 @@ namespace SpaceEngineersScripts.FabricatorArm
             return blockState == BlockState.Buildable || blockState == BlockState.BeingBuilt;
         }
 
-        public bool TryFindNextBlockToWeld(Vector3D referencePosition, out Vector3I nextLocation, out Vector3D nextPosition)
+        public bool TryTargetRandomBlock(ref Target target, Random rng)
         {
-            nextLocation = Vector3I.Zero;
-            nextPosition = Vector3D.Zero;
+            if (blockStates.Count == 0)
+            {
+                return false;
+            }
 
+            var i = rng.Next(blockStates.Count);
+            foreach (var pair in blockStates)
+            {
+                if (i-- == 0)
+                {
+                    target.Location = pair.Key;
+                    break;
+                }
+            }
+
+            return true;
+        }
+
+        public bool TryTargetNearbyBlock(ref Target target, Vector3D referencePosition)
+        {
             if (blockStates.Count == 0)
             {
                 return false;
@@ -78,13 +110,11 @@ namespace SpaceEngineersScripts.FabricatorArm
                     // The random addition helps to untangle the lasers, so they eventually go down different paths.
                     // Without this randomness they meet and converge, all of them welding the same sequence of blocks.
                     minDistanceSquared = distanceSquared;
-
-                    nextLocation = pair.Key;
-                    nextPosition = position;
+                    target.Location = pair.Key;
                 }
             }
 
-            return true;
+            return !double.IsInfinity(minDistanceSquared);
         }
     }
 }

@@ -11,5 +11,9 @@ namespace SpaceEngineersScripts.FabricatorArm
         // Name of the block group containing LCD panels to show completion statistics and debug information (optional)
         // Names should contains: Timer, Details, Status, Log
         public const string TextPanelsGroupName = "Shipyard Text Panels";
+
+        // The rotor base serves as a PID controller by integrating the angular velocity
+        // into its current angle over time, this value is the D component of that controller
+        public const float StatorDeltaMultiplier = 5.0f;
     }
 }
