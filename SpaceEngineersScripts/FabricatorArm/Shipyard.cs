@@ -33,8 +33,10 @@ namespace SpaceEngineersScripts.FabricatorArm
             this.lcdTimer = lcdTimer;
             this.debug = debug;
 
-            var armBases = new List<IMyMotorStator>();
-            gridTerminalSystem.GetBlockGroupWithName(Cfg.WelderArmsGroupName)?.GetBlocksOfType(armBases);
+            var statorsInGroup = new List<IMyMotorStator>();
+            gridTerminalSystem.GetBlockGroupWithName(Cfg.WelderArmsGroupName)?.GetBlocksOfType(statorsInGroup);
+
+            var armBases = statorsInGroup.Where(stator => !Util.IsHinge(stator)).ToList();
             if (armBases.Count == 0)
             {
                 Util.Log("Put the arm bases into the \"Fabricator Arms\" group!");
