@@ -88,6 +88,14 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="FabricatorArm\Cfg.cs" />
+        <Compile Include="FabricatorArm\DebugAPI.cs" />
+        <Compile Include="FabricatorArm\Main.cs" />
+        <Compile Include="FabricatorArm\MgpApi.cs" />
+        <Compile Include="FabricatorArm\Shipyard.cs" />
+        <Compile Include="FabricatorArm\Subgrid.cs" />
+        <Compile Include="FabricatorArm\Util.cs" />
+        <Compile Include="FabricatorArm\FabricatorArm.cs" />
         <Compile Include="IceCalc\Main.cs" />
         <Compile Include="Inventory\BaseConfig.cs" />
         <Compile Include="Inventory\Category.cs" />
@@ -129,6 +137,7 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="RobotArm\Cfg.cs" />
         <Compile Include="RobotArm\CollisionDetectingRobotArm.cs" />
+        <Compile Include="RobotArm\DebugAPI.cs" />
         <Compile Include="RobotArm\Main.cs" />
         <Compile Include="RobotArm\MgpApi.cs" />
         <Compile Include="RobotArm\RobotArm.cs" />
@@ -146,6 +155,10 @@
         <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
     </ItemGroup>
     <ItemGroup>
+      <Content Include="FabricatorArm\Info\steam_description_script.txt" />
+      <Content Include="FabricatorArm\Info\steam_description_world.txt" />
+      <Content Include="FabricatorArm\Mod\thumb.jpg" />
+      <Content Include="FabricatorArm\README.md" />
       <Content Include="Inventory\README.md" />
       <Content Include="merge_program.py" />
       <Content Include="RobotArm\Info\steam_description_script.txt" />
