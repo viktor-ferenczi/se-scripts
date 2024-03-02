@@ -60,8 +60,7 @@ namespace SpaceEngineersScripts.FabricatorArm
         {
             var lcdGroup = GridTerminalSystem.GetBlockGroupWithName(Cfg.TextPanelsGroupName);
             var textPanels = new List<IMyTextPanel>();
-
-            lcdGroup.GetBlocksOfType(textPanels);
+            lcdGroup?.GetBlocksOfType(textPanels);
 
             foreach (var textPanel in textPanels)
             {
