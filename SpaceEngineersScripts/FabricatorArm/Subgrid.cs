@@ -16,7 +16,6 @@ namespace SpaceEngineersScripts.FabricatorArm
         private readonly long projectorEntityId;
         private readonly MultigridProjectorProgrammableBlockAgent mgp;
         private readonly Dictionary<Vector3I, BlockState> blockStates = new Dictionary<Vector3I, BlockState>();
-        private readonly Random rng = new Random();
         private readonly IMyCubeGrid previewGrid;
         private ulong latestStateHash;
 
@@ -56,43 +55,29 @@ namespace SpaceEngineersScripts.FabricatorArm
             return blockState == BlockState.Buildable || blockState == BlockState.BeingBuilt;
         }
 
-        public bool TryFindNearestBlockToWeld(Vector3D previousPosition, out Vector3I nextLocation, out Vector3D nextPosition)
+        public bool TryFindNearestBlockToWeld(Vector3D fabricatorPosition, ref Vector3I nextLocation, ref Vector3D nextPosition)
         {
-            nextLocation = Vector3I.Zero;
-            nextPosition = Vector3D.Zero;
-
             if (blockStates.Count == 0)
             {
                 return false;
             }
 
-            var gridSize = previewGrid.GridSize;
             var minDistanceSquared = double.PositiveInfinity;
             foreach (var pair in blockStates)
             {
                 var position = previewGrid.GridIntegerToWorld(pair.Key);
-                var distanceSquared = Vector3D.DistanceSquared(position, previousPosition);
+                var distanceSquared = Vector3D.DistanceSquared(position, nextPosition) + Vector3D.DistanceSquared(position, fabricatorPosition) * Cfg.FabricatorSquaredDistanceWeight;
                 if (distanceSquared < minDistanceSquared)
                 {
                     // The random addition helps to untangle the lasers, so they eventually go down different paths.
                     // Without this randomness they meet and converge, all of them welding the same sequence of blocks.
-                    minDistanceSquared = distanceSquared + rng.NextDouble() * gridSize;
+                    minDistanceSquared = distanceSquared;
                     nextLocation = pair.Key;
                     nextPosition = position;
                 }
             }
 
             return true;
-        }
-
-        public void FinishBlock(Vector3I position)
-        {
-            blockStates.Remove(position);
-
-            if (blockStates.Count == 0)
-            {
-                HasFinished = true;
-            }
         }
     }
 }

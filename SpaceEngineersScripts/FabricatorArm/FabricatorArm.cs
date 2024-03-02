@@ -17,8 +17,8 @@ namespace SpaceEngineersScripts.FabricatorArm
         private readonly StringBuilder sb = new StringBuilder();
 
         private Subgrid subgrid;
-        private Vector3I targetLocation = Vector3I.MaxValue;
-        private Vector3D targetPosition = Vector3D.Zero;
+        private Vector3I targetLocation;
+        private Vector3D targetPosition;
 
         private double targetAzimuthAngle;
         private double targetElevationAngle;
@@ -48,7 +48,6 @@ namespace SpaceEngineersScripts.FabricatorArm
         public void TargetSubgrid(Subgrid target)
         {
             subgrid = target;
-            targetLocation = Vector3I.MaxValue;
             targetPosition = fabricator.WorldMatrix.Translation;
         }
 
@@ -72,8 +71,7 @@ namespace SpaceEngineersScripts.FabricatorArm
 
                 if (!subgrid.IsWeldable(targetLocation))
                 {
-                    var previousPosition = targetPosition;
-                    if (!subgrid.TryFindNearestBlockToWeld(previousPosition, out targetLocation, out targetPosition))
+                    if (!subgrid.TryFindNearestBlockToWeld(fabricator.WorldMatrix.Translation, ref targetLocation, ref targetPosition))
                     {
                         Reset();
                     }

@@ -11,5 +11,8 @@ namespace SpaceEngineersScripts.FabricatorArm
         // Name of the block group containing LCD panels to show completion statistics and debug information (optional)
         // Names should contains: Timer, Details, Status, Log
         public const string TextPanelsGroupName = "Shipyard Text Panels";
+
+        // Weight of the fabricator's distance, it helps to diverge the arms to different parts of the blueprint
+        public const double FabricatorSquaredDistanceWeight = 0.25;
     }
 }
