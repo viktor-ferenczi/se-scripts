@@ -11,7 +11,7 @@ namespace SpaceEngineersScripts.FabricatorArm
     // ReSharper disable once ArrangeTypeModifiers
     class Program : MyGridProgram
     {
-        private const bool EnableDebugDraw = true;
+        private const bool EnableDebugDraw = false;
 
         private static IMyTextPanel lcdTimer;
         private static IMyTextPanel lcdDetails;
@@ -119,12 +119,6 @@ namespace SpaceEngineersScripts.FabricatorArm
             {
                 Util.ShowLog(lcdLog);
             }
-        }
-
-        // ReSharper disable once UnusedMember.Global
-        public void Save()
-        {
-            Runtime.UpdateFrequency = UpdateFrequency.None;
         }
     }
 }
