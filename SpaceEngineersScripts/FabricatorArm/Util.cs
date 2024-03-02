@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
@@ -73,5 +74,12 @@ namespace SpaceEngineersScripts.FabricatorArm
         }
 
         public static bool IsHinge(IMyMotorStator stator) => stator.BlockDefinition.SubtypeName.EndsWith("Hinge");
+
+        public static Vector3D GetRandomPoint(Random rng, BoundingBoxD aabb)
+        {
+            var point = aabb.Min + aabb.Size * new Vector3D(rng.NextDouble(), rng.NextDouble(), rng.NextDouble());
+            point.SetDim(rng.Next(3), 0);
+            return point;
+        }
     }
 }

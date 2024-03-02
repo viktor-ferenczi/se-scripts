@@ -53,45 +53,39 @@ namespace SpaceEngineersScripts.FabricatorArm
 
             debug?.RemoveDraw();
 
-            if (projector.IsWorking)
+            var subgridCount = projector.IsWorking && mgp.Available ? mgp.GetSubgridCount(projector.EntityId) : 0;
+            var hasProjection = subgridCount != 0;
+
+            if (!loaded && hasProjection)
             {
-                var subgridCount = mgp.GetSubgridCount(projector.EntityId);
-                if (subgridCount == 0)
+                subgrids.Clear();
+
+                for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
                 {
-                    if (loaded)
-                    {
-                        // Finished welding
-                        lcdDetails?.WriteText("Completed");
-                        lcdStatus?.WriteText("");
-                        totalTicks = 0;
-                        subgrids.Clear();
-                        loaded = false;
-
-                        foreach (var arm in arms)
-                        {
-                            arm.Reset();
-                        }
-
-                        retracting = true;
-                    }
+                    var subgrid = new Subgrid(projector.EntityId, mgp, subgridIndex);
+                    subgrid.Update();
+                    subgrids.Add(subgrid);
                 }
-                else
+
+                totalTicks = 0;
+                loaded = true;
+            }
+
+            if (loaded && !hasProjection)
+            {
+                foreach (var arm in arms)
                 {
-                    if (!loaded)
-                    {
-                        subgrids.Clear();
-
-                        for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
-                        {
-                            var subgrid = new Subgrid(projector.EntityId, mgp, subgridIndex);
-                            subgrid.Update();
-                            subgrids.Add(subgrid);
-                        }
-
-                        totalTicks = 0;
-                        loaded = true;
-                    }
+                    arm.Reset();
                 }
+
+                subgrids.Clear();
+
+                lcdDetails?.WriteText("");
+                lcdStatus?.WriteText("");
+                totalTicks = 0;
+                loaded = false;
+
+                retracting = true;
             }
 
             if (loaded)
@@ -112,6 +106,7 @@ namespace SpaceEngineersScripts.FabricatorArm
                         continue;
                     }
 
+                    // If the arm is idle, then target a random weldable block on a random weldable subgrid
                     if (!arm.IsWorking)
                     {
                         if (weldableSubgridsCount > 0)
@@ -129,6 +124,30 @@ namespace SpaceEngineersScripts.FabricatorArm
                 }
                 weldableSubgrids.Clear();
 
+                // Detect pairs of arms targeting the same block, reset one of them
+                for (var i = 0; i < arms.Count - 1; i++)
+                {
+                    var arm = arms[i];
+                    if (!arm.IsValid)
+                    {
+                        continue;
+                    }
+
+                    var j = rng.Next(i + 1, arms.Count);
+                    var other = arms[j];
+                    if (!other.IsValid)
+                    {
+                        continue;
+                    }
+
+                    if (arm.Subgrid == other.Subgrid &&
+                        arm.TargetLocation == other.TargetLocation)
+                    {
+                        arm.TargetSubgrid(null);
+                        break;
+                    }
+                }
+
                 ShowStatus(lcdStatus);
 
                 var info = projector.DetailedInfo;
@@ -138,7 +157,8 @@ namespace SpaceEngineersScripts.FabricatorArm
                 var seconds = ++totalTicks / 6;
                 lcdTimer?.WriteText($"{seconds / 60:00}:{seconds % 60:00}");
             }
-            else if (retracting)
+
+            if (retracting)
             {
                 retracting = false;
 

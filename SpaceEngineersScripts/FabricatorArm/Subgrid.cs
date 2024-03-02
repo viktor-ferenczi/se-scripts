@@ -16,8 +16,10 @@ namespace SpaceEngineersScripts.FabricatorArm
         private readonly long projectorEntityId;
         private readonly MultigridProjectorProgrammableBlockAgent mgp;
         private readonly Dictionary<Vector3I, BlockState> blockStates = new Dictionary<Vector3I, BlockState>();
-        private readonly IMyCubeGrid previewGrid;
+        private readonly Random rng = new Random();
         private ulong latestStateHash;
+
+        public IMyCubeGrid PreviewGrid { get; }
 
         public Subgrid(long projectorEntityId, MultigridProjectorProgrammableBlockAgent mgp, int index)
         {
@@ -25,7 +27,7 @@ namespace SpaceEngineersScripts.FabricatorArm
             this.projectorEntityId = projectorEntityId;
             this.mgp = mgp;
 
-            previewGrid = mgp.GetPreviewGrid(projectorEntityId, index);
+            PreviewGrid = mgp.GetPreviewGrid(projectorEntityId, index);
         }
 
         public void Update()
@@ -55,8 +57,11 @@ namespace SpaceEngineersScripts.FabricatorArm
             return blockState == BlockState.Buildable || blockState == BlockState.BeingBuilt;
         }
 
-        public bool TryFindNearestBlockToWeld(Vector3D fabricatorPosition, ref Vector3I nextLocation, ref Vector3D nextPosition)
+        public bool TryFindNextBlockToWeld(Vector3D referencePosition, out Vector3I nextLocation, out Vector3D nextPosition)
         {
+            nextLocation = Vector3I.Zero;
+            nextPosition = Vector3D.Zero;
+
             if (blockStates.Count == 0)
             {
                 return false;
@@ -65,13 +70,15 @@ namespace SpaceEngineersScripts.FabricatorArm
             var minDistanceSquared = double.PositiveInfinity;
             foreach (var pair in blockStates)
             {
-                var position = previewGrid.GridIntegerToWorld(pair.Key);
-                var distanceSquared = Vector3D.DistanceSquared(position, nextPosition) + Vector3D.DistanceSquared(position, fabricatorPosition) * Cfg.FabricatorSquaredDistanceWeight;
+                var position = PreviewGrid.GridIntegerToWorld(pair.Key);
+
+                var distanceSquared = Vector3D.DistanceSquared(referencePosition, position);
                 if (distanceSquared < minDistanceSquared)
                 {
                     // The random addition helps to untangle the lasers, so they eventually go down different paths.
                     // Without this randomness they meet and converge, all of them welding the same sequence of blocks.
                     minDistanceSquared = distanceSquared;
+
                     nextLocation = pair.Key;
                     nextPosition = position;
                 }

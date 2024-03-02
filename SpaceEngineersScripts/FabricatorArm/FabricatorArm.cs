@@ -8,22 +8,22 @@ namespace SpaceEngineersScripts.FabricatorArm
     public class FabricatorArm
     {
         private const float AngleEpsilon = 1e-5f;
-        private const double AngleErrorLimit = Math.PI * 10 / 180;
 
         private readonly IMyMotorStator azimuthBase;
         private readonly IMyMotorStator elevationBase;
         private readonly IMyConveyorSorter fabricator;
         private readonly DebugAPI debug;
         private readonly StringBuilder sb = new StringBuilder();
-
-        private Subgrid subgrid;
-        private Vector3I targetLocation;
-        private Vector3D targetPosition;
+        private readonly Random rng = new Random();
 
         private double targetAzimuthAngle;
         private double targetElevationAngle;
-        private double angleError = -1;
-        private bool isOnTarget;
+
+        public Vector3I TargetLocation { get; private set; }
+        public Vector3D TargetPosition { get; private set; }
+        public Subgrid Subgrid { get; set; }
+        public bool IsOnTarget { get; set; }
+        public bool IsValid { get; }
 
         public FabricatorArm(IMyMotorStator armBase, DebugAPI debug)
         {
@@ -33,29 +33,37 @@ namespace SpaceEngineersScripts.FabricatorArm
             elevationBase = Util.FindBlock<IMyMotorStator>(azimuthBase.Top?.CubeGrid);
             fabricator = Util.FindBlock<IMyConveyorSorter>(elevationBase?.Top?.CubeGrid);
 
+            if (azimuthBase == null ||
+                elevationBase == null ||
+                fabricator == null ||
+                Util.IsHinge(azimuthBase) ||
+                !Util.IsHinge(elevationBase))
+            {
+                return;
+            }
+
+            IsValid = true;
             fabricator.Enabled = true;
             ActivateFabricator(false);
         }
 
         public string Name => azimuthBase.CustomName;
-        public Subgrid Subgrid => subgrid;
-        public bool IsValid => azimuthBase != null && elevationBase != null && fabricator != null && !Util.IsHinge(azimuthBase) && Util.IsHinge(elevationBase);
-        public bool IsWorking => subgrid != null && subgrid.HasBuilt && !subgrid.HasFinished;
-        public bool IsOnTarget => isOnTarget;
-        public double AngleError => angleError;
+        public bool IsWorking => IsValid && Subgrid != null && Subgrid.HasBuilt && !Subgrid.HasFinished;
         public bool IsMoving => IsValid && (Math.Abs(azimuthBase.TargetVelocityRad) > AngleEpsilon || Math.Abs(elevationBase.TargetVelocityRad) > AngleEpsilon);
 
         public void TargetSubgrid(Subgrid target)
         {
-            subgrid = target;
-            targetPosition = fabricator.WorldMatrix.Translation;
+            Subgrid = target;
+            IsOnTarget = false;
+            TargetPosition = target != null ? Util.GetRandomPoint(rng, target.PreviewGrid.WorldAABB) : Vector3D.Zero;
+            // Util.Log(Util.Format(TargetPosition));
         }
 
         public void Reset()
         {
             TargetSubgrid(null);
-            angleError = -1;
-            isOnTarget = false;
+            targetAzimuthAngle = 0;
+            targetElevationAngle = 0;
         }
 
         public void Update()
@@ -67,29 +75,27 @@ namespace SpaceEngineersScripts.FabricatorArm
 
             if (IsWorking)
             {
-                subgrid.Update();
+                Subgrid.Update();
 
-                if (!subgrid.IsWeldable(targetLocation))
+                if (!Subgrid.IsWeldable(TargetLocation))
                 {
-                    if (!subgrid.TryFindNearestBlockToWeld(fabricator.WorldMatrix.Translation, ref targetLocation, ref targetPosition))
+                    Vector3I nextLocation;
+                    Vector3D nextPosition;
+                    if (Subgrid.TryFindNextBlockToWeld(TargetPosition, out nextLocation, out nextPosition))
                     {
-                        Reset();
+                        TargetLocation = nextLocation;
+                        TargetPosition = nextPosition;
+                    }
+                    else
+                    {
+                        TargetSubgrid(null);
                     }
                 }
             }
 
             Rotate();
-
-            if (IsWorking)
-            {
-                VerifyTargeting();
-            }
-            else
-            {
-                isOnTarget = false;
-            }
-
-            ActivateFabricator(isOnTarget);
+            VerifyTargeting();
+            ActivateFabricator(IsOnTarget);
         }
 
         private void ActivateFabricator(bool activate)
@@ -114,11 +120,6 @@ namespace SpaceEngineersScripts.FabricatorArm
             {
                 CalculateTargetAngles();
             }
-            else
-            {
-                targetAzimuthAngle = 0;
-                targetElevationAngle = 0;
-            }
 
             Rotate(azimuthBase, targetAzimuthAngle);
             Rotate(elevationBase, targetElevationAngle);
@@ -128,36 +129,36 @@ namespace SpaceEngineersScripts.FabricatorArm
         {
             if (!IsWorking)
             {
-                angleError = -1;
-                isOnTarget = false;
+                IsOnTarget = false;
                 return;
             }
 
-            var azimuthError = NormalizeAngle(targetAzimuthAngle - azimuthBase.Angle);
-            var elevationError = NormalizeAngle(targetElevationAngle - elevationBase.Angle);
-            angleError = Math.Sqrt(azimuthError * azimuthError + elevationError * elevationError);
-            isOnTarget = angleError < AngleErrorLimit;
+            // It is on target is the distance of a laser beam from the target point is less
+            // than the diameter of the target grid's block
+            var projectedTarget = Vector3D.Transform(TargetPosition, MatrixD.Invert(fabricator.WorldMatrix));
+            projectedTarget.Z = 0;
+            var positionError = projectedTarget.Length();
+            IsOnTarget = positionError < Subgrid.PreviewGrid.GridSize * Math.Sqrt(3);
         }
-
 
         private void CalculateTargetAngles()
         {
             debug?.DrawMatrix(elevationBase.WorldMatrix, onTop: true);
             debug?.DrawMatrix(azimuthBase.WorldMatrix, onTop: true);
 
-            debug?.DrawPoint(targetPosition, Color.OrangeRed);
-            debug?.DrawLine(fabricator.WorldMatrix.Translation, targetPosition, Color.OrangeRed);
+            debug?.DrawPoint(TargetPosition, Color.OrangeRed);
+            debug?.DrawLine(fabricator.WorldMatrix.Translation, TargetPosition, Color.OrangeRed);
 
             var azimuthCenter = azimuthBase.WorldMatrix.Translation;
             var elevationCenter = elevationBase.WorldMatrix.Translation;
             var centerDistance = Vector3D.Distance(azimuthCenter, elevationCenter) + azimuthBase.Displacement;
 
             debug?.DrawPoint(elevationCenter, Color.Cyan, onTop: true);
-            debug?.DrawLine(elevationCenter, targetPosition, Color.Cyan, onTop: true);
+            debug?.DrawLine(elevationCenter, TargetPosition, Color.Cyan, onTop: true);
 
             // Azimuth is the angle of the target projected to the floor as seen from the rotor,
             // must also consider all 4 possible hinge placements (block orientations) on the rotor head
-            var projected = Vector3D.Transform(targetPosition, MatrixD.Invert(azimuthBase.WorldMatrix));
+            var projected = Vector3D.Transform(TargetPosition, MatrixD.Invert(azimuthBase.WorldMatrix));
             var hingeForwardDirection = elevationBase.Orientation.TransformDirection(Base6Directions.Direction.Forward);
             switch (hingeForwardDirection)
             {
