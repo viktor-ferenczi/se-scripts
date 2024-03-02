@@ -49,7 +49,7 @@ namespace SpaceEngineersScripts.FabricatorArm
             if (!mgp.Available)
                 return;
 
-            // debug.RemoveDraw();
+            debug?.RemoveDraw();
 
             if (projector.IsWorking)
             {
@@ -101,7 +101,7 @@ namespace SpaceEngineersScripts.FabricatorArm
 
                 // Util.Log($"Weldable SGs: {weldableSubgrids.Count}");
                 var weldableSubgridsCount = weldableSubgrids.Count;
-                var i = 0;
+                // var i = 0;
                 foreach (var arm in arms)
                 {
                     if (!arm.IsValid)

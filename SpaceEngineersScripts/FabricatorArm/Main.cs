@@ -11,6 +11,8 @@ namespace SpaceEngineersScripts.FabricatorArm
     // ReSharper disable once ArrangeTypeModifiers
     class Program : MyGridProgram
     {
+        private const bool EnableDebugDraw = true;
+
         private static IMyTextPanel lcdTimer;
         private static IMyTextPanel lcdDetails;
         private static IMyTextPanel lcdStatus;
@@ -21,8 +23,8 @@ namespace SpaceEngineersScripts.FabricatorArm
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
 
-            var debug = new DebugAPI(this);
-            debug.RemoveDraw();
+            var debug = EnableDebugDraw ? new DebugAPI(this) : null;
+            debug?.RemoveDraw();
 
             PrepareDisplay();
             FindTextPanels();

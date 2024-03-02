@@ -144,25 +144,46 @@ namespace SpaceEngineersScripts.FabricatorArm
 
         private void CalculateTargetAngles()
         {
-            // debug.DrawMatrix(elevationBase.WorldMatrix, onTop: true);
-            // debug.DrawMatrix(azimuthBase.WorldMatrix, onTop: true);
+            debug?.DrawMatrix(elevationBase.WorldMatrix, onTop: true);
+            debug?.DrawMatrix(azimuthBase.WorldMatrix, onTop: true);
 
-            // debug.DrawPoint(targetPosition, Color.OrangeRed);
-            // debug.DrawLine(fabricator.WorldMatrix.Translation, targetPosition, Color.OrangeRed);
+            debug?.DrawPoint(targetPosition, Color.OrangeRed);
+            debug?.DrawLine(fabricator.WorldMatrix.Translation, targetPosition, Color.OrangeRed);
 
             var azimuthCenter = azimuthBase.WorldMatrix.Translation;
             var elevationCenter = elevationBase.WorldMatrix.Translation;
             var centerDistance = Vector3D.Distance(azimuthCenter, elevationCenter) + azimuthBase.Displacement;
 
-            // debug.DrawPoint(elevationCenter, Color.Cyan, onTop: true);
-            // debug.DrawLine(elevationCenter, targetPosition, Color.Cyan);
+            debug?.DrawPoint(elevationCenter, Color.Cyan, onTop: true);
+            debug?.DrawLine(elevationCenter, targetPosition, Color.Cyan, onTop: true);
 
+            // Azimuth is the angle of the target projected to the floor as seen from the rotor,
+            // must also consider all 4 possible hinge placements (block orientations) on the rotor head
             var projected = Vector3D.Transform(targetPosition, MatrixD.Invert(azimuthBase.WorldMatrix));
-            targetAzimuthAngle = -Math.Atan2(projected.X, projected.Z);
+            var hingeForwardDirection = elevationBase.Orientation.TransformDirection(Base6Directions.Direction.Forward);
+            switch (hingeForwardDirection)
+            {
+                case Base6Directions.Direction.Forward:
+                    targetAzimuthAngle = Math.Atan2(projected.X, -projected.Z);
+                    break;
+                case Base6Directions.Direction.Backward:
+                    targetAzimuthAngle = Math.Atan2(-projected.X, projected.Z);
+                    break;
+                case Base6Directions.Direction.Left:
+                    targetAzimuthAngle = Math.Atan2(-projected.Z, -projected.X);
+                    break;
+                case Base6Directions.Direction.Right:
+                    targetAzimuthAngle = Math.Atan2(projected.Z, projected.X);
+                    break;
+                default:
+                    // Invalid hinge placement (on its side)
+                    targetElevationAngle = 0;
+                    return;
+            }
 
+            // Elevation is the angle of the "vertical" triangle as seen from the hinge
             var distance = Math.Sqrt(projected.X * projected.X + projected.Z * projected.Z);
             var height = projected.Y - centerDistance;
-
             targetElevationAngle = Math.Atan2(distance, height);
 
             // Util.Log($"{Util.Format(projected)}");
