@@ -1,7 +1,7 @@
 # Phobos Fabricator Arm Control Script
 
 ## Requirements
-- [Phobos Fabricator Mod](https://steamcommunity.com/sharedfiles/filedetails/?id=3165243109)
+- [Phobos Fabricator Mod](TODO)
 - Experimental mode enabled in the game (so the Programmable Block works)
 
 ## How to test the script

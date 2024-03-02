@@ -4,7 +4,7 @@
 [list]
 [*] Experimental mode enabled in the game (so the Programmable Block works)
 [*] Multigrid Projector client plugin via [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
-[*] [Phobos Fabricator Mod](https://steamcommunity.com/sharedfiles/filedetails/?id=3165243109)
+[*] [Phobos Fabricator Mod](TODO)
 [/list]
 
 [h2]How to test the script[/h2]
