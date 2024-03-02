@@ -1,0 +1,27 @@
+[h1]OmniBeam Arm Controller Script[/h1]
+
+[h2]Requirements[/h2]
+[list]
+[*] Experimental mode enabled in the game (so the Programmable Block works)
+[*] Multigrid Projector client plugin via [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
+[*] [OmniCorp: OmniTools](TODO)
+[/list]
+
+[h2]How to test the script[/h2]
+[list]
+[*] Subscribe to the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3216987606]test world[/url]
+[*] Create and enter the world
+[*] Join the Testers faction
+[*] Spawn to the medical room
+[*] Enter the pilot seat at the top
+[*] Recompile the program in the [b]Shipyard Projector[/b]
+[*] Start the welding by 3 (PB Run start), stop by 4 (PB Run stop)
+[/list]
+
+[h2]Remarks[/h2]
+[list]
+[*] Tested only in single player in creative mode so far.
+[*] Should work in multiplayer.
+[/list]
+
+[i]Enjoy![/i]

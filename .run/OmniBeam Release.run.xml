@@ -1,0 +1,15 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="OmniBeam Release" type="RunExe" factoryName=".NET Executable">
+    <option name="EXE_PATH" value="$PROJECT_DIR$/../se-script-merge/IngameScriptMergeTool/bin/IngameScriptMergeTool.exe" />
+    <option name="PROGRAM_PARAMETERS" value="-maur -n OmniBeam -d OmniBeam" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="PASS_PARENT_ENVS" value="1" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="RUNTIME_TYPE" value="netfw" />
+    <method v="2">
+      <option name="Build" default="false" projectName="OmniBeam" projectPath="$PROJECT_DIR$/OmniBeam/OmniBeam.csproj" />
+    </method>
+  </configuration>
+</component>
