@@ -41,6 +41,14 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="IceCalc\Main.cs" />
+        <Compile Include="WelderTurretController\Load.cs" />
+        <Compile Include="WelderTurretController\MultigridProjectorProgrammableBlockAgent.cs" />
+        <Compile Include="WelderTurretController\Network.cs" />
+        <Compile Include="WelderTurretController\Program.cs" />
+        <Compile Include="WelderTurretController\Status.cs" />
+        <Compile Include="WelderTurretController\Utility.cs" />
+        <Compile Include="WelderTurretController\WeldTargetComp.cs" />
+        <Compile Include="WelderTurretController\WeldTurret.cs" />
         <None Include="Others\Eloka.cs" />
         <None Include="Others\GravityDrive.cs" />
         <None Include="Others\LAMP.cs" />
@@ -71,6 +79,12 @@
     <ItemGroup>
       <PackageReference Include="SpaceEngineers.ScriptingReferences" Version="1.3.0" />
       <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="WelderTurretController\Instructions.readme" />
+      <Content Include="WelderTurretController\thumb.png" />
+      <Content Include="WelderTurretController\Welder Turret Controller 2.csproj" />
+      <Content Include="WelderTurretController\Welder Turret Controller 2.sln" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
