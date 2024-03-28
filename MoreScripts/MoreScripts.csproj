@@ -41,6 +41,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="IceCalc\Main.cs" />
+        <None Include="OmniBeamController\Controller.cs" />
         <Compile Include="WelderTurretController\Load.cs" />
         <Compile Include="WelderTurretController\MultigridProjectorProgrammableBlockAgent.cs" />
         <Compile Include="WelderTurretController\Network.cs" />
