@@ -5,7 +5,7 @@ using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using VRage.Game.ModAPI.Ingame;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     public struct BlockLocation
     {

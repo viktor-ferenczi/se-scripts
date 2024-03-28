@@ -1,4 +1,4 @@
-﻿namespace FabricatorArm
+﻿namespace OmniBeam
 {
     public enum ArmState
     {

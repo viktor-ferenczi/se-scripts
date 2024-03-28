@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using VRage.Game.ModAPI.Ingame;
 using VRageMath;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     public class Subgrid
     {

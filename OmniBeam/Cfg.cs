@@ -1,4 +1,4 @@
-namespace FabricatorArm
+namespace OmniBeam
 {
     public static class Cfg
     {
@@ -6,7 +6,7 @@ namespace FabricatorArm
         public const string ProjectorName = "Shipyard Projector";
 
         // Name of the block group containing the first mechanical bases of each arm (required)
-        public const string WelderArmsGroupName = "Fabricator Arms";
+        public const string WelderArmsGroupName = "OmniBeam Arms";
 
         // Name of the block group containing LCD panels to show completion statistics and debug information (optional)
         // Names should contains: Timer, Details, Status, Log

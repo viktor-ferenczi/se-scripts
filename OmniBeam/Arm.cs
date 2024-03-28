@@ -3,15 +3,15 @@ using System.Text;
 using Sandbox.ModAPI.Ingame;
 using VRageMath;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
-    public class FabricatorArm
+    public class Arm
     {
         private const float AngleEpsilon = 1e-3f;
 
         private readonly IMyMotorStator azimuthBase;
         private readonly IMyMotorStator elevationBase;
-        private readonly IMyConveyorSorter fabricator;
+        private readonly IMyConveyorSorter omniBeam;
 
         private readonly StringBuilder sb = new StringBuilder();
         private readonly Random rng = new Random();
@@ -24,34 +24,34 @@ namespace FabricatorArm
 
         public int? SubgridIndex => subgrid?.Index;
 
-        public FabricatorArm(IMyMotorStator armBase, DebugAPI debug)
+        public Arm(IMyMotorStator armBase, DebugAPI debug)
         {
             this.debug = debug;
 
             azimuthBase = armBase;
             elevationBase = Util.FindBlock<IMyMotorStator>(azimuthBase.Top?.CubeGrid);
-            fabricator = Util.FindBlock<IMyConveyorSorter>(elevationBase?.Top?.CubeGrid);
+            omniBeam = Util.FindBlock<IMyConveyorSorter>(elevationBase?.Top?.CubeGrid);
 
             if (azimuthBase == null ||
                 elevationBase == null ||
-                fabricator == null ||
+                omniBeam == null ||
                 Util.IsHinge(azimuthBase) ||
                 !Util.IsHinge(elevationBase) ||
                 !azimuthBase.IsWorking ||
                 !elevationBase.IsWorking ||
-                !fabricator.IsWorking)
+                !omniBeam.IsWorking)
             {
                 State = ArmState.Invalid;
                 return;
             }
 
             StopBaseRotations();
-            ActivateFabricator(false);
+            ActivateOmniBeam(false);
         }
 
         public string Name => azimuthBase.CustomName;
 
-        public bool HasSameTargetAs(FabricatorArm other) =>
+        public bool HasSameTargetAs(Arm other) =>
             this != other &&
             (State == ArmState.Targeting || State == ArmState.Welding) &&
             (other.State == ArmState.Targeting || other.State == ArmState.Welding) &&
@@ -70,7 +70,7 @@ namespace FabricatorArm
             if (subgrid.TryTargetRandomBlock(ref target, rng))
             {
                 State = ArmState.Targeting;
-                ActivateFabricator(false);
+                ActivateOmniBeam(false);
             }
         }
 
@@ -88,7 +88,7 @@ namespace FabricatorArm
                     if (target.IsOnTarget)
                     {
                         State = ArmState.Welding;
-                        ActivateFabricator(true);
+                        ActivateOmniBeam(true);
                     }
 
                     TargetAndRotateBases();
@@ -136,7 +136,7 @@ namespace FabricatorArm
                 case ArmState.Welding:
                     subgrid = null;
                     State = ArmState.Idle;
-                    ActivateFabricator(false);
+                    ActivateOmniBeam(false);
                     StopBaseRotations();
                     break;
             }
@@ -156,7 +156,7 @@ namespace FabricatorArm
                     subgrid = null;
                     target.ResetAngles();
                     State = ArmState.Resetting;
-                    ActivateFabricator(false);
+                    ActivateOmniBeam(false);
                     break;
             }
         }
@@ -178,18 +178,22 @@ namespace FabricatorArm
         {
             target.Position = subgrid.PreviewGrid.GridIntegerToWorld(target.Location);
 
+#if DEBUG
             debug?.DrawMatrix(elevationBase.WorldMatrix, onTop: true);
             debug?.DrawMatrix(azimuthBase.WorldMatrix, onTop: true);
 
             debug?.DrawPoint(target.Position, Color.OrangeRed);
-            debug?.DrawLine(fabricator.WorldMatrix.Translation, target.Position, Color.OrangeRed);
+            debug?.DrawLine(omniBeam.WorldMatrix.Translation, target.Position, Color.OrangeRed);
+#endif
 
             var azimuthCenter = azimuthBase.WorldMatrix.Translation;
             var elevationCenter = elevationBase.WorldMatrix.Translation;
             var centerDistance = Vector3D.Distance(azimuthCenter, elevationCenter) + azimuthBase.Displacement;
 
+#if DEBUG
             debug?.DrawPoint(elevationCenter, Color.Cyan, onTop: true);
             debug?.DrawLine(elevationCenter, target.Position, Color.Cyan, onTop: true);
+#endif
 
             // Azimuth is the angle of the target projected to the floor as seen from the rotor,
             // must also consider all 4 possible hinge placements (block orientations) on the rotor head
@@ -228,7 +232,7 @@ namespace FabricatorArm
         private void CalculateTargetError()
         {
             // Distance of the target position from the laser beam (line)
-            var projectedTarget = Vector3D.Transform(target.Position, MatrixD.Invert(fabricator.WorldMatrix));
+            var projectedTarget = Vector3D.Transform(target.Position, MatrixD.Invert(omniBeam.WorldMatrix));
 
             projectedTarget.Z = 0;
             var positionError = projectedTarget.Length();
@@ -256,19 +260,19 @@ namespace FabricatorArm
             elevationBase.TargetVelocityRad = 0;
         }
 
-        private void ActivateFabricator(bool activate)
+        private void ActivateOmniBeam(bool activate)
         {
-            var activated = IsFabricatorActivated();
+            var activated = IsOmniBeamActivate();
             if (activated != activate)
             {
-                fabricator.GetActionWithName("ToolCore_Shoot_Action")?.Apply(fabricator);
+                omniBeam.GetActionWithName("ToolCore_Shoot_Action")?.Apply(omniBeam);
             }
         }
 
-        private bool IsFabricatorActivated()
+        private bool IsOmniBeamActivate()
         {
             sb.Clear();
-            fabricator.GetActionWithName("ToolCore_Shoot_Action")?.WriteValue(fabricator, sb);
+            omniBeam.GetActionWithName("ToolCore_Shoot_Action")?.WriteValue(omniBeam, sb);
             return sb.ToString() == "Deactivate";
         }
     }

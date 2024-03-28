@@ -1,6 +1,6 @@
 ﻿using VRageMath;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     public struct Target
     {

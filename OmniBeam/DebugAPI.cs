@@ -7,7 +7,7 @@ using VRageMath;
 using IMyProgrammableBlock=Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
 using MyGridProgram=Sandbox.ModAPI.Ingame.MyGridProgram;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     /// <summary>
     /// Create an instance of this and hold its reference.

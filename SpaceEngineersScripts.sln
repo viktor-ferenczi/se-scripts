@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreScripts", "MoreScripts\MoreScripts.csproj", "{FDE43926-B40A-4A27-B46E-C0233A65A70C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabricatorArm", "FabricatorArm\FabricatorArm.csproj", "{4B4E7CC4-C2DA-43F6-9785-60BA4334995E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OmniBeam", "OmniBeam\OmniBeam.csproj", "{4B4E7CC4-C2DA-43F6-9785-60BA4334995E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotArm", "RobotArm\RobotArm.csproj", "{5E615E5C-4DC2-4566-84AF-546D1468709A}"
 EndProject

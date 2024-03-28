@@ -4,7 +4,7 @@ using Sandbox.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
 using VRageMath;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     public static class Util
     {

@@ -8,8 +8,8 @@
         <ProjectGuid>{4B4E7CC4-C2DA-43F6-9785-60BA4334995E}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>FabricatorArm</RootNamespace>
-        <AssemblyName>FabricatorArm</AssemblyName>
+        <RootNamespace>OmniBeam</RootNamespace>
+        <AssemblyName>OmniBeam</AssemblyName>
         <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
         <LangVersion>6</LangVersion>
@@ -43,7 +43,7 @@
         <Compile Include="ArmState.cs" />
         <Compile Include="Cfg.cs" />
         <Compile Include="DebugAPI.cs" />
-        <Compile Include="FabricatorArm.cs" />
+        <Compile Include="Arm.cs" />
         <Compile Include="Main.cs" />
         <Compile Include="MgpApi.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>

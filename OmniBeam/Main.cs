@@ -5,14 +5,12 @@ using VRageMath;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.GUI.TextPanel;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     // ReSharper disable once UnusedType.Global
     // ReSharper disable once ArrangeTypeModifiers
     class Program : MyGridProgram
     {
-        private const bool EnableDebugDraw = false;
-
         private readonly Shipyard shipyard;
         private readonly DebugAPI debug;
 
@@ -25,8 +23,10 @@ namespace FabricatorArm
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
 
-            debug = EnableDebugDraw ? new DebugAPI(this) : null;
+#if DEBUG
+            debug = new DebugAPI(this);
             debug?.RemoveDraw();
+#endif
 
             PrepareDisplay();
             FindTextPanels();
@@ -57,7 +57,7 @@ namespace FabricatorArm
             pbSurface.FontColor = Color.DarkGreen;
             pbSurface.Font = "DEBUG";
             pbSurface.FontSize = 3f;
-            pbSurface.WriteText("Fabricator Arm\r\nController");
+            pbSurface.WriteText("OmniBeam Arm\r\nController");
         }
 
         private void FindTextPanels()

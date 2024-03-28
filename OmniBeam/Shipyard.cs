@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
 
-namespace FabricatorArm
+namespace OmniBeam
 {
     public class Shipyard
     {
@@ -14,7 +14,7 @@ namespace FabricatorArm
         private readonly IMyTextPanel lcdDetails;
         private readonly IMyTextPanel lcdStatus;
         private readonly IMyTextPanel lcdTimer;
-        private readonly List<FabricatorArm> arms = new List<FabricatorArm>();
+        private readonly List<Arm> arms = new List<Arm>();
         private readonly List<Subgrid> subgrids = new List<Subgrid>();
         private readonly List<Subgrid> weldableSubgrids = new List<Subgrid>();
         private readonly StringBuilder sb = new StringBuilder();
@@ -48,12 +48,12 @@ namespace FabricatorArm
             var armBases = statorsInGroup.Where(stator => !Util.IsHinge(stator)).ToList();
             if (armBases.Count == 0)
             {
-                Util.Log("Put the arm bases into the \"Fabricator Arms\" group!");
+                Util.Log("Put the arm bases into the \"OmniBeam Arms\" group!");
                 return;
             }
 
             arms.Clear();
-            arms.AddRange(armBases.Select(armBase => new FabricatorArm(armBase, debug)));
+            arms.AddRange(armBases.Select(armBase => new Arm(armBase, debug)));
         }
 
         private void ResetArms()
