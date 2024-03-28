@@ -1,0 +1,26 @@
+﻿## OmniBeam Terminal Actions
+
+- `Toggle block On/Off`
+- `Toggle block On`
+- `Toggle block Off`
+- `Show on HUD On/Off`
+- `Show on HUD On`
+- `Show on HUD Off`
+- `Increase Font Size`
+- `Decrease Font Size`
+- `Increase Text Padding`
+- `Decrease Text Padding`
+- `Increase Image change interval`
+- `Decrease Image change interval`
+- `Preserve aspect ratio On/Off`
+- `Drain All On/Off`
+- `Activate/Deactivate`
+- `Activate`
+- `Deactivate`
+- `Mode Select`
+- `Action Select`
+- `Draw On/Off`
+- `Work on Own Grids On/Off`
+- `Work on Friendly Grids On/Off`
+- `Work on Neutral Grids On/Off`
+- `Work on Hostile Grids On/Off`

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Interfaces;
 using VRageMath;
 
 namespace OmniBeam
@@ -11,7 +13,7 @@ namespace OmniBeam
 
         private readonly IMyMotorStator azimuthBase;
         private readonly IMyMotorStator elevationBase;
-        private readonly IMyConveyorSorter omniBeam;
+        public readonly IMyConveyorSorter omniBeam;
 
         private readonly StringBuilder sb = new StringBuilder();
         private readonly Random rng = new Random();
@@ -46,7 +48,7 @@ namespace OmniBeam
             }
 
             StopBaseRotations();
-            ActivateOmniBeam(false);
+            ActivateBeam(false);
         }
 
         public string Name => azimuthBase.CustomName;
@@ -70,7 +72,7 @@ namespace OmniBeam
             if (subgrid.TryTargetRandomBlock(ref target, rng))
             {
                 State = ArmState.Targeting;
-                ActivateOmniBeam(false);
+                ActivateBeam(false);
             }
         }
 
@@ -88,7 +90,7 @@ namespace OmniBeam
                     if (target.IsOnTarget)
                     {
                         State = ArmState.Welding;
-                        ActivateOmniBeam(true);
+                        ActivateBeam(true);
                     }
 
                     TargetAndRotateBases();
@@ -136,7 +138,7 @@ namespace OmniBeam
                 case ArmState.Welding:
                     subgrid = null;
                     State = ArmState.Idle;
-                    ActivateOmniBeam(false);
+                    ActivateBeam(false);
                     StopBaseRotations();
                     break;
             }
@@ -156,7 +158,7 @@ namespace OmniBeam
                     subgrid = null;
                     target.ResetAngles();
                     State = ArmState.Resetting;
-                    ActivateOmniBeam(false);
+                    ActivateBeam(false);
                     break;
             }
         }
@@ -237,7 +239,7 @@ namespace OmniBeam
             projectedTarget.Z = 0;
             var positionError = projectedTarget.Length();
 
-            target.IsOnTarget = positionError < subgrid.PreviewGrid.GridSize * Math.Sqrt(3);
+            target.IsOnTarget = positionError < 0.5 * subgrid.PreviewGrid.GridSize;
             // Util.Log($"{Util.Format(positionError)} {IsOnTarget}");
         }
 
@@ -260,16 +262,15 @@ namespace OmniBeam
             elevationBase.TargetVelocityRad = 0;
         }
 
-        private void ActivateOmniBeam(bool activate)
+        private void ActivateBeam(bool activate)
         {
-            var activated = IsOmniBeamActivate();
-            if (activated != activate)
+            if (HasActiveBeam() != activate)
             {
                 omniBeam.GetActionWithName("ToolCore_Shoot_Action")?.Apply(omniBeam);
             }
         }
 
-        private bool IsOmniBeamActivate()
+        private bool HasActiveBeam()
         {
             sb.Clear();
             omniBeam.GetActionWithName("ToolCore_Shoot_Action")?.WriteValue(omniBeam, sb);
