@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{FDE43926-B40A-4A27-B46E-C0233A65A70C}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>SpaceEngineersScripts</RootNamespace>
+        <AssemblyName>MoreScripts</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <LangVersion>6</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>x64</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>x64</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="System" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.Xml" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="IceCalc\Main.cs" />
+        <None Include="OmniBeamController\Controller.cs" />
+        <Compile Include="ModSources\RaidfireModClass.cs" />
+        <Compile Include="ModSources\SdxLogger.cs" />
+        <Compile Include="WelderTurretController\Load.cs" />
+        <Compile Include="WelderTurretController\MultigridProjectorProgrammableBlockAgent.cs" />
+        <Compile Include="WelderTurretController\Network.cs" />
+        <Compile Include="WelderTurretController\Program.cs" />
+        <Compile Include="WelderTurretController\Status.cs" />
+        <Compile Include="WelderTurretController\Utility.cs" />
+        <Compile Include="WelderTurretController\WeldTargetComp.cs" />
+        <Compile Include="WelderTurretController\WeldTurret.cs" />
+        <None Include="Others\Eloka.cs" />
+        <None Include="Others\GravityDrive.cs" />
+        <None Include="Others\LAMP.cs" />
+        <None Include="Others\Program.cs" />
+        <None Include="Others\ProjectorInventory.cs" />
+        <None Include="Others\Robot10-Resupply-script.cs" />
+        <None Include="Others\ShipInventory.cs" />
+        <None Include="Others\ShipLayout.cs" />
+        <None Include="Others\SimpleSorter.cs" />
+        <None Include="Others\TheGalleryAirlock.cs" />
+        <None Include="Others\TheGalleryBlockInfo.cs" />
+        <None Include="Others\TheGalleryMacros.cs" />
+        <None Include="Own\AirlockController.cs" />
+        <None Include="Own\GarageCranes.cs" />
+        <None Include="Own\PrinterController.cs" />
+        <None Include="Own\ProjectorInventory.cs" />
+        <None Include="Own\Skeleton.cs" />
+        <None Include="Own\SolarTower.cs" />
+        <None Include="Own\SpaceEngineersProgram.cs" />
+        <Compile Include="Others\RaycastLidar.cs" />
+        <Compile Include="Program.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Skeleton\EmptyProgram.cs" />
+        <None Include="Skeleton\Explained\ProgramExplained.cs" />
+        <Compile Include="Skeleton\Skeleton.cs" />
+        <Compile Include="Skeleton\SpaceEngineersProgram.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="SpaceEngineers.ScriptingReferences" Version="1.3.0" />
+      <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="WelderTurretController\Instructions.readme" />
+      <Content Include="WelderTurretController\thumb.png" />
+      <Content Include="WelderTurretController\Welder Turret Controller 2.csproj" />
+      <Content Include="WelderTurretController\Welder Turret Controller 2.sln" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+</Project>

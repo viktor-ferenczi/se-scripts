@@ -360,8 +360,8 @@ MigrationBackup/
 
 ## Project specific extensions:
 
-# Symlinked Space Engineers DLL dependencies
-/Bin64/
-
 # JetBrains Rider project files
 /.idea/
+
+# Project
+/debug

@@ -1,0 +1,26 @@
+[h1]OmniBeam Arm Controller Script[/h1]
+
+[h2]Requirements[/h2]
+[list]
+[*] Experimental mode enabled in the game (so the Programmable Block works)
+[*] Multigrid Projector plugin via [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3218498375]OmniCorp: OmniTools[Lasers][/url] mod
+[/list]
+
+[h2]How to use the script[/h2]
+[list]
+[*] Example usage is in this [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3216987606]test world[/url]
+[*] Please see the configuration at the top of the script's code. It tells you the block and group names to use.
+[*] The welding will not start automatically on recompiling the script.
+[*] To start the welding run the PB with argument: [b]start[/b]
+[*] To stop the welding run the PB with argument: [b]stop[/b]
+[/list]
+
+[h2]Remarks[/h2]
+[list]
+[*] Works both in creative and multiplayer
+[*] This script is a minified release version
+[*] Source code for development: [url=https://github.com/viktor-ferenczi/se-scripts]GitHub repository[/url]
+[/list]
+
+[i]Enjoy![/i]
