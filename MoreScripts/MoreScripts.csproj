@@ -41,7 +41,6 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="IceCalc\Main.cs" />
-        <None Include="OmniBeamController\Controller.cs" />
         <Compile Include="ModSources\RaidfireModClass.cs" />
         <Compile Include="ModSources\SdxLogger.cs" />
         <Compile Include="WelderTurretController\Load.cs" />
@@ -55,6 +54,7 @@
         <None Include="Others\Eloka.cs" />
         <None Include="Others\GravityDrive.cs" />
         <None Include="Others\LAMP.cs" />
+        <None Include="Others\OmniBeamControllerFromSomeoneElse.cs" />
         <None Include="Others\Program.cs" />
         <None Include="Others\ProjectorInventory.cs" />
         <None Include="Others\Robot10-Resupply-script.cs" />
