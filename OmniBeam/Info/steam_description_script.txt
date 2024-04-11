@@ -19,6 +19,10 @@
 [h2]Remarks[/h2]
 [list]
 [*] Works both in creative and multiplayer
+[*] The script can control any number of arms
+[*] Put only the azimuth rotor bases of each arm into the [b]OmniBeam Arms[/b] group, not the whole arms
+[*] Supported arm structure: Advanced Rotor azimuth (base), Hinge elevation, OmniBeam X-1100
+[*] The LCD panels are optional, they are useful for debugging
 [*] This script is a minified release version
 [*] Source code for development: [url=https://github.com/viktor-ferenczi/se-scripts]GitHub repository[/url]
 [/list]
