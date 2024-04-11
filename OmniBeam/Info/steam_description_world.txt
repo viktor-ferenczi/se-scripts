@@ -4,18 +4,18 @@
 [list]
 [*] Experimental mode enabled in the game (so the Programmable Block works)
 [*] Multigrid Projector client plugin via [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
-[*] [OmniCorp: OmniTools](TODO)
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3218498375]OmniCorp: OmniTools[Lasers][/url] mod
 [/list]
 
-[h2]How to test the script[/h2]
+[h2]How to use the test world[/h2]
 [list]
-[*] Subscribe to the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3216972580]arm control script[/url]
+[*] Subscribe to the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3216972580]OmniBeam Arm Control[/url] script
 [*] Create and enter the world
 [*] Join the Testers faction
 [*] Spawn to the medical room
 [*] Enter the pilot seat at the top
-[*] Recompile the program in the [b]Shipyard Projector[/b]
-[*] Start the welding by 3 (PB Run start), stop by 4 (PB Run stop)
+[*] Recompile the [b]Shipyard Program[/b] PB
+[*] Welding controls on the pilot seat's toolbar: #3 Start, #4 Stop
 [/list]
 
 [h2]Remarks[/h2]
