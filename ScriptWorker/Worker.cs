@@ -1,4 +1,6 @@
-﻿// ReSharper disable ConvertConstructorToMemberInitializers
+﻿#define PB_WORKER_V1
+
+// ReSharper disable ConvertConstructorToMemberInitializers
 // ReSharper disable ArrangeTypeMemberModifiers
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable InconsistentNaming
@@ -26,7 +28,6 @@ using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
-
 
 // TODO: Change the namespace name to something meaningful,
 //       Put all the code which needs to be deployed as part of
@@ -72,6 +73,7 @@ namespace ScriptWorker
             // TODO: This is executed when the PB is run
         }
 
+#if PB_WORKER_V1
         // ReSharper disable once UnusedMember.Global
         public IEnumerable<WorkerSchedule> Worker(IWorkerLimits limits)
         {
@@ -128,6 +130,7 @@ namespace ScriptWorker
             // Ideally split your task based on timing measurements, so it always stays below the limit.
             // Make the limit configurable by the player, because it may depend on the server.
         }
+#endif
 
         // ReSharper disable once UnusedMember.Global
         public void Save()
