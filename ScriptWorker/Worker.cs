@@ -57,6 +57,10 @@ namespace ScriptWorker
 
         // Maximum time the worker can run on a background thread until it gets killed
         TimeSpan MaxBackground { get; }
+
+        // Maximum number of calls to certain expensive methods by fully qualified method name (any overload),
+        // it applies only in main thread execution
+        IReadOnlyDictionary<string, int> MaxCalls { get; }
     }
 
     // ReSharper disable once UnusedType.Global
