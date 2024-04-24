@@ -1,4 +1,6 @@
-﻿#define PB_WORKER_V1
+﻿// This symbol is defined to support conditional compilation for backwards compatibility with the vanilla game
+
+#define SCRIPT_WORKER_V1
 
 // ReSharper disable ConvertConstructorToMemberInitializers
 // ReSharper disable ArrangeTypeMemberModifiers
@@ -49,18 +51,14 @@ namespace ScriptWorker
         Background,
     }
 
+    // Exceeding any of these limits causes the worker to be killed
     public interface IWorkerLimits
     {
-        // Maximum time the worker can run on the main thread until it gets killed
-        // NOTE: It is technically running in a worker thread which can be killed, while the main is suspended
+        // Maximum time the worker can run with full access, like if it would run on the main thread
         TimeSpan MaxMain { get; }
 
-        // Maximum time the worker can run on a background thread until it gets killed
+        // Maximum time the worker can run with read-only access in a worker thread in parallel with main
         TimeSpan MaxBackground { get; }
-
-        // Maximum number of calls to certain expensive methods by fully qualified method name (any overload),
-        // it applies only in main thread execution
-        IReadOnlyDictionary<string, int> MaxCalls { get; }
     }
 
     // ReSharper disable once UnusedType.Global
@@ -69,15 +67,24 @@ namespace ScriptWorker
         public Program()
         {
             // TODO: One-time initialization executed when the PB program is loaded
+            // Ideally don't put anything here, move all initialization into the Worker
         }
 
         // ReSharper disable once UnusedMember.Global
         public void Main(string argument, UpdateType updateSource)
         {
             // TODO: This is executed when the PB is run
+            // Use this method to receive commands and events from the grid,
+            // but delegate all actual processing to the Worker.
         }
 
-#if PB_WORKER_V1
+#if SCRIPT_WORKER_V1
+        // The plugin looks for the presence of the Worker method with this signature.
+        // If it presents then it prepends WorkerSchedule and IWorkerLimits to the code
+        // and rewrites the code to include accessibility checks on all setters and
+        // method calls to all accessible game objects. This is how the read-only access
+        // is enforced while running on a background thread. Dirty read may happen.
+
         // ReSharper disable once UnusedMember.Global
         public IEnumerable<WorkerSchedule> Worker(IWorkerLimits limits)
         {
@@ -104,13 +111,12 @@ namespace ScriptWorker
                 var started = DateTime.UtcNow;
                 // TODO: Periodic background work
                 var duration = DateTime.UtcNow - started;
-                // TODO: Make sure the duration is less than the maximum in the limits
 
-                // TODO: Use this to split your task to stay under the server's configured execution time limit
+                // TODO: Yield this to split your task into periods shorter than the background execution time limit
                 // Suspend the program now, continue on a worker thread once CPU capacity is available
                 yield return WorkerSchedule.Background;
 
-                // TODO: Use one of these to execute code on the main thread to apply grid changes
+                // TODO: Use one of these to execute code on the main thread to apply changes to the grid
                 // Suspend the program until an update, then run it on the main thread to have full grid access
                 yield return WorkerSchedule.Update;
                 yield return WorkerSchedule.Update10;
@@ -121,18 +127,16 @@ namespace ScriptWorker
                 duration = DateTime.UtcNow - started;
                 // TODO: Make sure the duration is less than the maximum in the limits
 
-                // TODO: Use this to switch back to the worker thread once done with modifications
+                // TODO: Use this to switch back to the worker thread once done with all modifications
                 // Suspend the program now, continue on a worker thread once CPU capacity is available
                 yield return WorkerSchedule.Background;
 
-                // TODO: Break the loop if the background worker should stop
+                // TODO: Break the loop to stop the worker
+                break;
             }
 
-            // This method is killed without raising exception if it does not yield nor finish up to a configured
-            // amount of time (1ms by default). Set a flag in your PB during processing to detect this, then inform
-            // the player with a warning if the flag is true when the PB is run the next time.
-            // Ideally split your task based on timing measurements, so it always stays below the limit.
-            // Make the limit configurable by the player, because it may depend on the server.
+            // This method is killed without raising an exception if it does not yield nor finish until
+            // the configured amount of time. Use automatic throttling to stay under the limits.
         }
 #endif
 
