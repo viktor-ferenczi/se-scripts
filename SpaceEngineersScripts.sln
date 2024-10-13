@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KTZInv", "KTZInv\KTZInv.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KTZHunt3", "KTZHunt3\KTZHunt3.csproj", "{2CD9770E-E257-42AC-B3AB-A16691BB880B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignedDistanceFunction", "SignedDistanceFunction\SignedDistanceFunction.csproj", "{7A26F087-8513-4CB4-B2A4-769386428074}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{2CD9770E-E257-42AC-B3AB-A16691BB880B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CD9770E-E257-42AC-B3AB-A16691BB880B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CD9770E-E257-42AC-B3AB-A16691BB880B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A26F087-8513-4CB4-B2A4-769386428074}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A26F087-8513-4CB4-B2A4-769386428074}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A26F087-8513-4CB4-B2A4-769386428074}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A26F087-8513-4CB4-B2A4-769386428074}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
