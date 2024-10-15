@@ -112,7 +112,7 @@ namespace SignedDistanceFunction
             }
 
             Me.CustomData = "";
-            
+
             var parts = argument.Split(' ');
             switch (parts[0])
             {
@@ -132,7 +132,7 @@ namespace SignedDistanceFunction
                         break;
 
                     PrepareGeneration(size);
-                    
+
                     strideY = (size.X + 7) >> 3;
                     layerSize = strideY * size.Y;
                     if (layerSize > MaxCustomDataLength)
@@ -145,13 +145,18 @@ namespace SignedDistanceFunction
                     return;
 
                 case "layer":
-                    int z;
-                    if (parts.Length != 2 ||
-                        !int.TryParse(parts[1], out z) ||
-                        z < 0 || z >= size.Z)
+                    Vector3 offset;
+                    if (parts.Length != 4 ||
+                        !float.TryParse(parts[1], out offset.X) ||
+                        !float.TryParse(parts[2], out offset.Y) ||
+                        !float.TryParse(parts[3], out offset.Z) ||
+                        offset.AbsMin() < 0 ||
+                        offset.X > size.X ||
+                        offset.Y > size.Y ||
+                        offset.Z > size.Z)
                         break;
 
-                    var data = CalculateLayer(z);
+                    var data = CalculateLayer(offset);
                     if (data.Length != layerSize)
                     {
                         Echo($"Invalid layer size {data.Length}, expected {layerSize}");
@@ -175,27 +180,25 @@ namespace SignedDistanceFunction
             Echo($"Invalid arguments: {argument}");
         }
 
-        string CalculateLayer(int z)
+        string CalculateLayer(Vector3 offset)
         {
             var buf = buffer;
-            
-            var pos = new Vector3I(0, 0, z);
-            var centerOfCube = Vector3.Half;
 
             var xs = size.X;
             var ys = size.Y;
 
+            var position = Vector3I.Zero;
             for (var y = 0; y < ys; y++)
             {
-                pos.Y = y;
-                
+                position.Y = y;
+
                 var v = 0;
                 var b = 1;
                 for (var x = 0; x < xs; x++)
                 {
-                    pos.X = x;
+                    position.X = x;
 
-                    if (CalculateDistance(pos + centerOfCube) <= 0)
+                    if (CalculateDistance(position + offset) <= 0)
                         v |= b;
 
                     b <<= 1;
