@@ -41,16 +41,16 @@ namespace SignedDistanceFunction
         /*
         TODO: Implement any initialization code in the `PrepareGeneration` method.
 
-        The `Vector3I boundingBoxSize` parameter provides the size of the bounding box.
+        The `Vector3I boundingBox` parameter provides the size of the bounding box.
 
         This size is independent of the grid size and the projection offset and rotation. 
 
         This method is called only once before each generation.
         */
-        void PrepareGeneration(Vector3I boundingBoxSize)
+        void PrepareGeneration(Vector3I boundingBox)
         {
             // Example: Fits a sphere in the bounding box
-            center = 0.5f * boundingBoxSize;
+            center = 0.5f * boundingBox;
             var radius = center.AbsMin();
             radiusSquared = radius * radius;
         }
