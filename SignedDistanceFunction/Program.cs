@@ -79,12 +79,10 @@ namespace SignedDistanceFunction
             return (point - center).LengthSquared() - radiusSquared;
         }
 
-        // DO NOT CHANGE ANYTHING BELOW THIS LINE
-        // Scaffolding to deliver SDF layers as bitmaps
-        // from the SDF in-game script to the WFC mod
+        // !!!!!!!! DO NOT CHANGE ANYTHING BELOW THIS LINE !!!!!!!!
+        // Scaffolding to deliver SDF layers as bitmaps to the Shape Designer mod
 
-        // SDF program version, determines the protocol
-        // to use between the WFC mod and this program 
+        // SDF program version, determines the communication protocol
         const string ProtocolVersion = "SDF1";
         const int MaxSize = 512;
 
@@ -105,7 +103,7 @@ namespace SignedDistanceFunction
         {
             if (string.IsNullOrEmpty(argument))
             {
-                Echo("This script implements a signed distance function (SDF) for use with the Wave Function Collapse mod.");
+                Echo("This script implements a signed distance function (SDF) for use with the Shape Designer mod.");
                 Echo($"Protocol version: {ProtocolVersion}");
                 Echo($"Maximum box size: {MaxSize}");
                 return;
