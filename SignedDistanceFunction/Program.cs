@@ -43,10 +43,9 @@ namespace SignedDistanceFunction
 
         The `Vector3I boundingBoxSize` parameter provides the size of the bounding box.
 
-        This size is independent of the grid size (1 means a single block) and the
-        projection offset and rotation.
+        This size is independent of the grid size and the projection offset and rotation. 
 
-        It is called only once for each generation.
+        This method is called only once before each generation.
         */
         void PrepareGeneration(Vector3I boundingBoxSize)
         {
@@ -57,7 +56,7 @@ namespace SignedDistanceFunction
         }
 
         /*
-        TODO: Implement the calculation in the `CalculateDistance` method.
+        TODO: Implement the point-wise calculation in the `CalculateDistance` method.
 
         The `Vector3 point` parameter defines the spatial position to calculate
         the SDF for within the bounding box's frame of reference. The point is
@@ -67,9 +66,15 @@ namespace SignedDistanceFunction
         be called for key points inside the blocks to select the best fitting
         one from the allowed set of blocks in that position.
 
-        Return the signed distance from the shape's surface to the point.
-        Points inside the shape have a negative distance, the surface of the
-        shape has a zero distance and outside points have positive distance.
+        The return value must be the signed distance of the point from the shape:
+        - Negative: Inside
+        - Zero: On the surface
+        - Positive: Outside
+
+        It does not have to be an exact distance, but the value returned may be
+        used later to define a notion of "thickness". Currently only the sign of
+        the value is used, considering positive return values as outside,
+        otherwise inside.
 
         Make this method fast, it may be called millions of times.
         */
