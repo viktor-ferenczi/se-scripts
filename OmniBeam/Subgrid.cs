@@ -114,8 +114,6 @@ namespace OmniBeam
                 var distanceSquared = Vector3D.DistanceSquared(referencePosition, position);
                 if (distanceSquared < minDistanceSquared)
                 {
-                    // The random addition helps to untangle the lasers, so they eventually go down different paths.
-                    // Without this randomness they meet and converge, all of them welding the same sequence of blocks.
                     minDistanceSquared = distanceSquared;
                     minLocation = location;
 
