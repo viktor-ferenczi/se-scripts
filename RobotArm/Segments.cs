@@ -10,16 +10,16 @@ namespace RobotArm
         public static readonly Random Rng = new Random();
 
         // Maximum acceptable optimized cost for the arm to start targeting a block
-        public static readonly double MaxAcceptableCost = Cfg.MaxWeldingDistanceLargeWelder * Cfg.MaxWeldingDistanceLargeWelder + 2 * (Cfg.DirectionCostWeight + Cfg.RollCostWeight) + Cfg.ActivationRegularization;
+        public static readonly double MaxAcceptableCost = Config.Instance.MaxWeldingDistanceLargeWelder * Config.Instance.MaxWeldingDistanceLargeWelder + 2 * (Config.Instance.DirectionCostWeight + Config.Instance.RollCostWeight) + Config.Instance.ActivationRegularization;
 
         // Stops optimizing the pose before the loop count limit if this cost level is reached
-        public static readonly double GoodEnoughCost = 0.04 * Cfg.MaxWeldingDistanceSmallWelder * Cfg.MaxWeldingDistanceSmallWelder;
+        public static readonly double GoodEnoughCost = 0.04 * Config.Instance.MaxWeldingDistanceSmallWelder * Config.Instance.MaxWeldingDistanceSmallWelder;
 
         public static double CalculatePoseCost(ref MatrixD target, ref MatrixD pose)
         {
             return Vector3D.DistanceSquared(pose.Translation, target.Translation) +
-                   Vector3D.DistanceSquared(pose.Forward, target.Forward) * Cfg.DirectionCostWeight +
-                   Vector3D.DistanceSquared(pose.Up, target.Up) * Cfg.RollCostWeight;
+                   Vector3D.DistanceSquared(pose.Forward, target.Forward) * Config.Instance.DirectionCostWeight +
+                   Vector3D.DistanceSquared(pose.Up, target.Up) * Config.Instance.RollCostWeight;
         }
     }
 
@@ -136,7 +136,7 @@ namespace RobotArm
 
             var nextSegment = this.next as Segment<IMyMechanicalConnectionBlock>;
             segmentCount = 1 + (nextSegment?.segmentCount ?? 0);
-            activationWeight = Cfg.ActivationRegularization / segmentCount;
+            activationWeight = Config.Instance.ActivationRegularization / segmentCount;
 
             double v;
             if (double.TryParse((block.CustomData ?? "").Trim(), out v))
@@ -283,7 +283,7 @@ namespace RobotArm
 
         public RotorSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
         {
-            MinActivationStep = Cfg.MinActivationStepRotor;
+            MinActivationStep = Config.Instance.MinActivationStepRotor;
             ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.UpperLimitRad - InitialActivation, InitialActivation - Block.LowerLimitRad));
         }
 
@@ -307,7 +307,7 @@ namespace RobotArm
 
         public HingeSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
         {
-            MinActivationStep = Cfg.MinActivationStepHinge;
+            MinActivationStep = Config.Instance.MinActivationStepHinge;
             ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.UpperLimitRad - InitialActivation, InitialActivation - Block.LowerLimitRad));
         }
 
@@ -331,7 +331,7 @@ namespace RobotArm
 
         public PistonSegment(IMyPistonBase block, ISegment<IMyTerminalBlock> next) : base(block, next)
         {
-            MinActivationStep = Cfg.MinActivationStepPiston;
+            MinActivationStep = Config.Instance.MinActivationStepPiston;
             ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.HighestPosition - InitialActivation, InitialActivation - Block.LowestPosition));
         }
 

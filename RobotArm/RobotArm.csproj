@@ -40,8 +40,9 @@
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Cfg.cs" />
+        <Compile Include="BaseConfig.cs" />
         <Compile Include="CollisionDetectingRobotArm.cs" />
+        <Compile Include="Config.cs" />
         <Compile Include="DebugAPI.cs" />
         <Compile Include="Main.cs" />
         <Compile Include="MgpApi.cs" />

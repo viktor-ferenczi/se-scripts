@@ -22,7 +22,7 @@ namespace RobotArm
             this.mgp = mgp;
 
             var armBases = new List<IMyMechanicalConnectionBlock>();
-            gridTerminalSystem.GetBlockGroupWithName(Cfg.WelderArmsGroupName)?.GetBlocksOfType(armBases);
+            gridTerminalSystem.GetBlockGroupWithName(Config.Instance.WelderArmsGroupName)?.GetBlocksOfType(armBases);
             if (armBases.Count == 0)
             {
                 Util.Log("Add all arm base blocks to the Welder Arms group!");
@@ -142,7 +142,7 @@ namespace RobotArm
             switch (arm.State)
             {
                 case WelderArmState.Failed:
-                    if (++arm.FailureCount >= Cfg.ResetArmAfterFailedWeldingAttempts)
+                    if (++arm.FailureCount >= Config.Instance.ResetArmAfterFailedWeldingAttempts)
                         arm.Reset();
                     else
                         AssignNextBlock(arm, arm.FirstSegment.EffectorTipPose.Translation);
@@ -158,11 +158,11 @@ namespace RobotArm
                     break;
 
                 case WelderArmState.Collided:
-                    arm.Reset(Cfg.MaxRetractionTimeAfterCollision);
+                    arm.Reset(Config.Instance.MaxRetractionTimeAfterCollision);
                     break;
 
                 case WelderArmState.Unreachable:
-                    arm.Reset(Cfg.MaxRetractionTimeAfterUnreachable);
+                    arm.Reset(Config.Instance.MaxRetractionTimeAfterUnreachable);
                     break;
             }
         }
@@ -231,20 +231,20 @@ namespace RobotArm
                 return;
 
             var sb = new StringBuilder();
-            sb.Append("Sub Block position    Cost State\r\n");
-            sb.Append("--- --------------    ---- -----\r\n");
+            sb.AppendLine("Sub Block position    Cost State");
+            sb.AppendLine("--- --------------    ---- -----");
             foreach (var arm in arms)
             {
                 var active = arm.State == WelderArmState.Moving || arm.State == WelderArmState.Welding;
                 var subgridIndexText = (active ? arm.TargetLocation.GridIndex.ToString() : "-").PadLeft(3);
                 var positionText = (active ? Util.Format(arm.TargetLocation.Position) : "").PadRight(14);
                 var costText = (active ? (arm.Cost < 1000 ? $"{arm.Cost:0.000}" : "-") : "").PadLeft(7);
-                sb.Append($"{subgridIndexText} {positionText} {costText} {arm.State}\r\n");
+                sb.AppendLine($"{subgridIndexText} {positionText} {costText} {arm.State}");
             }
 
-            sb.Append("\r\n");
-            sb.Append("Sub Blocks Layers Welding Blocks\r\n");
-            sb.Append("--- ------ ------ ------- ------\r\n");
+            sb.AppendLine("");
+            sb.AppendLine("Sub Blocks Layers Welding Blocks");
+            sb.AppendLine("--- ------ ------ ------- ------");
             foreach (var subgrid in subgrids)
             {
                 if (!subgrid.HasBuilt || subgrid.HasFinished)
@@ -256,7 +256,7 @@ namespace RobotArm
                 var layerCountText = subgrid.LayerIndex.ToString().PadLeft(6);
                 var layerBlockCountText = subgrid.CountWeldableBlocks(out lastLayerToWeld).ToString().PadLeft(5);
                 var weldedLayerText = $"{1 + subgrid.WeldedLayer}-{1 + lastLayerToWeld}".PadLeft(7);
-                sb.Append($"{subgridIndexText} {blockCountText} {layerCountText} {weldedLayerText} {layerBlockCountText}\r\n");
+                sb.AppendLine($"{subgridIndexText} {blockCountText} {layerCountText} {weldedLayerText} {layerBlockCountText}");
             }
 
             lcdStatus.WriteText(sb.ToString());

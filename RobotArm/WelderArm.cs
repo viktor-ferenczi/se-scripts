@@ -207,7 +207,7 @@ namespace RobotArm
             var keepDistance = welder.WorldMatrix.Forward * 1.5 * previewBlockHalfSize;
             target.Translation += previewBlockCoordinates - keepDistance;
             Cost = Target(target);
-            if (Cost >= Shared.MaxAcceptableCost || Cost > bestCostForThisTarget + Cfg.MovingCostIncreaseLimit)
+            if (Cost >= Shared.MaxAcceptableCost || Cost > bestCostForThisTarget + Config.Instance.MovingCostIncreaseLimit)
             {
                 State = WelderArmState.Unreachable;
                 return;
@@ -222,7 +222,7 @@ namespace RobotArm
             }
 
             var distanceSquared = Vector3D.DistanceSquared(FirstSegment.EffectorTipPose.Translation, previewBlockCoordinates);
-            var maxWeldingDistance = previewBlockHalfSize + (welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? Cfg.MaxWeldingDistanceLargeWelder : Cfg.MaxWeldingDistanceSmallWelder);
+            var maxWeldingDistance = previewBlockHalfSize + (welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? Config.Instance.MaxWeldingDistanceLargeWelder : Config.Instance.MaxWeldingDistanceSmallWelder);
             var maxWeldingDistanceSquared = maxWeldingDistance * maxWeldingDistance;
             var welding = distanceSquared <= maxWeldingDistanceSquared;
             // Log($"dsq={distanceSquared:0.000}");
@@ -231,13 +231,13 @@ namespace RobotArm
             {
                 State = WelderArmState.Moving;
 
-                if (++movingTimer >= Cfg.MovingTimeout)
+                if (++movingTimer >= Config.Instance.MovingTimeout)
                     State = WelderArmState.Unreachable;
 
                 return;
             }
 
-            if (++weldingTimer >= Cfg.WeldingTimeout)
+            if (++weldingTimer >= Config.Instance.WeldingTimeout)
             {
                 State = WelderArmState.Failed;
                 return;

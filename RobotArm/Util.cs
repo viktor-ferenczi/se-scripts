@@ -15,7 +15,7 @@ namespace RobotArm
 
         public static void Log(string message)
         {
-            LogBuilder.Append($"{message}\r\n");
+            LogBuilder.AppendLine($"{message}");
         }
 
         public static void ShowLog(IMyTextPanel lcd)

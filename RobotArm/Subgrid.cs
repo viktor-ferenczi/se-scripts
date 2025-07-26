@@ -97,7 +97,7 @@ namespace RobotArm
             // Find weldable layers
             lastLayerToWeld = WeldedLayer;
             var blockCount = LayerBlockCounts[lastLayerToWeld];
-            var maxBlocksToWeld = gridSize == MyCubeSize.Large ? Cfg.MaxLargeBlocksToWeld : Cfg.MaxSmallBlocksToWeld;
+            var maxBlocksToWeld = gridSize == MyCubeSize.Large ? Config.Instance.MaxLargeBlocksToWeld : Config.Instance.MaxSmallBlocksToWeld;
             while (lastLayerToWeld + 1 < LayerBlockCounts.Count && blockCount + LayerBlockCounts[lastLayerToWeld + 1] <= maxBlocksToWeld)
                 blockCount += LayerBlockCounts[lastLayerToWeld++];
 

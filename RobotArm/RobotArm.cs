@@ -92,7 +92,7 @@ namespace RobotArm
             FirstSegment.Init();
             var wm = FirstSegment.Block.WorldMatrix;
             var bestCost = double.PositiveInfinity;
-            for (var i = 0; i < Cfg.OptimizationPasses; i++)
+            for (var i = 0; i < Config.Instance.OptimizationPasses; i++)
             {
                 var cost = FirstSegment.Optimize(ref wm, ref target);
                 if (cost > bestCost || cost < Shared.GoodEnoughCost)

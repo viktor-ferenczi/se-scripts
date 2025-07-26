@@ -15,9 +15,15 @@ namespace RobotArm
         private static IMyTextPanel lcdLog;
         private readonly Shipyard shipyard;
         private readonly RotorReverser rotorReverser;
+        private readonly Config config;
 
         public Program()
         {
+            config = new Config();
+            Config.Instance = config;
+            if (!LoadConfig())
+                return;
+
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
 
             PrepareDisplay();
@@ -27,10 +33,10 @@ namespace RobotArm
             try
             {
                 var mgp = new MultigridProjectorProgrammableBlockAgent(Me);
-                var projector = GridTerminalSystem.GetBlockWithName(Cfg.ProjectorName) as IMyProjector;
+                var projector = GridTerminalSystem.GetBlockWithName(Config.Instance.ProjectorName) as IMyProjector;
                 shipyard = new Shipyard(GridTerminalSystem, projector, mgp);
 
-                var projectorRotor = GridTerminalSystem.GetBlockWithName(Cfg.ProjectorRotorName) as IMyMotorStator;
+                var projectorRotor = GridTerminalSystem.GetBlockWithName(Config.Instance.ProjectorRotorName) as IMyMotorStator;
                 rotorReverser = new RotorReverser(projectorRotor);
                 rotorReverser.OnReverse += shipyard.RetractAll;
             }
@@ -44,6 +50,29 @@ namespace RobotArm
                 Util.ShowLog(lcdLog);
             }
         }
+        
+        private bool LoadConfig()
+        {
+            if (string.IsNullOrEmpty(Me.CustomData))
+            {
+                Me.CustomData = config.ToString();
+            }
+            else
+            {
+                var defaults = new Config();
+                var errors = new List<string>();
+                if (!config.TryParse(Me.CustomData, defaults, errors))
+                {
+                    Echo("Configuration errors:");
+                    foreach (var line in errors)
+                    {
+                        Echo(line);
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }        
 
         private void PrepareDisplay()
         {
@@ -58,7 +87,7 @@ namespace RobotArm
 
         private void FindTextPanels()
         {
-            var lcdGroup = GridTerminalSystem.GetBlockGroupWithName(Cfg.TextPanelsGroupName);
+            var lcdGroup = GridTerminalSystem.GetBlockGroupWithName(Config.Instance.TextPanelsGroupName);
             var textPanels = new List<IMyTextPanel>();
 
             lcdGroup.GetBlocksOfType(textPanels);
