@@ -20,6 +20,7 @@ namespace RobotArm
         public int MovingTimeout => (int)this["MovingTimeout"];
         public int WeldingTimeout => (int)this["WeldingTimeout"];
         public int ResetArmAfterFailedWeldingAttempts => (int)this["ResetArmAfterFailedWeldingAttempts"];
+        public int ReverseStuckRotorTimeout => (int)this["ReverseStuckRotorTimeout"];
         public double MinActivationStepPiston => (double)this["MinActivationStepPiston"];
         public double MinActivationStepRotor => (double)this["MinActivationStepRotor"];
         public double MinActivationStepHinge => (double)this["MinActivationStepHinge"];
@@ -58,23 +59,26 @@ namespace RobotArm
             Descriptions["OptimizationPasses"] = "Maximum number of full forward-backward optimization\npasses along the arm segments each tick";
             Defaults["OptimizationPasses"] = 1;
 
-            Descriptions["MaxRetractionTimeAfterCollision"] = "Maximum time to retract the arm after a collision\non moving the arm to the target block or during welding";
-            Defaults["MaxRetractionTimeAfterCollision"] = 3; // [Ticks] (1/6 seconds, due to Update10)
+            Descriptions["MaxRetractionTimeAfterCollision"] = "Maximum time to retract the arm after a collision\non moving the arm to the target block or during welding\n[Ticks] (1/6 seconds, due to Update10)";
+            Defaults["MaxRetractionTimeAfterCollision"] = 3;
 
-            Descriptions["MaxRetractionTimeAfterUnreachable"] = "Maximum time to retract the arm after a block\nproved to be unreachable after the arm tried to reach it";
-            Defaults["MaxRetractionTimeAfterUnreachable"] = 6; // [Ticks] (1/6 seconds, due to Update10)
+            Descriptions["MaxRetractionTimeAfterUnreachable"] = "Maximum time to retract the arm after a block\nproved to be unreachable after the arm tried to reach it\n[Ticks] (1/6 seconds, due to Update10)";
+            Defaults["MaxRetractionTimeAfterUnreachable"] = 6;
 
             Descriptions["MovingCostIncreaseLimit"] = "If the arm moves the wrong direction then\nconsider the target as unreachable";
             Defaults["MovingCostIncreaseLimit"] = 50.0;
 
-            Descriptions["MovingTimeout"] = "Timeout moving the arm near the target block,\ncounted until welding range";
-            Defaults["MovingTimeout"] = 20; // [Ticks] (1/6 seconds, due to Update10)
+            Descriptions["MovingTimeout"] = "Timeout moving the arm near the target block,\ncounted until welding range\n[Ticks] (1/6 seconds, due to Update10)";
+            Defaults["MovingTimeout"] = 20; 
 
-            Descriptions["WeldingTimeout"] = "Timeout for welding a block";
-            Defaults["WeldingTimeout"] = 6; // [Ticks] (1/6 seconds, due to Update10)
+            Descriptions["WeldingTimeout"] = "Timeout for welding a block\n[Ticks] (1/6 seconds, due to Update10)";
+            Defaults["WeldingTimeout"] = 6;
 
             Descriptions["ResetArmAfterFailedWeldingAttempts"] = "Resets the arm after this many subsequent\nfailed welding attempts";
             Defaults["ResetArmAfterFailedWeldingAttempts"] = 5;
+
+            Descriptions["ReverseStuckRotorTimeout"] = "If the projector's rotor is stuck for this many ticks (1/60 seconds), then reverse it";
+            Defaults["ReverseStuckRotorTimeout"] = 60; 
 
             Descriptions["MinActivationStepPiston"] = "Minimum meaningful activation steps during\noptimization for pistons [m]"; 
             Defaults["MinActivationStepPiston"] = 0.001;
@@ -85,10 +89,10 @@ namespace RobotArm
             Descriptions["MinActivationStepHinge"] = "Minimum meaningful activation steps during\noptimization for hinges [rad]"; 
             Defaults["MinActivationStepHinge"] = 0.001;
 
-            Descriptions["MaxLargeBlocksToWeld"] = "Maximum number of blocks to weld\nat the same time on large grid";
+            Descriptions["MaxLargeBlocksToWeld"] = "Maximum number of blocks to weld at the same time on large grid";
             Defaults["MaxLargeBlocksToWeld"] = 1;
             
-            Descriptions["MaxSmallBlocksToWeld"] = "Maximum number of blocks to weld\nat the same time on small grid";
+            Descriptions["MaxSmallBlocksToWeld"] = "Maximum number of blocks to weld at the same time on small grid";
             Defaults["MaxSmallBlocksToWeld"] = 125;
         }
     }

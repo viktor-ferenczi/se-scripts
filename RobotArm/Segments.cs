@@ -27,7 +27,9 @@ namespace RobotArm
     {
         // Base block of the arm segment or the effector block
         T Block { get; }
-
+        
+        BlockConfig BlockConfig { get; }
+        
         // Transformation from the Block to the effector's tip according to the current optimized pose
         MatrixD Transform { get; }
 
@@ -72,6 +74,8 @@ namespace RobotArm
         }
 
         public T Block { get; }
+        
+        public BlockConfig BlockConfig { get; }
 
         public MatrixD Transform { get; }
 
@@ -131,6 +135,21 @@ namespace RobotArm
             Block = block;
             this.next = next;
 
+            var defaultConfig = new BlockConfig();
+            if (string.IsNullOrEmpty(Block.CustomData))
+            {
+                Block.CustomData = defaultConfig.ToString();
+                BlockConfig = defaultConfig;
+            }
+            else
+            {
+                BlockConfig = new BlockConfig();
+                if (!BlockConfig.TryParse(Block.CustomData, defaultConfig))
+                {
+                    Util.Log($"{Block.DisplayName}: Invalid config");
+                }
+            }
+
             topToNext = next.Block.WorldMatrix * MatrixD.Invert(block.Top.WorldMatrix);
             previousActivation = GetPhysicalActivation();
 
@@ -151,6 +170,8 @@ namespace RobotArm
 
         public T Block { get; }
 
+        public BlockConfig BlockConfig { get; }
+        
         public MatrixD Transform
         {
             get
@@ -295,7 +316,7 @@ namespace RobotArm
 
         protected override double GetVelocity() => Block.TargetVelocityRad;
 
-        protected override void SetVelocity(double velocity) => Block.TargetVelocityRad = (float) velocity;
+        protected override void SetVelocity(double velocity) => Block.TargetVelocityRad = (float) (velocity * BlockConfig.VelocityMultiplier);
 
         protected override MatrixD GetBaseToTopTransform(double activation) => MatrixD.CreateTranslation(Vector3D.Up * (0.2 + Block.Displacement)) * MatrixD.CreateFromAxisAngle(Vector3D.Down, activation);
     }
@@ -319,7 +340,7 @@ namespace RobotArm
 
         protected override double GetVelocity() => Block.TargetVelocityRad;
 
-        protected override void SetVelocity(double velocity) => Block.TargetVelocityRad = (float) velocity;
+        protected override void SetVelocity(double velocity) => Block.TargetVelocityRad = (float) (velocity * BlockConfig.VelocityMultiplier);
 
         protected override MatrixD GetBaseToTopTransform(double activation) => MatrixD.CreateFromAxisAngle(Vector3D.Down, activation);
     }
@@ -343,7 +364,7 @@ namespace RobotArm
 
         protected override double GetVelocity() => Block.Velocity;
 
-        protected override void SetVelocity(double velocity) => Block.Velocity = (float) velocity;
+        protected override void SetVelocity(double velocity) => Block.Velocity = (float) (velocity * BlockConfig.VelocityMultiplier);
 
         protected override MatrixD GetBaseToTopTransform(double activation) => MatrixD.CreateTranslation(Vector3D.Up * (1.4 + activation));
     }

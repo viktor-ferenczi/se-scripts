@@ -33,7 +33,7 @@ namespace RobotArm
             {
                 var description = Descriptions[p.Key];
                 foreach (var line in description.Split('\n'))
-                    Sb.AppendLine($"// {line}");
+                    Sb.AppendLine($"#| {line}");
                 
                 var isDefault = p.Value == Defaults[p.Key];
                 var prefix = isDefault ? "#" : "";

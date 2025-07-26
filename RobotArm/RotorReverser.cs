@@ -8,7 +8,6 @@ namespace RobotArm
         private readonly IMyMotorStator rotor;
         private float latestAngle;
         private int counter;
-        private const int Timeout = 18;
         public event Action OnReverse;
 
         public RotorReverser(IMyMotorStator rotor)
@@ -36,8 +35,9 @@ namespace RobotArm
             if (Math.Abs(rotor.Angle - latestAngle) < Math.Abs(velocity) * 0.1)
             {
                 counter++;
-                Util.Log($"Projector rotor is stuck {counter} / {Timeout}");
-                if (counter >= Timeout)
+                var timeout = Config.Instance.ReverseStuckRotorTimeout;
+                Util.Log($"Projector rotor is stuck {counter} / {timeout}");
+                if (counter >= timeout)
                 {
                     rotor.TargetVelocityRad = -velocity;
                     counter = 0;
