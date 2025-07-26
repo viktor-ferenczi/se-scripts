@@ -99,6 +99,7 @@ namespace RobotArm
                 textPanel.FontColor = Color.Cyan;
                 textPanel.Font = "DEBUG";
                 textPanel.FontSize = 1.2f;
+                textPanel.TextPadding = 2f; // %
                 textPanel.WriteText("");
             }
 

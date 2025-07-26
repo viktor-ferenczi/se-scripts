@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Sandbox.ModAPI.Ingame;
 using VRageMath;
@@ -87,6 +88,12 @@ namespace RobotArm
         {
             if (!mgp.Available)
                 return;
+
+            if (!arms.Any())
+            {
+                Util.Log("No arms found");
+                return;
+            }
 
             var subgridCount = mgp.GetSubgridCount(projector.EntityId);
             if (!projector.Enabled || subgridCount < 1)
