@@ -1,0 +1,18 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SearchlightAiming Debug" type="RunExe" factoryName=".NET Executable">
+    <option name="EXE_PATH" value="$PROJECT_DIR$/../se-script-merge/IngameScriptMergeTool/bin/IngameScriptMergeTool.exe" />
+    <option name="PROGRAM_PARAMETERS" value="-n SearchlightAiming -d SearchlightAiming" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="PASS_PARENT_ENVS" value="1" />
+    <option name="ENV_FILE_PATHS" value="" />
+    <option name="REDIRECT_INPUT_PATH" value="" />
+    <option name="MIXED_MODE_DEBUG" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="AUTO_ATTACH_CHILDREN" value="0" />
+    <option name="RUNTIME_TYPE" value="netfw" />
+    <method v="2">
+      <option name="Build" default="false" projectName="Inventory" projectPath="$PROJECT_DIR$/Inventory/Inventory.csproj" />
+    </method>
+  </configuration>
+</component>

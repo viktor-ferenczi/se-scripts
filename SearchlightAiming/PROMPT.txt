@@ -1,0 +1,2 @@
+﻿First read and internalize the general instructions from the `AGENTS.md` file. 
+Then read and follow the script specific instructions from the `SearchlightAiming/INSTRUCTIONS.md` file.
