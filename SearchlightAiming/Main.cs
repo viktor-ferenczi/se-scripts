@@ -12,8 +12,6 @@ namespace SearchlightAiming
         const string TURRET_GROUP_SUBSTRING = "[Turret Controllers]";
         const int UPDATE_FREQUENCY_TICKS = 10;
 
-        const double EPSILON = 1e-5;
-
         IMyTurretControlBlock turretController;
         List<IMySearchlight> searchlights = new List<IMySearchlight>();
 
@@ -97,8 +95,8 @@ namespace SearchlightAiming
                 var searchlightMatrix = searchlight.WorldMatrix;
                 var localDirection = Vector3D.TransformNormal(shootDirection, MatrixD.Transpose(searchlightMatrix));
 
-                double azimuth = (Math.Atan2(localDirection.X, localDirection.Z) + Math.PI) % (2.0 * Math.PI);
-                double elevation = Math.Asin(Math.Max(EPSILON, Math.Min(1.0 - EPSILON, localDirection.Y)));
+                var azimuth = (Math.Atan2(localDirection.X, localDirection.Z) + Math.PI) % (2.0 * Math.PI);
+                var elevation = Math.Asin(Math.Max(0.0, Math.Min(1.0, localDirection.Y)));
 
                 searchlight.SetManualAzimuthAndElevation((float)azimuth, (float)elevation);
             }
